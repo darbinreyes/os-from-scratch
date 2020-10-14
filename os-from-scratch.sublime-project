@@ -1,0 +1,12 @@
+{
+    "folders":
+    [
+        {
+            "file_exclude_patterns":
+            [
+                "*.o"
+            ],
+            "path": "/Users/darbinreyes/dev/private_dev/os-from-scratch"
+        }
+    ]
+}
