@@ -23,7 +23,7 @@ jmp $ ; Infinite loop if/when the kernel returns.
 
 en_ints:
 lidt [idt_register]
-;sti
+sti
 ret
 
 my_gp_int_handler:
