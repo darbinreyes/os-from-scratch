@@ -1,0 +1,7 @@
+# FYI: 1.9.2. How do you pronounce "Bochs"?
+# Phonetically the same as the English word "box". It's just a play on the word "box", since techies like to call their machines a "Linux box", "Windows box", ... Bochs emulates a box inside a box.
+
+# Tell bochs to use our boot sector code as though it were a floppy disk
+# inserted into a computer at boot time.
+floppya: 1_44=boot_sector_10.bin, status=inserted
+boot: a
