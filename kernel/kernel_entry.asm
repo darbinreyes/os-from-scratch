@@ -28,4 +28,4 @@ ret
 
 my_gp_int_handler:
 jmp $
-ret
+iret

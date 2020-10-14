@@ -40,8 +40,21 @@
 ; "~ ~ ~" means no text given by Intel.
 ; - - - - - - -
 
-idt_start:
-; A trap gate descriptor without an exception handler procedure.
+
+; A **interrupt** gate descriptor without an exception handler procedure.
+; - - - - - - -
+; Offset   ; low order ; Offset to procedure entry point ; 0x00`00.
+; Selector ; Segment Selector for destination code segment 0x00`08.
+; Reserved ; 0b0`0000.
+; constant ; 0b000.
+; constant ; 0b110.
+; D ; Size of gate ; 1 = 32-bits ;  0b1.
+; constant ; 0b0.
+; DPL ; Descriptor Privilege Level ; 0b00.
+; P ; Segment Present Flag ; 0b0.
+; Offset ; high order ; Offset to procedure entry point ; 0x00`00.
+;- - - - - - -
+; A **trap** gate descriptor without an exception handler procedure.
 ; - - - - - - -
 ; Offset   ; low order ; Offset to procedure entry point ; 0x00`00.
 ; Selector ; Segment Selector for destination code segment 0x00`08.
@@ -55,6 +68,7 @@ idt_start:
 ; Offset ; high order ; Offset to procedure entry point ; 0x00`00.
 ;- - - - - - -
 ; Reminder Intel CPUs are Little-Endian.
+idt_start:
 ;- - - - - - - Default trap gate descriptor 0 - - - - - - -;
 dw 0x0000     ; Offset low (15<-0)
 dw 0x0008    ; Segment Selector (31<-16)
@@ -151,7 +165,7 @@ dw my_gp_int_handler;dw 0x0000
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b ; Set present bit.
 dw 0x0000
 ;- - - - - - - Default trap gate descriptor 14 - - - - - - -;
 dw 0x0000
