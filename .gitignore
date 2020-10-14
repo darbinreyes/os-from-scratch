@@ -1,3 +1,4 @@
 *.bin
 *.o
 os-image
+bochs_w_sti.txt
