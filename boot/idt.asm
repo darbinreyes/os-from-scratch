@@ -69,228 +69,229 @@
 ;- - - - - - -
 ; Reminder Intel CPUs are Little-Endian.
 idt_start:
-;- - - - - - - Default trap gate descriptor 0 - - - - - - -;
-dw 0x0000     ; Offset low (15<-0)
-dw 0x0008    ; Segment Selector (31<-16)
+;- - - - - - - vector 0 - - - - - - -;
+dw 0x0000          ; Offset low (15<-0)
+dw 0x0000          ; Segment Selector (31<-16)
 ; 4-byte boundary.
-db 00000000b ; constant (7<-5), Reserved (4<-0)
-db 00001111b ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
-dw 0x0000    ; Offset high (31<-16)
-;- - - - - - - Default trap gate descriptor 1 - - - - - - -;
+db 00000000b       ; constant (7<-5), Reserved (4<-0)
+db 00001110b       ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
+dw 0x0000          ; Offset high (31<-16)
+;- - - - - - - vector 1 - - - - - - -;
 dw 0x0000
-dw 0x0008
-; 4-byte boundary.
-db 00000000b
-db 00001111b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 2 - - - - - - -;
-dw 0x0000
-dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 3 - - - - - - -;
+;- - - - - - - vector 2 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 4 - - - - - - -;
+;- - - - - - - vector 3 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 5 - - - - - - -;
+;- - - - - - - vector 4 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 6 - - - - - - -;
+;- - - - - - - vector 5 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 7 - - - - - - -;
+;- - - - - - - vector 6 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 8 - - - - - - -;
+;- - - - - - - vector 7 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 9 - - - - - - -;
+;- - - - - - - vector 8 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 10 - - - - - - -;
+;- - - - - - - vector 9 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 11 - - - - - - -;
+;- - - - - - - vector 10 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 12 - - - - - - -;
+;- - - - - - - vector 11 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 13 - - - - - - -;
-dw my_gp_int_handler;dw 0x0000
+;- - - - - - - vector 12 - - - - - - -;
+dw 0x0000
+dw 0x0000
+; 4-byte boundary.
+db 00000000b
+db 00001110b
+dw 0x0000
+;- - - - - - - vector 13 - - - - - - -;
+dw my_gp_int_handler
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
 db 10001110b ; Set present bit.
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 14 - - - - - - -;
+;- - - - - - - vector 14 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 15 - - - - - - -;
+;- - - - - - - vector 15 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 16 - - - - - - -;
+;- - - - - - - vector 16 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 17 - - - - - - -;
+;- - - - - - - vector 17 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 18 - - - - - - -;
+;- - - - - - - vector 18 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 19 - - - - - - -;
+;- - - - - - - vector 19 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 20 - - - - - - -;
+;- - - - - - - vector 20 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 21 - - - - - - -;
+;- - - - - - - vector 21 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 22 - - - - - - -;
+;- - - - - - - vector 22 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 23 - - - - - - -;
+;- - - - - - - vector 23 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 24 - - - - - - -;
+;- - - - - - - vector 24 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 25 - - - - - - -;
+;- - - - - - - vector 25 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 26 - - - - - - -;
+;- - - - - - - vector 26 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 27 - - - - - - -;
+;- - - - - - - vector 27 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 28 - - - - - - -;
+;- - - - - - - vector 28 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 29 - - - - - - -;
+;- - - - - - - vector 29 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
-dw 0x0000;- - - - - - - Default trap gate descriptor 30 - - - - - - -;
+db 00001110b
 dw 0x0000
-dw 0x0008
+;- - - - - - - vector 30 - - - - - - -;
+dw 0x0000
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 31 - - - - - - -;
+;- - - - - - - vector 31 - - - - - - -;
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
 ;- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ;
 idt_end:
