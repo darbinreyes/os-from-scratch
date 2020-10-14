@@ -11,8 +11,8 @@ dd 0x0
 
 gdt_code: ; the code segment descriptor
 ; base = 0x0, limit = 0xf`ffff
-; 1st flags: (present) 1 (privilege) 00 descriptor type (1) = 1001b
 ; type flags: (code) 1 (conforming) 0 (readable) 1 (accessed) 0 = 1010b
+; 1st flags: (present) 1 (privilege) 00 (descriptor type) 1 = 1001b
 ; 2nd flags: (granularity) 1 (32 bit default) 1 (64 bit seg) 0 (AVL) 0 = 1100b
 
 dw 0xffff ; Limit (bits 0-15) ; 16 bits
