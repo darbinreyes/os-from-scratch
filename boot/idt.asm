@@ -1,6 +1,7 @@
 ; Our interrupt descriptor table (IDT).
 ; This configures ...
 
+
 ; - - - - - - - Table 6-1. Exceptions and Interrupts - Intel SDM Vol.1.Ch.6.5.1 - - - - - -
 ;
 ; Vector | Mnemonic | Description | Source |
@@ -39,6 +40,17 @@
 ; ^5. This exception can occur only on processors that support the 1-setting of the “EPT-violation #VE” VM-execution control.
 ; "~ ~ ~" means no text given by Intel.
 ; - - - - - - -
+
+; - - - - - - -
+; DPL      ; Descriptor Privilege Level.
+; Offset   ; Offset to procedure entry point.
+; P        ; Segment Present Flag. 0b1 = present. 0b0 = not present.
+; Selector ; Segment selector for destination code segment. This should be an offset into the GDT.
+; D        ; Size of gate. 1 = 32 bits. 0 = 16-bits.
+; - - - - - - -
+
+
+
 
 
 ; A **interrupt** gate descriptor without an exception handler procedure.
@@ -165,7 +177,7 @@ dw my_gp_int_handler
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 10001110b ; Set present bit.
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 14 - - - - - - -;
 dw 0x0000
