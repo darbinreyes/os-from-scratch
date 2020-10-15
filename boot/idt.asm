@@ -326,8 +326,8 @@ dd idt_start ; Starting address of our IDT.
 ; Issue special instruction to load the IDT register.
 load_idtr:
 lidt [idt_register]
-sti
-;int 0
+;sti
+int 0
 ;int 1
 ;int 20
 ;int 21

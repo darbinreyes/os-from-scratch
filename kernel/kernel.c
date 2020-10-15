@@ -44,6 +44,8 @@ int main(void) {
     //asm("int 21");
 
 
+
+
     // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
     //     r = get_scan_code2(sc);
 
