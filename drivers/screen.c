@@ -299,7 +299,7 @@ void clear_screen(void) {
 }
 
 /* Note: Empty string is a NO-OP. */
-void print_at(char *s, int row, int col) {
+void print_at(const char *s, int row, int col) {
 
     if (*s == '\0')
         return;
@@ -313,7 +313,7 @@ void print_at(char *s, int row, int col) {
     }
 }
 
-void print(char *s) {
+void print(const char *s) {
 
     while (*s != '\0') {
         print_ch_at(*s, 0, -1, -1);

@@ -7,6 +7,7 @@
 #include "../drivers/ps_2_ctlr.h"
 #include "../drivers/keyboard.h"
 #include "../mylibc/mylibc.h"
+#include "idt_v_print.h"
 
 /* [Index of Directives](https://gcc.gnu.org/onlinedocs/cpp/Index-of-Directives.html#Index-of-Directives)
     [] How to ensure my integers are of the size I expect?
@@ -25,10 +26,10 @@
 */
 
 
-#if 0 == 1
-    #error "caca" // "The directive ‘#error’ causes the preprocessor to report a fatal error."
+//#if 0 == 1
+    // #error "caca" // "The directive ‘#error’ causes the preprocessor to report a fatal error."
     // #warning "pipi" // Just a warning, not fatal.
-#endif
+//#endif
 
 int main(void) {
     //int r;
@@ -39,7 +40,8 @@ int main(void) {
 
 
     //clear_screen();
-    print_at("\nEdsger Dijkstra!\n", 0, 0);
+    //print_at("Edsger Dijkstra!\n", 0, 0);
+    //asm("int 21");
 
 
     // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
