@@ -7,10 +7,6 @@
 [extern main] ; Declare that we will be referencing the external symbol "main".
               ; The linker will substitute the final address.
 
-;%include "../boot/enable_pm_interrupts.asm"
-
-%include "boot/idt.asm"
-
 call en_ints
 
 ; To link this program with the kernel use (order of .o files is essential):
@@ -23,9 +19,20 @@ jmp $ ; Infinite loop if/when the kernel returns.
 
 en_ints:
 lidt [idt_register]
-sti
+;sti
+int 13
+mov ebx, MSG_IDT_OUT
+call print_string_pm
 ret
 
 my_gp_int_handler:
-jmp $
+; jmp $
+mov ebx, MSG_IDT
+call print_string_pm
 iret
+
+%include "boot/idt.asm"
+%include "boot/print_string_pm.asm"
+
+MSG_IDT     db "IDT is a bitch!", 0
+MSG_IDT_OUT db "out of the IDT bitch!", 0
