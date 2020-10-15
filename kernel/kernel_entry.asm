@@ -19,14 +19,11 @@ jmp $ ; Infinite loop if/when the kernel returns.
 
 en_ints:
 lidt [idt_register]
-;sti
-int 13
-mov ebx, MSG_IDT_OUT
-call print_string_pm
+sti
+;int 21
 ret
 
-my_gp_int_handler:
-; jmp $
+def_handler_procedure:
 mov ebx, MSG_IDT
 call print_string_pm
 iret
@@ -34,5 +31,4 @@ iret
 %include "boot/idt.asm"
 %include "boot/print_string_pm.asm"
 
-MSG_IDT     db "IDT is a bitch!", 0
-MSG_IDT_OUT db "out of the IDT bitch!", 0
+MSG_IDT     db "vector 21 was called    ", 0

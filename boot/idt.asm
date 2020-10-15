@@ -80,113 +80,120 @@
 ; Offset ; high order ; Offset to procedure entry point ; 0x00`00.
 ;- - - - - - -
 ; Reminder Intel CPUs are Little-Endian.
+;dw 0x0000          ; Offset low (15<-0)
+;dw 0x0000          ; Segment Selector (31<-16)
+; 4-byte boundary.
+;db 00000000b       ; constant (7<-5), Reserved (4<-0)
+;db 00001110b       ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
+;dw 0x0000          ; Offset high (31<-16)
+
 idt_start:
 ;- - - - - - - vector 0 - - - - - - -;
-dw 0x0000          ; Offset low (15<-0)
-dw 0x0000          ; Segment Selector (31<-16)
-; 4-byte boundary.
-db 00000000b       ; constant (7<-5), Reserved (4<-0)
-db 00001110b       ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
-dw 0x0000          ; Offset high (31<-16)
-;- - - - - - - vector 1 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
+dw 0x0000
+;- - - - - - - vector 1 - - - - - - -;
+dw def_handler_procedure
+dw 0x0008
+; 4-byte boundary.
+db 00000000b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 2 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 3 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 4 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 5 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 6 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 7 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 8 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 9 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 10 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 11 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 12 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 13 - - - - - - -;
-dw my_gp_int_handler
+dw def_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
 db 10001110b
 dw 0x0000
 ;- - - - - - - vector 14 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
-;- - - - - - - vector 15 - - - - - - -;
+;- - - - - - - vector 15 - - - - - - -; (Reserved)
 dw 0x0000
 dw 0x0000
 ; 4-byte boundary.
@@ -194,46 +201,46 @@ db 00000000b
 db 00001110b
 dw 0x0000
 ;- - - - - - - vector 16 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 17 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 18 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 19 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 20 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 21 - - - - - - -;
-dw 0x0000
-dw 0x0000
+dw def_handler_procedure
+dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001110b
+db 10001110b
 dw 0x0000
 ;- - - - - - - vector 22 - - - - - - -;
 dw 0x0000

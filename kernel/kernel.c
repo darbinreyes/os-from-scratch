@@ -39,7 +39,7 @@ int main(void) {
 
 
     //clear_screen();
-    //print_at("Edsger Dijkstra!\n", 0, 0);
+    print_at("\nEdsger Dijkstra!\n", 0, 0);
 
 
     // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
