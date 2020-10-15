@@ -31,15 +31,16 @@
 #endif
 
 int main(void) {
-    int r;
+    //int r;
     // unsigned char b;
-    unsigned char sc[2];
+    //unsigned char sc[2];
     // char c;
     // ps_2_ctrl_stat_t stat;
 
 
-    clear_screen();
-    print_at("Edsger Dijkstra!\n", 0, 0);
+    //clear_screen();
+    //print_at("Edsger Dijkstra!\n", 0, 0);
+
 
     // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
     //     r = get_scan_code2(sc);
