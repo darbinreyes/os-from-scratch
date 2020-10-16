@@ -549,6 +549,11 @@ iret
 
 [extern v_33_print]
 v_33_handler_procedure:
+pusha
 call v_33_print
+; port 0x60
+mov dx, 0x0060
+in al, dx
 call send_pic_eoi
+popa
 iret
