@@ -101,4 +101,15 @@ void v_21_print(void) {
     print("\n");
 }
 
+// vectors 22 - 31 reserved.
 
+void v_32_print(void) {
+    print(__func__);
+    print("\n");
+}
+
+void v_33_print(void) {
+    print("The keyboard says hello.\n");
+    print(__func__);
+    print("\n");
+}
