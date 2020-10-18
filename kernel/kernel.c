@@ -7,6 +7,7 @@
 #include "../drivers/ps_2_ctlr.h"
 #include "../drivers/keyboard.h"
 #include "../mylibc/mylibc.h"
+#include "idt_v_print.h"
 
 /* [Index of Directives](https://gcc.gnu.org/onlinedocs/cpp/Index-of-Directives.html#Index-of-Directives)
     [] How to ensure my integers are of the size I expect?
@@ -25,44 +26,48 @@
 */
 
 
-#if 0 == 1
-    #error "caca" // "The directive ‘#error’ causes the preprocessor to report a fatal error."
+//#if 0 == 1
+    // #error "caca" // "The directive ‘#error’ causes the preprocessor to report a fatal error."
     // #warning "pipi" // Just a warning, not fatal.
-#endif
+//#endif
 
 int main(void) {
-    int r;
+    //int r;
     // unsigned char b;
-    unsigned char sc[2];
+    //unsigned char sc[2];
     // char c;
     // ps_2_ctrl_stat_t stat;
 
 
-    clear_screen();
-    print_at("Edsger Dijkstra!\n", 0, 0);
+    //clear_screen();
+    //print_at("Edsger Dijkstra!\n", 0, 0);
+    //asm("int 21");
 
-    while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
-        r = get_scan_code2(sc);
 
-        if (r != 0) {
-            print("Error 2.\n");
-            return 1;
-        }
 
-        if (sc[1] != 0x00) {
-            print(" 2 byte sc.");
-            print("[");
-            print_byteh(sc[0]);
-            print("]");
-            print("[");
-            print_byteh(sc[1]);
-            print("]\n");
-        } else {
-            print(" 1 byte sc.");
-            print("[");
-            print_byteh(sc[0]);
-            print("]\n");
-        }
-    }
+
+    // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
+    //     r = get_scan_code2(sc);
+
+    //     if (r != 0) {
+    //         print("Error 2.\n");
+    //         return 1;
+    //     }
+
+    //     if (sc[1] != 0x00) {
+    //         print(" 2 byte sc.");
+    //         print("[");
+    //         print_byteh(sc[0]);
+    //         print("]");
+    //         print("[");
+    //         print_byteh(sc[1]);
+    //         print("]\n");
+    //     } else {
+    //         print(" 1 byte sc.");
+    //         print("[");
+    //         print_byteh(sc[0]);
+    //         print("]\n");
+    //     }
+    // }
     return 0;
 }

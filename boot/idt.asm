@@ -1,6 +1,7 @@
 ; Our interrupt descriptor table (IDT).
 ; This configures ...
 
+
 ; - - - - - - - Table 6-1. Exceptions and Interrupts - Intel SDM Vol.1.Ch.6.5.1 - - - - - -
 ;
 ; Vector | Mnemonic | Description | Source |
@@ -40,6 +41,17 @@
 ; "~ ~ ~" means no text given by Intel.
 ; - - - - - - -
 
+; - - - - - - -
+; DPL      ; Descriptor Privilege Level.
+; Offset   ; Offset to procedure entry point.
+; P        ; Segment Present Flag. 0b1 = present. 0b0 = not present.
+; Selector ; Segment selector for destination code segment. This should be an offset into the GDT.
+; D        ; Size of gate. 1 = 32 bits. 0 = 16-bits.
+; - - - - - - -
+
+
+
+
 
 ; A **interrupt** gate descriptor without an exception handler procedure.
 ; - - - - - - -
@@ -68,235 +80,362 @@
 ; Offset ; high order ; Offset to procedure entry point ; 0x00`00.
 ;- - - - - - -
 ; Reminder Intel CPUs are Little-Endian.
+;- - - - - - -
+;dw 0x0000          ; Offset low (15<-0)
+;dw 0x0000          ; Segment Selector (31<-16)
+; 4-byte boundary.
+;db 00000000b       ; constant (7<-5), Reserved (4<-0)
+;db 00001110b       ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
+;dw 0x0000          ; Offset high (31<-16)
+
 idt_start:
-;- - - - - - - Default trap gate descriptor 0 - - - - - - -;
-dw 0x0000     ; Offset low (15<-0)
-dw 0x0008    ; Segment Selector (31<-16)
-; 4-byte boundary.
-db 00000000b ; constant (7<-5), Reserved (4<-0)
-db 00001111b ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
-dw 0x0000    ; Offset high (31<-16)
-;- - - - - - - Default trap gate descriptor 1 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 0 - - - - - - -;
+dw v_0_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 2 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 1 - - - - - - -;
+dw v_1_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 3 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 2 - - - - - - -;
+dw v_2_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 4 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 3 - - - - - - -;
+dw v_3_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 5 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 4 - - - - - - -;
+dw v_4_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 6 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 5 - - - - - - -;
+dw v_5_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 7 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 6 - - - - - - -;
+dw v_6_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 8 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 7 - - - - - - -;
+dw v_7_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 9 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 8 - - - - - - -;
+dw v_8_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 10 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 9 - - - - - - -;
+dw v_9_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 11 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 10 - - - - - - -;
+dw v_10_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 12 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 11 - - - - - - -;
+dw v_11_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 13 - - - - - - -;
-dw my_gp_int_handler;dw 0x0000
+;- - - - - - - vector 12 - - - - - - -;
+dw v_12_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 10001110b ; Set present bit.
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 14 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 13 - - - - - - -;
+dw v_13_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 15 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 14 - - - - - - -;
+dw v_14_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 16 - - - - - - -;
+;- - - - - - - vector 15 - - - - - - -; (Reserved)
 dw 0x0000
+dw 0x0000
+; 4-byte boundary.
+db 00000000b
+db 00001110b
+dw 0x0000
+;- - - - - - - vector 16 - - - - - - -;
+dw v_16_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 17 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 17 - - - - - - -;
+dw v_17_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 18 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 18 - - - - - - -;
+dw v_18_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 19 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 19 - - - - - - -;
+dw v_19_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 20 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 20 - - - - - - -;
+dw v_20_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 21 - - - - - - -;
-dw 0x0000
+;- - - - - - - vector 21 - - - - - - -;
+dw v_21_handler_procedure
 dw 0x0008
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 10001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 22 - - - - - - -;
+;- - - - - - - vector 22 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 23 - - - - - - -;
+;- - - - - - - vector 23 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 24 - - - - - - -;
+;- - - - - - - vector 24 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 25 - - - - - - -;
+;- - - - - - - vector 25 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 26 - - - - - - -;
+;- - - - - - - vector 26 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 27 - - - - - - -;
+;- - - - - - - vector 27 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 28 - - - - - - -;
+;- - - - - - - vector 28 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 29 - - - - - - -;
+;- - - - - - - vector 29 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
-dw 0x0000;- - - - - - - Default trap gate descriptor 30 - - - - - - -;
+db 00001110b
 dw 0x0000
-dw 0x0008
+;- - - - - - - vector 30 - - - - - - -;(Reserved)
+dw 0x0000
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
-;- - - - - - - Default trap gate descriptor 31 - - - - - - -;
+;- - - - - - - vector 31 - - - - - - -;(Reserved)
 dw 0x0000
-dw 0x0008
+dw 0x0000
 ; 4-byte boundary.
 db 00000000b
-db 00001111b
+db 00001110b
 dw 0x0000
 ;- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ;
 idt_end:
 
-; IDTR
-idt_register: ; Holds both the 32-bit base address and 16-bit limit for the IDT
+; IDT register
+idt_register: ; 16-bit IDT limit and 32-bit IDT base.
 
-dw idt_end - idt_start - 1 ; The size of our GDT, ALWAYS LESS 1 OF THE TRUE SIZE. ; 16 bits
+dw idt_end - idt_start - 1 ; Limit is ALWAYS LESS 1 OF THE TRUE SIZE.
 dd idt_start ; Starting address of our IDT.
+
+
+; Issue special instruction to load the IDT register.
+load_idtr:
+lidt [idt_register]
+;sti
+int 0
+;int 1
+;int 20
+;int 21
+ret
+
+[extern v_0_print]
+v_0_handler_procedure:
+call v_0_print
+iret
+
+[extern v_1_print]
+v_1_handler_procedure:
+call v_1_print
+iret
+
+[extern v_2_print]
+v_2_handler_procedure:
+call v_2_print
+iret
+
+[extern v_3_print]
+v_3_handler_procedure:
+call v_3_print
+iret
+
+[extern v_4_print]
+v_4_handler_procedure:
+call v_4_print
+iret
+
+[extern v_5_print]
+v_5_handler_procedure:
+call v_5_print
+iret
+
+[extern v_6_print]
+v_6_handler_procedure:
+call v_6_print
+iret
+
+[extern v_7_print]
+v_7_handler_procedure:
+call v_7_print
+iret
+
+[extern v_8_print]
+v_8_handler_procedure:
+call v_8_print
+iret
+
+[extern v_9_print]
+v_9_handler_procedure:
+call v_9_print
+iret
+
+[extern v_10_print]
+v_10_handler_procedure:
+call v_10_print
+iret
+
+[extern v_11_print]
+v_11_handler_procedure:
+call v_11_print
+iret
+
+[extern v_12_print]
+v_12_handler_procedure:
+call v_12_print
+iret
+
+[extern v_13_print]
+v_13_handler_procedure:
+call v_13_print
+iret
+
+[extern v_14_print]
+v_14_handler_procedure:
+call v_14_print
+iret
+
+; vector 15 reserved.
+
+[extern v_16_print]
+v_16_handler_procedure:
+call v_16_print
+iret
+
+[extern v_17_print]
+v_17_handler_procedure:
+call v_17_print
+iret
+
+[extern v_18_print]
+v_18_handler_procedure:
+call v_18_print
+iret
+
+[extern v_19_print]
+v_19_handler_procedure:
+call v_19_print
+iret
+
+[extern v_20_print]
+v_20_handler_procedure:
+call v_20_print
+iret
+
+[extern v_21_print]
+v_21_handler_procedure:
+call v_21_print
+iret

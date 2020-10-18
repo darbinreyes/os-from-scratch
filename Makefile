@@ -35,7 +35,7 @@ os-image: boot_sect.bin kernel.bin
 boot_sect.bin: boot/boot_sect.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
 
 #    Build the kernel object file.
@@ -62,7 +62,7 @@ low_level.o: kernel/low_level.c kernel/low_level.h
 
 # Build the kernel entry object file.
 # [] Add .asm files as dep. and test make reports changes.
-kernel_entry.o: kernel/kernel_entry.asm
+kernel_entry.o: kernel/kernel_entry.asm boot/idt.asm
 	nasm -O0 $< -f elf -o $@
 
 # Disassemble our kernel - might be useful for debugging.
