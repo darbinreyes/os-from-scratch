@@ -7,7 +7,9 @@
 [extern main] ; Declare that we will be referencing the external symbol "main".
               ; The linker will substitute the final address.
 
-call load_idtr
+
+call init_pics
+call load_idtr ; also enables interrupts.
 
 ; To link this program with the kernel use (order of .o files is essential):
 ; i386-elf-gcc -ffreestanding -c kernel.c -o kernel.o

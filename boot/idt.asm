@@ -313,6 +313,20 @@ dw 0x0000
 db 00000000b
 db 00001110b
 dw 0x0000
+;- - - - - - - vector 32 - - - - - - -;
+dw v_32_handler_procedure
+dw 0x0008
+; 4-byte boundary.
+db 00000000b
+db 10001110b
+dw 0x0000
+;- - - - - - - vector 33 - - - - - - -;
+dw v_33_handler_procedure
+dw 0x0008
+; 4-byte boundary.
+db 00000000b
+db 10001110b
+dw 0x0000
 ;- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ;
 idt_end:
 
@@ -326,11 +340,97 @@ dd idt_start ; Starting address of our IDT.
 ; Issue special instruction to load the IDT register.
 load_idtr:
 lidt [idt_register]
-;sti
-int 0
+sti
+;int 0
 ;int 1
 ;int 20
 ;int 21
+ret
+
+; /* ICW1 */
+; outb( 0x11, 0x20 ); /* Master port A */
+; outb( 0x11, 0xA0 ); /* Slave port A */
+
+; /* ICW2 */
+; outb( 0x20, 0x21 ); /* Master offset of 0x20 in the IDT */
+; outb( 0x28, 0xA1 ); /* Master offset of 0x28 in the IDT */
+
+; /* ICW3 */
+; outb( 0x04, 0x21 ); /* Slaves attached to IR line 2 */
+; outb( 0x02, 0xA1 ); /* This slave in IR line 2 of master */
+
+; /* ICW4 */
+; outb( 0x05, 0x21 ); /* Set as master */
+; outb( 0x01, 0xA1 ); /* Set as slave */
+
+; /* Only listen to irqs 0, 1, and 2 */
+; outb( 0xf8, 0x21 ); /* master PIC */
+; outb( 0xff, 0xA1 ); /* slave PIC */
+
+
+; /* Send EOI to both master and slave */
+; outb( 0x20, 0x20 ); /* master PIC */
+; outb( 0x20, 0xA0 ); /* slave PIC */
+
+
+    ; __asm__("in al, dx" : "=a" (result) : "d" (port) );
+    ; __asm__("out dx, al" : :"a" (data), "d" (port) );
+
+MASTER_PIC_PORT_A equ 0x0020
+MASTER_PIC_PORT_B equ 0x0021
+
+SLAVE_PIC_PORT_A equ 0x00A0
+SLAVE_PIC_PORT_B equ 0x00A1
+
+init_pics:
+pusha
+; ICW1
+mov dx, MASTER_PIC_PORT_A
+mov al, 0x11
+out dx, al
+mov dx, SLAVE_PIC_PORT_A
+out dx, al
+; ICW2
+mov dx, MASTER_PIC_PORT_B
+mov al, 0x20
+out dx, al
+mov dx, SLAVE_PIC_PORT_B
+mov al, 0x28
+out dx, al
+; ICW3
+mov dx, MASTER_PIC_PORT_B
+mov al, 0x04
+out dx, al
+mov dx, SLAVE_PIC_PORT_B
+mov al, 0x02
+out dx, al
+; ICW4
+mov dx, MASTER_PIC_PORT_B
+mov al, 0x05
+out dx, al
+mov dx, SLAVE_PIC_PORT_B
+mov al, 0x01
+out dx, al
+; Set interrupt mask - which IRQs to listen to and not listen to.
+mov dx, MASTER_PIC_PORT_B
+mov al, 0xfd
+out dx, al ; d = 1101b
+mov dx, SLAVE_PIC_PORT_B
+mov al, 0xff
+out dx, al
+
+popa
+ret
+
+; Send pic end of interrupt (EOI) byte.
+send_pic_eoi:
+pusha
+mov al, 0x20
+mov dx, MASTER_PIC_PORT_A
+out dx, al
+mov dx, SLAVE_PIC_PORT_A
+out dx, al
+popa
 ret
 
 [extern v_0_print]
@@ -438,4 +538,22 @@ iret
 [extern v_21_print]
 v_21_handler_procedure:
 call v_21_print
+iret
+
+; vectors 22 - 31 reserved.
+
+[extern v_32_print]
+v_32_handler_procedure:
+call v_32_print
+iret
+
+[extern v_33_print]
+v_33_handler_procedure:
+pusha
+call v_33_print
+; port 0x60
+mov dx, 0x0060
+in al, dx
+call send_pic_eoi
+popa
 iret

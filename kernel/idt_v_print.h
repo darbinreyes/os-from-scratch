@@ -23,5 +23,7 @@ void v_18_print(void);
 void v_19_print(void);
 void v_20_print(void);
 void v_21_print(void);
-
+// vectors 22 - 31 reserved.
+void v_32_print(void);
+void v_33_print(void);
 #endif
