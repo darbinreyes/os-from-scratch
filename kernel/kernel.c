@@ -45,7 +45,7 @@ external variables do not appear to be working correctly e.g. unsigned int idt[1
 //#endif
 
 unsigned long long idt[] = {
-    0xFACECACADEADBEEF
+    0xFACECACADEADBEEF // ef be ` ad de ` ca ca ` ce fa // efbe adde caca cefa
 };
 
 int main(void) {
@@ -62,7 +62,9 @@ int main(void) {
     //unsigned long long t = 0;
     //print_byteh((unsigned char) sizeof(t));
     unsigned char *t = (unsigned char *) &idt[0];
+    t += 0x200 - 0x1000;
     unsigned int taddr = (unsigned int) t;
+
     for (int i = 7; i >= 0; i--) {
         print_byteh(t[i], 0);
     }
