@@ -35,7 +35,7 @@ os-image: boot_sect.bin kernel.bin
 boot_sect.bin: boot/boot_sect.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o idt.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
 
 #    Build the kernel object file.
@@ -44,21 +44,27 @@ kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o 
 # Generic rule for building 'somefile.o' from 'somefile.c'.
 # IMPORTANT: The % operator does not match sub-directories, hence `kernel/%.c`.
 # kernel/%.c
-%.o: kernel/%.c
-	i386-elf-gcc -Wall -O0 -ffreestanding -c $< -o $@
+kernel.o: kernel/kernel.c kernel/kernel.h
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+
+idt.o: kernel/idt.c kernel/idt.h
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+
+idt_v_print.o: kernel/idt_v_print.c kernel/idt_v_print.h
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 screen.o: drivers/screen.c drivers/screen.h
-	i386-elf-gcc -Wall -O0 -ffreestanding -c $< -o $@
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 keyboard.o: drivers/keyboard.c drivers/keyboard.h
-	i386-elf-gcc -Wall -O0 -ffreestanding -c $< -o $@
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 ps_2_ctlr.o: drivers/ps_2_ctlr.c drivers/ps_2_ctlr.h
-	i386-elf-gcc -Wall -O0 -ffreestanding -c $< -o $@
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 # The use of -masm=intel below changes the syntax for the inline assembly from GAS to NASM.
 low_level.o: kernel/low_level.c kernel/low_level.h
-	i386-elf-gcc -Wall -masm=intel -O0 -ffreestanding -c $< -o $@
+	i386-elf-gcc -Wall -Wextra -Werror -masm=intel -O0 -ffreestanding -c $< -o $@
 
 # Build the kernel entry object file.
 # [] Add .asm files as dep. and test make reports changes.
