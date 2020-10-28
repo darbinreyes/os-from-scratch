@@ -18,7 +18,7 @@ OBJ = ${C_SOURCES:.c=.o}
 all: os-image
 
 run: all
-	bochs -q
+	./bochs/bochs -q -f bochsrc.txt
 
 runq: all
 	qemu-system-i386 -drive file=os-image,if=floppy,format=raw

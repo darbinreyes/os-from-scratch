@@ -1,20 +1,21 @@
-# FYI: 1.9.2. How do you pronounce "Bochs"?
-# Phonetically the same as the English word "box". It's just a play on the word
-# "box", since techies like to call their machines a "Linux box", "Windows box",
-# ... Bochs emulates a box inside a box.
+# Bochs is a program that simulates a complete Intel x86 computer.
+# ===
+# * This is the bochs configuration file.
+# * [Bochs User Manual](http://bochs.sourceforge.net/doc/docbook/user/index.html).
+# * FYI:
+#   * How do you pronounce "Bochs"? Phonetically the same as the English word "box".
+#   * To quit bochs with keyboard -> CMD+CRTL, then press SPACE.
+#   * for bochs installed with macports, ROM images are located at `/opt/local/share/bochs/`.
+#   * for bochs built from source, `./bochs/bios/`.
+# ##############################################################################
 
-# RTFM: http://bochs.sourceforge.net/doc/docbook/user/index.html
-#       http://bochs.sourceforge.net/doc/docbook/user/using-bochs.html#COMMANDLINE
 
-# FYI: To quit bochs with keyboard -> CMD+CRTL, then press SPACE.
-
-# Tell bochs to use our boot sector code as though it were a floppy disk
-# inserted into a computer at boot time.
-floppya: 1_44=os-image, status=inserted
-boot: a
-
-# FYI: ROM Images are located at `/opt/local/share/bochs/` , bios.bin-1.13.0 , BIOS-bochs-legacy, BIOS-bochs-latest
-
-romimage: file=/opt/local/share/bochs/BIOS-bochs-legacy
-
+romimage: file=./bochs/bios/BIOS-bochs-latest
+vgaromimage: file=./bochs/bios/VGABIOS-lgpl-latest
 keyboard: type=mf
+
+# * Tell bochs to use our boot sector code as though it were a floppy disk inserted into a computer at boot time.
+
+floppya: 1_44=os-image, status=inserted    # media_type=image_file. [floppya/floppyb](http://bochs.sourceforge.net/doc/docbook/user/bochsrc.html#BOCHSOPT-FLOPPYAB).
+boot: a                                    # This defines the boot sequence. Legacy 'a'.
+
