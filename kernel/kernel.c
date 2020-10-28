@@ -62,7 +62,7 @@ int main(void) {
     //unsigned long long t = 0;
     //print_byteh((unsigned char) sizeof(t));
     unsigned char *t = (unsigned char *) &idt[0];
-    t += 0x200 - 0x1000;
+    //t += 0x200 - 0x1000;
     unsigned int taddr = (unsigned int) t;
 
     for (int i = 7; i >= 0; i--) {
