@@ -8,8 +8,8 @@
               ; The linker will substitute the final address.
 
 
-call init_pics
-call load_idtr ; also enables interrupts.
+; call init_pics
+; call load_idtr ; also enables interrupts.
 
 ; To link this program with the kernel use (order of .o files is essential):
 ; i386-elf-gcc -ffreestanding -c kernel.c -o kernel.o
@@ -19,6 +19,6 @@ call main ; Call the main function of our C kernel.
 
 jmp $ ; Infinite loop if/when the kernel returns.
 
-%include "boot/idt.asm"
+; %include "boot/idt.asm"
 
 
