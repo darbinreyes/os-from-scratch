@@ -35,7 +35,7 @@ os-image: boot_sect.bin kernel.bin
 boot_sect.bin: boot/boot_sect.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o idt.o
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
 
 #    Build the kernel object file.
@@ -45,9 +45,6 @@ kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o 
 # IMPORTANT: The % operator does not match sub-directories, hence `kernel/%.c`.
 # kernel/%.c
 kernel.o: kernel/kernel.c kernel/kernel.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
-
-idt.o: kernel/idt.c kernel/idt.h
 	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 idt_v_print.o: kernel/idt_v_print.c kernel/idt_v_print.h
