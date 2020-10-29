@@ -18,7 +18,10 @@ OBJ = ${C_SOURCES:.c=.o}
 all: os-image
 
 run: all
-	./bochs/bochs -q -f bochsrc.txt
+	bochs -q -f bochsrc.txt # run bochs installed by mac ports.
+
+rundbg: all
+	./bochs/bochs -q -f bochsrc.txt # run bochs compiled from source. Required to use bochs' debugging features.
 
 runq: all
 	qemu-system-i386 -drive file=os-image,if=floppy,format=raw
