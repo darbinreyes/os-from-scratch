@@ -61,7 +61,7 @@ ps_2_ctlr.o: drivers/ps_2_ctlr.c drivers/ps_2_ctlr.h
 
 # The use of -masm=intel below changes the syntax for the inline assembly from GAS to NASM.
 low_level.o: kernel/low_level.c kernel/low_level.h
-	i386-elf-gcc -Wall -Wextra -Werror -masm=intel -O0 -ffreestanding -c $< -o $@
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 # Build the kernel entry object file.
 # [] Add .asm files as dep. and test make reports changes.

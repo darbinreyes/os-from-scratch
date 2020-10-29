@@ -32,9 +32,9 @@ unsigned char port_byte_in (unsigned short port) {
         Read from I/O port specified in DX into AL.
 
     */
-    __asm__("in al, dx" : "=a" (result) : "d" (port) );
+    // __asm__("in al, dx" : "=a" (result) : "d" (port) ); // Compile with: i386-elf-gcc -masm=intel
 
-    /* __asm__("in %%dx, %%al" : "=a" (result) : "d" (port) ); */ // Author's given assembly, I change the assembly syntax to NASM to be consistent with our other assembly code like that in the boot sector.
+    __asm__("in %%dx, %%al" : "=a" (result) : "d" (port) );  // Author's given assembly, I change the assembly syntax to NASM to be consistent with our other assembly code like that in the boot sector.
 
     return result;
 }
@@ -53,9 +53,9 @@ void port_byte_out (unsigned short port, unsigned char data) {
 
     */
 
-    __asm__("out dx, al" : :"a" (data), "d" (port) );
+    // __asm__("out dx, al" : :"a" (data), "d" (port) ); // Compile with: i386-elf-gcc -masm=intel
 
-    /*__asm__("out %% al, %%dx" : :"a" (data), "d" (port) ); See note above. */
+    __asm__("out %% al, %%dx" : :"a" (data), "d" (port) ); // See note above.
 }
 
 // TODO: port_WORD_in()
