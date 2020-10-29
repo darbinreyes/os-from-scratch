@@ -1,17 +1,17 @@
-/*
+#if 0
 int my_function(void) {
     return 0xbaba;
 }
-*/
+#endif
 
-/*
+#if 1
 int my_function(void) {
     int my_var = 0xbaba;
     return my_var;
 }
-*/
+#endif
 
-/*
+#if 0
 int callee_function(int my_arg);
 
 void caller_function(void) {
@@ -21,7 +21,7 @@ void caller_function(void) {
 int callee_function(int my_arg) {
     return my_arg;
 }
-*/
+#endif
 
 
 /*
@@ -42,8 +42,10 @@ though in our simple C program we didn’t declare any data."
 
 */
 
+#if 0
 void my_function(void) {
     char *my_string = "Hello"; // Nick Blundell wrote this `char *my_string = "Hello";` but he meant `char my_string[] = "Hello";`
 }
+#endif
 
 
