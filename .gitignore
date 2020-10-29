@@ -6,3 +6,4 @@ bochs/
 ld_help.txt
 gcc_man.txt
 nasm_man.txt
+objdump_help.txt
