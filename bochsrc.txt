@@ -19,3 +19,4 @@ keyboard: type=mf
 floppya: 1_44=os-image, status=inserted    # media_type=image_file. [floppya/floppyb](http://bochs.sourceforge.net/doc/docbook/user/bochsrc.html#BOCHSOPT-FLOPPYAB).
 boot: a                                    # This defines the boot sequence. Legacy 'a'.
 
+# gdbstub: enabled=0, port=1234, text_base=0x1000    # Enable gdb debugging.
