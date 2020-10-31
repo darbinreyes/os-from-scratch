@@ -37,7 +37,7 @@
 
 #define IDT_ENTRY_COUNT 34
 
-#define PROCEDURE_ENTRY_POINT_NOT_PRESENT 0x00000000U
+#define INTR_VECTOR_RESERVED 0x00000000U
 #define GDT_CODE_SEGMENT 0x0008
 
 #define GATE_SIZE_32_BITS 1
@@ -98,13 +98,6 @@ V_N_HANDLER_FUNC(1)
     print("\n");                      \
   } while (0)                         \
 
-
-const uint32_t handler_entry [] = {
-    //(unsigned int) V_N_HANDLER_FUNC_NAME(0)
-   (unsigned int) intr_v0_handler,
-   (unsigned int) intr_v1_handler
-};
-
 // void (*func_ptr)(unsigned char b, int pf);
 
 uint64_t idt[IDT_ENTRY_COUNT];
@@ -112,83 +105,71 @@ uint64_t idt[IDT_ENTRY_COUNT];
 struct idt_reg_t idtr;
 
 void init_idt(void) {
-    uint32_t t;
+
 
     // Fill IDT.
-    idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[0]);
-    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[1]);
+    idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(0)) );
+    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(1)) );
+    idt[2] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(2)) );
+    idt[3] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(3)) );
+    idt[4] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(4)) );
+    idt[5] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(5)) );
+    idt[6] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(6)) );
+    idt[7] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(7)) );
+    idt[8] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(8)) );
+    idt[9] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(9)) );
+    idt[10] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(10)) );
+    idt[11] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(11)) );
+    idt[12] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(12)) );
+    idt[13] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(13)) );
+    idt[14] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(14)) );
 
-/*
-    struct intr_gate_d_t *igd_p;
-    void (*func_ptr)(void);
-    unsigned int t;
+    // RESERVED
+    idt[15] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
 
-    idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[0]);
-    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[1]);
+    idt[16] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(16)) );
+    idt[17] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(17)) );
+    idt[18] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(18)) );
+    idt[19] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(19)) );
+    idt[20] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(20)) );
+    idt[21] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(21)) );
 
-    igd_p = (struct intr_gate_d_t *) &idt[0];
-    v_0_handler();
-    print_uint32h(handler_entry[0]);
-    print("\n");
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->offset_l);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->seg_sel);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->rsvd);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->const0);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->const1);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->d);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->const2);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->dpl);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->p);
-    PRINT_BYTEH_STRUCT_MEMBER(igd_p->offset_h);
-    func_ptr = (void (*)(void)) handler_entry[0];
-    func_ptr();
+    // RESERVED
+    idt[22] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[23] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[24] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[25] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[26] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[27] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[28] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[29] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[30] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
+    idt[31] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
 
-    print_uint32h( 8 * 34);
-    print("\n");
+    idt[32] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(32)) );
+    idt[33] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(33)) );
 
-    print_uint32h(  sizeof(idt[0]) * IDT_ENTRY_COUNT); // Why is sizeof(idt) == 16 and not  sizeof(idt[0])*IDT_ENTRY_COUNT? !!!! sizeof(idt[0])*IDT_ENTRY_COUNT == 0x10?!!!
-    print("\n");
-
-    print_uint32h((uint32_t)idt);
-    print("\n");
-
-    idtr.idt_limit = sizeof(idt) - 1;
-    idtr.idt_base_addr = (uint32_t)idt;
-
-    print_uint32h(idtr.idt_limit);
-    print("\n");
-
-    print_uint32h(idtr.idt_base_addr);
-    print("\n");
-
-    print_uint32h((uint32_t)&idtr);
-    print("\n");
-
-    t = load_idt_reg((uint32_t)&idtr);
-
-    print_uint32h(t);
-    print("\n");
-
-    //__asm__("int $0");
-    //__asm__("int $1");
-*/
     // Load IDT register
     idtr.idt_limit = sizeof(idt) - 1;
     idtr.idt_base_addr = (uint32_t)idt;
-    t = load_idt_reg((uint32_t)&idtr);
-    print_uint32h(t);
-    print("\n");
-    // Test IDT vector 0.
-    __asm__("int $0");
+
+    init_pics();
+    load_idt_reg((uint32_t)&idtr);
+
+    __asm__("int $0"); // Test IDT vector 0.
     __asm__("int $1");
 }
 
 void intr_handler(uint32_t vn, uint32_t err_code) {
+    print("Vector Number = ");
     print_uint32h(vn);
     print("\n");
     print_uint32h(err_code);
     print("\n");
     print("Programming Notation. Not programming language.\n");
+    if(vn == 33)
+        print("THE KEYBOARD SAYS DIJKSTRA.\n");
+
 }
 
 

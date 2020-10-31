@@ -22,8 +22,7 @@ global load_idt_reg  ; make the label load_idt_reg visible outside this file
 load_idt_reg:
     mov eax, [esp + 4]
     lidt [eax]
-    ;sti
-    ;int 0
+    sti
     ret
 
 ; - - -  - - -  - - -
@@ -92,3 +91,112 @@ intr_common_handler:
 
 intr_handler_no_err_code 0
 intr_handler_no_err_code 1
+intr_handler_no_err_code 2
+intr_handler_no_err_code 3
+intr_handler_no_err_code 4
+intr_handler_no_err_code 5
+intr_handler_no_err_code 6
+intr_handler_no_err_code 7
+intr_handler_no_err_code 8
+intr_handler_no_err_code 9
+intr_handler_no_err_code 10
+intr_handler_no_err_code 11
+intr_handler_no_err_code 12
+intr_handler_no_err_code 13
+intr_handler_no_err_code 14
+; intr_handler_no_err_code 15 ; RESERVED
+intr_handler_no_err_code 16
+intr_handler_no_err_code 17
+intr_handler_no_err_code 18
+intr_handler_no_err_code 19
+intr_handler_no_err_code 20
+intr_handler_no_err_code 21
+
+; intr_handler_no_err_code 22 ; RESERVED
+; intr_handler_no_err_code 23
+; intr_handler_no_err_code 24
+; intr_handler_no_err_code 25
+; intr_handler_no_err_code 26
+; intr_handler_no_err_code 27
+; intr_handler_no_err_code 28
+; intr_handler_no_err_code 29
+; intr_handler_no_err_code 30
+; intr_handler_no_err_code 31
+
+intr_handler_no_err_code 32
+;intr_handler_no_err_code 33
+
+MASTER_PIC_PORT_A equ 0x0020
+MASTER_PIC_PORT_B equ 0x0021
+
+SLAVE_PIC_PORT_A equ 0x00A0
+SLAVE_PIC_PORT_B equ 0x00A1
+
+global init_pics
+
+init_pics:
+    pusha
+    ; ICW1
+    mov dx, MASTER_PIC_PORT_A
+    mov al, 0x11
+    out dx, al
+    mov dx, SLAVE_PIC_PORT_A
+    out dx, al
+    ; ICW2
+    mov dx, MASTER_PIC_PORT_B
+    mov al, 0x20
+    out dx, al
+    mov dx, SLAVE_PIC_PORT_B
+    mov al, 0x28
+    out dx, al
+    ; ICW3
+    mov dx, MASTER_PIC_PORT_B
+    mov al, 0x04
+    out dx, al
+    mov dx, SLAVE_PIC_PORT_B
+    mov al, 0x02
+    out dx, al
+    ; ICW4
+    mov dx, MASTER_PIC_PORT_B
+    mov al, 0x05
+    out dx, al
+    mov dx, SLAVE_PIC_PORT_B
+    mov al, 0x01
+    out dx, al
+    ; Set interrupt mask - which IRQs to listen to and not listen to.
+    mov dx, MASTER_PIC_PORT_B
+    mov al, 0xfd
+    out dx, al ; d = 1101b
+    mov dx, SLAVE_PIC_PORT_B
+    mov al, 0xff
+    out dx, al
+
+    popa
+    ret
+
+
+
+; Send pic end of interrupt (EOI) byte.
+send_pic_eoi:
+    pusha
+    mov al, 0x20
+    mov dx, MASTER_PIC_PORT_A
+    out dx, al
+    mov dx, SLAVE_PIC_PORT_A
+    out dx, al
+    popa
+    ret
+
+global intr_v33_handler
+
+intr_v33_handler:
+    ;pusha
+    push dword 0
+    push dword 33
+    call intr_handler
+    mov dx, 0x0060
+    in al, dx      ; Read keyboard output buffer.
+    call send_pic_eoi
+    ;popa
+    add esp, 8
+    iret
