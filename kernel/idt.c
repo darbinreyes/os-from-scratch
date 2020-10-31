@@ -37,16 +37,6 @@
 
 #define IDT_ENTRY_COUNT 34
 
-/*
-idt_start:
-;- - - - - - - vector 0 - - - - - - -;
-dw v_0_handler_procedure
-dw 0x0008
-; 4-byte boundary.
-db 00000000b
-db 10001110b
-dw 0x0000
-*/
 #define PROCEDURE_ENTRY_POINT_NOT_PRESENT 0x00000000U
 #define GDT_CODE_SEGMENT 0x0008
 
@@ -62,26 +52,6 @@ dw 0x0000
 // @spec Intel SDM Vol.3.Chapter.3.4.5.
 #define SEGMENT_PRESENT 1
 #define SEGMENT_NOT_PRESENT 0
-
-#define V_N_HANDLER_FUNC(vn)          \
-void v_##vn##_handler(void) {         \
-    print(__func__);                  \
-    print(" in Dijkstra I trust.\n"); \
-}                                     \
-
-V_N_HANDLER_FUNC(0)
-V_N_HANDLER_FUNC(1)
-
-#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
-
-const uint32_t handler_entry [] = { // hndlr
-    (unsigned int) V_N_HANDLER_FUNC_NAME(0),
-    (unsigned int) V_N_HANDLER_FUNC_NAME(1)
-};
-
-// void (*func_ptr)(unsigned char b, int pf);
-
-uint64_t idt[IDT_ENTRY_COUNT];
 
 struct intr_gate_d_t { // interrupt gate descriptor.
     // @spec Intel SDM Vol.3.Chapter.6.11.
@@ -107,7 +77,17 @@ struct idt_reg_t {
     uint32_t idt_base_addr;
 } __attribute__((packed));
 
-struct idt_reg_t idtr;
+
+#define V_N_HANDLER_FUNC(vn)          \
+void v_##vn##_handler(void) {         \
+    print(__func__);                  \
+    print(" in Dijkstra I trust.\n"); \
+}                                     \
+
+V_N_HANDLER_FUNC(0)
+V_N_HANDLER_FUNC(1)
+
+#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
 
 #define TOKEN_TO_STR(tkn) #tkn
 
@@ -118,7 +98,25 @@ struct idt_reg_t idtr;
     print("\n");                      \
   } while (0)                         \
 
+
+const uint32_t handler_entry [] = {
+    //(unsigned int) V_N_HANDLER_FUNC_NAME(0)
+   (unsigned int) intr_v0_handler
+};
+
+// void (*func_ptr)(unsigned char b, int pf);
+
+uint64_t idt[IDT_ENTRY_COUNT];
+
+struct idt_reg_t idtr;
+
 void init_idt(void) {
+    uint32_t t;
+
+    // Fill IDT.
+    idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[0]);
+
+/*
     struct intr_gate_d_t *igd_p;
     void (*func_ptr)(void);
     unsigned int t;
@@ -171,21 +169,23 @@ void init_idt(void) {
 
     //__asm__("int $0");
     //__asm__("int $1");
-
+*/
+    // Load IDT register
+    idtr.idt_limit = sizeof(idt) - 1;
+    idtr.idt_base_addr = (uint32_t)idt;
+    t = load_idt_reg((uint32_t)&idtr);
+    print_uint32h(t);
+    print("\n");
+    // Test IDT vector 0.
+    __asm__("int $0");
 }
 
-/*
-
-; Issue special instruction to load the IDT register.
-load_idtr:
-lidt [idt_register]
-sti
-;int 0
-;int 1
-;int 20
-;int 21
-ret
-
-*/
+void intr_handler(uint32_t vn, uint32_t err_code) {
+    print_uint32h(vn);
+    print("\n");
+    print_uint32h(err_code);
+    print("\n");
+    print("Programming Notation. Not programming language.\n");
+}
 
 
