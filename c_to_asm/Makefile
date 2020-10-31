@@ -1,11 +1,11 @@
 MAINFILE := c0
 
-all: $(MAINFILE).bin
+all: $(MAINFILE).bin $(MAINFILE).elf
 
-#%.bin: %.o
-#	i386-elf-ld -O0 -o $@ -Ttext 0x0 --oformat binary $^
+$(MAINFILE).bin: $(MAINFILE).o
+	i386-elf-ld -O0 -o $@ -Ttext 0x0 --oformat binary $^
 
-%.bin: %.o
+$(MAINFILE).elf: $(MAINFILE).o
 	i386-elf-ld -O0 -o $@ -Ttext 0x0 --oformat elf32-i386 $^
 
 $(MAINFILE).o: $(MAINFILE).c
@@ -14,8 +14,11 @@ $(MAINFILE).o: $(MAINFILE).c
 ndis: $(MAINFILE).bin
 	ndisasm -b 32 $<
 
-objd: $(MAINFILE).o
+objd-bin: $(MAINFILE).o
+	i386-elf-objdump -d $< -M intel
+
+objd-elf: $(MAINFILE).elf
 	i386-elf-objdump -d $< -M intel
 
 clean:
-	rm -Rf *.bin *.o
+	rm -Rf *.bin *.o *.elf
