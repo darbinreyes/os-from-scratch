@@ -32,4 +32,5 @@ void print(const char *s);
 void clear_screen(void);
 void print_byteb (unsigned char b);
 void print_byteh (unsigned char b, int pf);
+void print_uint32h(unsigned int i);
 #endif

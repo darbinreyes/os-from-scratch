@@ -356,3 +356,15 @@ void print_byteh (unsigned char b, int pf) {
 
     print_ch_at(c, 0, -1, -1);
 }
+
+void print_uint32h(unsigned int i) {
+    // print_byteh ((i & 0xFFU) >> 24, 0); // YOU ZEROED OUT ALL HIGH ORDER BYTES DUMBASS!
+    // print_byteh ((i & 0xFFU) >> 16, 0);
+    // print_byteh ((i & 0xFFU) >> 8, 0);
+    // print_byteh ((i & 0xFFU), 0);
+
+    print_byteh ((i >> 24) & 0xFFU, 0);
+    print_byteh ((i >> 16) & 0xFFU, 0);
+    print_byteh ((i >> 8) & 0xFFU, 0);
+    print_byteh ((i >> 0) & 0xFFU, 0);
+}
