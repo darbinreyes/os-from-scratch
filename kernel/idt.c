@@ -63,13 +63,20 @@ dw 0x0000
 #define SEGMENT_PRESENT 1
 #define SEGMENT_NOT_PRESENT 0
 
-void v_0_handler(void) {
-    print(__func__);
-    print(" in Dijkstra I trust.\n");
-}
+#define V_N_HANDLER_FUNC(vn)          \
+void v_##vn##_handler(void) {         \
+    print(__func__);                  \
+    print(" in Dijkstra I trust.\n"); \
+}                                     \
+
+V_N_HANDLER_FUNC(0)
+V_N_HANDLER_FUNC(1)
+
+#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
 
 const uint32_t handler_entry [] = { // hndlr
-    (unsigned int) v_0_handler
+    (unsigned int) V_N_HANDLER_FUNC_NAME(0),
+    (unsigned int) V_N_HANDLER_FUNC_NAME(1)
 };
 
 // void (*func_ptr)(unsigned char b, int pf);
@@ -117,6 +124,7 @@ void init_idt(void) {
     unsigned int t;
 
     idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[0]);
+    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[1]);
 
     igd_p = (struct intr_gate_d_t *) &idt[0];
     v_0_handler();
@@ -161,9 +169,9 @@ void init_idt(void) {
     print_uint32h(t);
     print("\n");
 
-    __asm__("int $0");
-    __asm__("int $0");
-    //asm("int 21");
+    //__asm__("int $0");
+    //__asm__("int $1");
+
 }
 
 /*
@@ -179,3 +187,5 @@ sti
 ret
 
 */
+
+
