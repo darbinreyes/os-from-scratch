@@ -101,7 +101,8 @@ V_N_HANDLER_FUNC(1)
 
 const uint32_t handler_entry [] = {
     //(unsigned int) V_N_HANDLER_FUNC_NAME(0)
-   (unsigned int) intr_v0_handler
+   (unsigned int) intr_v0_handler,
+   (unsigned int) intr_v1_handler
 };
 
 // void (*func_ptr)(unsigned char b, int pf);
@@ -115,6 +116,7 @@ void init_idt(void) {
 
     // Fill IDT.
     idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[0]);
+    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, handler_entry[1]);
 
 /*
     struct intr_gate_d_t *igd_p;
@@ -178,6 +180,7 @@ void init_idt(void) {
     print("\n");
     // Test IDT vector 0.
     __asm__("int $0");
+    __asm__("int $1");
 }
 
 void intr_handler(uint32_t vn, uint32_t err_code) {

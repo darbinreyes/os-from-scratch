@@ -20,5 +20,15 @@
 */
 int load_idt_reg(uint32_t addr);
 
-void intr_v0_handler(void);
+//#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
+
+#define INTR_V_N_HANDLER_FUNC(vn) void intr_v##vn##_handler(void)
+
+//#define INTR_V_N_HANDLER_FUNC(vn) INTR_V_N_HANDLER_FUNC_NAME(0)
+
+//void intr_v0_handler(void);
+
+INTR_V_N_HANDLER_FUNC(0);
+INTR_V_N_HANDLER_FUNC(1);
+
 #endif

@@ -91,3 +91,4 @@ intr_common_handler:
     iret ; **NOTE: This is not the usual `ret`.** Interrupt specific return.
 
 intr_handler_no_err_code 0
+intr_handler_no_err_code 1
