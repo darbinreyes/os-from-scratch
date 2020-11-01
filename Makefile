@@ -1,3 +1,9 @@
+###########################
+# The first thing the compiler will do is preprocess the file. We can tell clang to show us what it looks like if we stop after that step:
+# i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -E kernel/idt.c > idtpp.c
+# Next up: parsing and code generation. We can tell clang to output the resulting assembly code like so:
+# i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -S kernel/idt.c
+###########################
 # Build the kernel binary.
 # $^ = all target dependency files.
 # $< = first target dependency file.
@@ -38,8 +44,15 @@ os-image: boot_sect.bin kernel.bin
 boot_sect.bin: boot/boot_sect.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o keyboard.o ps_2_ctlr.o idt_v_print.o
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
+
+
+idt.o: kernel/idt.c kernel/idt.h
+	i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+
+test.o: kernel/test.s kernel/test.h
+	nasm -O0 $< -f elf -o $@
 
 #    Build the kernel object file.
 #    kernel.o: kernel/kernel.c
