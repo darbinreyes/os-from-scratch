@@ -88,6 +88,8 @@
 ;db 00001110b       ; P (15)  DPL (14<-13) constant (12)  D (11) constant (10<-8)
 ;dw 0x0000          ; Offset high (31<-16)
 
+
+; [ ] .align 8? iSDM.Vol.3.Ch.6.11.
 idt_start:
 ;- - - - - - - vector 0 - - - - - - -;
 dw v_0_handler_procedure

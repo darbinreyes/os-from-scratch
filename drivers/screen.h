@@ -31,5 +31,5 @@ void print_at(const char *s, int row, int col);
 void print(const char *s);
 void clear_screen(void);
 void print_byteb (unsigned char b);
-void print_byteh (unsigned char b);
+void print_byteh (unsigned char b, int pf);
 #endif

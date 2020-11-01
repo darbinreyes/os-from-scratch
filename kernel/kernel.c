@@ -1,3 +1,14 @@
+/*
+
+Remarks:
+On moving the IDT into C.
+
+gcc is not reporting out of bounds access on arrays but cc does. e.g. int a[3]; int t = a[4]; does not generate an error.
+
+external variables do not appear to be working correctly e.g. unsigned int idt[1] = {0xDEADBEEF}; // printing idt[0] prints all 0's. Works fine as local variable.
+
+*/
+
 // []IMPORTANT: Add param checks in all C functions. []Avoid/remove unnecessary/dangerous macros. - Elements of Programming Style - Brian Kernighan [] fully specify function pre and post conditions.
 
 
@@ -8,6 +19,8 @@
 #include "../drivers/keyboard.h"
 #include "../mylibc/mylibc.h"
 #include "idt_v_print.h"
+#include "idt.h"
+
 
 /* [Index of Directives](https://gcc.gnu.org/onlinedocs/cpp/Index-of-Directives.html#Index-of-Directives)
     [] How to ensure my integers are of the size I expect?
@@ -31,6 +44,10 @@
     // #warning "pipi" // Just a warning, not fatal.
 //#endif
 
+unsigned long long idt[] = {
+    0xFACECACADEADBEEF // ef be ` ad de ` ca ca ` ce fa // efbe adde caca cefa
+};
+
 int main(void) {
     //int r;
     // unsigned char b;
@@ -39,12 +56,28 @@ int main(void) {
     // ps_2_ctrl_stat_t stat;
 
 
-    //clear_screen();
-    //print_at("Edsger Dijkstra!\n", 0, 0);
+    clear_screen();
+    print_at("Edsger Dijkstra!\n", 0, 0);
     //asm("int 21");
+    //unsigned long long t = 0;
+    //print_byteh((unsigned char) sizeof(t));
+    unsigned char *t = (unsigned char *) &idt[0];
+    //t += 0x200 - 0x1000;
+    unsigned int taddr = (unsigned int) t;
+
+    for (int i = 7; i >= 0; i--) {
+        print_byteh(t[i], 0);
+    }
+    print("\n");
+    print_byteh(taddr >> 24, 0);
+    print_byteh(taddr >> 16, 0);
+    print_byteh(taddr >> 8, 0);
+    print_byteh(taddr, 0);
 
 
 
+
+    //print_byteh(idt[0], 0);
 
     // while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
     //     r = get_scan_code2(sc);

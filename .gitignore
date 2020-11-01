@@ -2,3 +2,8 @@
 *.o
 os-image
 bochs_w_sti.txt
+bochs/
+ld_help.txt
+gcc_man.txt
+nasm_man.txt
+objdump_help.txt

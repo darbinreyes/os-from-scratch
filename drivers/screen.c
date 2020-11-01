@@ -335,17 +335,18 @@ void print_byteb (unsigned char b) {
 char nibtoa (unsigned char b) {
     b = 0x0F & b; // lower nibble.
 
-    if (b >= 0 && b <= 9)
+    if (b <= 9)
         b += '0';
     else if (b > 9)
         b = b - 10 + 'A';
     return b;
 }
 
-void print_byteh (unsigned char b) {
+void print_byteh (unsigned char b, int pf) {
     char c;
 
-    print("0x");
+    if (pf)
+        print("0x");
 
     c = nibtoa (b >> 4); // upper nibble
 

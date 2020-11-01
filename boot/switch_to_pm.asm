@@ -27,7 +27,7 @@ init_pm:
 mov ax, DATA_SEG; Now in PM, our old segments are meaningless, so we point our segment
 ; registers to the data segment descriptor in our GDT.
 ; Note the use of the 16 bit AX register here.
-mov ds, ax
+mov ds, ax ; NOTE that the CS code segment register does not appear here. [x] Confirm that the `jmp CODE_SEG:init_pm` instruction above loads the CS register. Confirmed. "Important: The way a far jump works in x86 means that the CPU will automatically update our cs register to the target segment used in the far jump instruction."
 mov ss, ax
 mov es, ax
 mov fs, ax
