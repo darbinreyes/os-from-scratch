@@ -41,7 +41,7 @@ os-image: boot_sect.bin kernel.bin
 #	The -I option tells nasm where to find our useful assembly
 #	routines that we include in boot_sect.asm.
 #	NOTE: nasm reports file not found errors with "fatal: unable to open include file"
-boot_sect.bin: boot/boot_sect.asm
+boot_sect.bin: boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm boot/gdt.asm boot/print_string_pm.asm boot/switch_to_pm.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o
