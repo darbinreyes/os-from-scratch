@@ -15,11 +15,6 @@
 ;
 
 disk_load:
-    ;
-    ; @precondition: DH contains the number of sectors to be read.
-    ; @precondition: DL contains the drive number to read from.
-    ;
-
     push dx                  ; Push DX on the stack so we can use DH for error checking after int 0x13
                              ; returns.
 

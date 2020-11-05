@@ -1,7 +1,22 @@
-; Our global descriptor table (GDT)
-; this configures a basic flat model of memory with 2 overlapping
-; segments: a code segment and a data segment, after the standard null
-; descriptor.
+;
+; @abstract
+; Our global descriptor table (GDT).
+;
+; @discussion
+; This configures a basic flat model of memory with 2 overlapping segments: a
+; code segment and a data segment, after the standard null descriptor.
+;
+; @doc [Writing a Simple Operating System - from Scratch, by Nick Blundell, chapter 4.2]
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 3.4.5]
+;
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3.8 Segment Descriptor]
+; |31        24| 23|   22| 21|   20|19              16| 15|14 13| 12|11   8|7           0| Byte|
+; |------------|---|-----|---|-----|------------------|---|-----|---|------|-------------|-----|
+; | Base 31:24 | G | D/B | L | AVL | Seg. Limit 19:16 | P | DPL | S | Type |  Base 23:16 |    4|
+;
+; |31                                               16|15                               0| Byte|
+; |---------------------------------------------------|----------------------------------|-----|
+; |                                Base Address 15:00 |              Segment Limit 15:00 |    0|
 
 gdt_start:
 
