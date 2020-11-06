@@ -63,7 +63,7 @@
 ;   * A segment selector is 16-bits, points to a segment descriptor in the GDT or LDT. But, it also encodes a little more info:
 ;     * segment_selector[bit 15:3] == Index into GDT or LDT. Is multiplied by 8 to object the GDT/LDT byte offset.
 ;     * segment_selector[bit 2]    == TI == Table indicator flag. 0 (GDT). 1 (LDT).
-;     * segment_selector[bit 1:0]  == RPL == Requested Privilege Level == Specifies the privilege level of the **selector** (vs. the descriptor). @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 5.5 Privilege Levels].
+;     * segment_selector[bit 1:0]  == RPL == Requested Privilege Level == Specifies the privilege level of the **selector** (vs. the descriptor). @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.5.5 Privilege Levels].
 ; @note The first GDT entry is *not** used. Segment selectors == 0000H == "null segment selector". Loading the CS or SS register with 0000H causes a general protection exception (#GP). This is not the case with the remaining segment registers, unless you try to access memory with them.
 ; @note "Segment selectors are visible to application programs as part of a **pointer variable**, but the values of selectors are usually assigned or modified by link editors or linking loaders, not application programs."
 ; @note
@@ -245,79 +245,39 @@
 ;     * The AVL bit "is available for use by system software." @remark I assume this means the OS can set/clear this bit at will, and assign to it whatever meaning it wishes. Perhaps it could be used as a dirty bit indicator under a paging memory management scheme.
 
 
-;--------------------------------------------------------------------------------------------------------------------|
-; @dijkstra "Our proof format". "Everywhere operator" e.g. [X]. "boolean scalars: true, false.".
-; @remark Notes taken as part of understanding the segment limit field of a segment descriptor.
-; I call this the "absorption of the one's rule". For all integers x, y:
-;-----------------------------------------------------
-;  x + 1 <= y
-; = {}
-;  x <= y - 1
-; = {}
-;  x < y // Example:  x <= 5 - 1, solutions: x = 0, 1, 2, 3, 4; | x < 5, has identical solutions: x = 0, 1, 2, 3, 4; |
-;-----------------------------------------------------
-;  !(x + 1 <= y)
-; = {}
-;   (x + 1 > y)
-; = {}
-;   (y < x + 1)
-; = {}
-;   (y <= x) // Example: y < 4 + 1, solutions: y = 0, 1, 2, 3, 4; | y <= 4, solutions: y = 0, 1, 2, 3, 4; |
-;-----------------------------------------------------
-; Summary
-;-----------------------------------------------------
-;  x + 1 <= y
-; = {Symbol dynamics: `+ 1` elimination of the `=`}
-;  x < y
-;-----------------------------------------------------
-;  x - 1 <= y  // Example x - 1 <= 3, solutions x = 0, 1, 2, 3, 4; | x < 3 + 2, solutions x = 0, 1, 2, 3, 4; |
-; = {}
-;  x + 1 <= y + 2
-; = {Symbol dynamics: `+ 1` elimination of the `=`}
-;  x < y + 2
-;-----------------------------------------------------
-;  x < y + 1
-; = {Symbol dynamics: `+ 1` formation of the `=`}
-;  x <= y
-;-----------------------------------------------------
-;  x < y - 1 // Example: x < 3 - 1, solutions x = 0, 1; x <= 1, solutions x = 0, 1; |
-; = {}
-;  x + 2 < y + 1
-; = {Symbol dynamics: `+ 1` formation of the `=`}
-;  x + 2 <= y // Check: x = 0, [0 + 2 <= 3], x = 1, [1 + 2 <= 3] |
-;--------------------------------------------------------------------------------------------------------------------|
 
-; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1. Code- and Data-Segment Types]
-; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types]
+
+
+
 
 ; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1 Code- and Data-Segment Types]
+;   * This section applies to the cases in which segment_descriptor.S == 1.
+; * Our data segment uses Type[bit 11:8] == 0010B.
+; @note @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1. Code- and Data-Segment Types]
+; |                 11|                       10|                 9|            8| Description                                                                   |
+; |-------------------|-------------------------|------------------|-------------|-------------------------------------------------------------------------------|
+; | Data (0)/Code (1) | expansion-direction (E) | write-enable (W) | accessed (A)|                                                                               |
+; |                 0 |                       0 |                1 |           0 | Data segment, Expand-Up (segment limit is constant), Read/Write, Not Accessed |
+; |--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+; @note A stack segment is a data segment which must be read/write, otherwise loading the SS register with a nonwritable segment selector will generate a #GP.
+; @note For a stack whose size needs to be changed dynamically, set E == 1 == expand-down. Then, to change the size of the stack, change the segment_descriptor.limit. For a fixed sized stack, the E flag is a "don't care".
+; @note The A - accessed flag, "indicates whether the segment has been accessed since the last time the OS cleared the bit". @remark I suspect this is used for page replacement algorithms if paging is used.
+;   * The CPU doesn't set this when a byte is accessed in the segment, instead, it is set whenever it loads the segment selector for the segment into a segment register. The OS must explicitly clear this bit.
+; @note A data segment cannot be accessed if CPL > DPL. But, for a data segment, if CPL < DPL, it can be accessed, "without using a special access gate".
 ;
-; If GDT.segment_descriptor.S = 1 (code or data). GDT.segment_descriptor.Type
-; has the following meaning
-; Type[bit 11] | 0 = this is a data segment descriptor; 1 = this is code segment descriptor|
-;
-; Data segment
-; |                 11|                       10|                 9|            8| Description                                                           |
-; |-------------------|-------------------------|------------------|-------------|-----------------------------------------------------------------------|
-; | Data (0)/Code (1) | expansion-direction (E) | write-enable (W) | accessed (A)|                                                                       |
-; |                 0 |                       0 |                1 |           0 | Data, Expand-Up (segment limit is constant), Read/Write, Not Accessed |
-; Type[bit 11:8]| 0010B
-; @discussion
-
-; |                   10|             9|                    8|
-; |---------------------|--------------|---------------------|
-; | expansion direction (1 = size of stack needs to be changed dynamically)| write-enable (1 = writable)|            accessed |
-;
-; Code segment
-; |                 11|              10|                9|            8| Description                                     |
-; |-------------------|----------------|-----------------|-------------|-------------------------------------------------|
-; | Data (0)/Code (1) | conforming (C) | read-enable (R) | accessed (A)|                                                 |
-; |                 1 |              0 |               1 |           0 | Code, Execute/Read, Nonconforming, Not Accessed |
-; Type[bit 11:8]| 1010B
-;   Type[bit 11]  | 1 = This descriptor is for a code segment
-;   Type[bit 10] C| 0 = Nonconforming
-;   Type[bit  9] R| 1 = Read-enable
-;   Type[bit  8] A| 0 = Not accessed
+; * Our code segment uses Type[bit 11:8] == 1010B
+; @note @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1. Code- and Data-Segment Types]
+; |                 11|              10|                9|            8| Description                                               |
+; |-------------------|----------------|-----------------|-------------|-----------------------------------------------------------|
+; | Data (0)/Code (1) | conforming (C) | read-enable (R) | accessed (A)|                                                           |
+; |                 1 |              0 |               1 |           0 | Code segment, Nonconforming, Execute/Read, , Not Accessed |
+; |--------------------------------------------------------------------------------------------------------------------------------|
+; * @note "An execute/read segment might be used when constants or other static data have been placed with instruction code in a ROM."
+; * @note "data can be read from the code segment either by using an instruction with a CS override prefix or by loading a segment selector for the code segment in a data-segment register (the DS, ES, FS, or GS registers)."
+; * @note In protected mode, a code segment is never writable.
+; * @note "Nonconforming" means that a transfer of execution to this segment is only allowed if CPL == DPL otherwise a #GP is generated. "Utilities that need to be protected from less privileged programs and procedures should be placed in nonconforming code segments." For details on conforming and nonconforming code segments see @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.5.8.1 Direct Calls or Jumps to Code Segments].
+; * @note Regardless of the conforming flag value, "Execution cannot be transferred by a call or a jump to a less-privileged (numerically higher privilege level, CPL > DPL) code segment, regardless of whether the target segment is a conforming or nonconforming code segment." An attempt to do this generates a #GP.
+; * @IMPORTANT "If the segment descriptors in the GDT or an LDT are placed in ROM, the processor can enter an indefinite loop if software or the processor attempts to update (write to) the ROM-based segment descriptors. To prevent this problem, set the accessed bits for all segment descriptors placed in a ROM. Also, remove operating-system or executive code that attempts to modify segment descriptors located in ROM."
 ; segment_limit | F`FFFFH
 ;   segment_limit[bit 19:16] | FH
 ;   segment_limit[bit 15:0]  | FFFFH
@@ -325,6 +285,9 @@
 ;   base_address[bit 31:24] | 00H
 ;   base_address[bit 23:16] | 00H
 ;   base_address[bit 15:00] | 0000H
+
+; NEXT!!!!!!!!!!!!!!!! @note @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3.5 System Descriptor Type]
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; This configures a basic flat model of memory with 2 overlapping segments: a
@@ -376,3 +339,45 @@ dd gdt_start ; Starting address of our GDT.
 ; GST, which in our case is the DATA segment (0x0 = NULL, 0x08 = CODE, 0x10 = DATA)
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
+
+;--------------------------------------------------------------------------------------------------------------------|
+; @dijkstra "Our proof format". "Everywhere operator" e.g. [X]. "boolean scalars: true, false.".
+; @remark Notes taken as part of understanding the segment limit field of a segment descriptor.
+; I call this the "absorption of the one's rule". For all integers x, y:
+;-----------------------------------------------------
+;  x + 1 <= y
+; = {}
+;  x <= y - 1
+; = {}
+;  x < y // Example:  x <= 5 - 1, solutions: x = 0, 1, 2, 3, 4; | x < 5, has identical solutions: x = 0, 1, 2, 3, 4; |
+;-----------------------------------------------------
+;  !(x + 1 <= y)
+; = {}
+;   (x + 1 > y)
+; = {}
+;   (y < x + 1)
+; = {}
+;   (y <= x) // Example: y < 4 + 1, solutions: y = 0, 1, 2, 3, 4; | y <= 4, solutions: y = 0, 1, 2, 3, 4; |
+;-----------------------------------------------------
+; Summary
+;-----------------------------------------------------
+;  x + 1 <= y
+; = {Symbol dynamics: `+ 1` elimination of the `=`}
+;  x < y
+;-----------------------------------------------------
+;  x - 1 <= y  // Example x - 1 <= 3, solutions x = 0, 1, 2, 3, 4; | x < 3 + 2, solutions x = 0, 1, 2, 3, 4; |
+; = {}
+;  x + 1 <= y + 2
+; = {Symbol dynamics: `+ 1` elimination of the `=`}
+;  x < y + 2
+;-----------------------------------------------------
+;  x < y + 1
+; = {Symbol dynamics: `+ 1` formation of the `=`}
+;  x <= y
+;-----------------------------------------------------
+;  x < y - 1 // Example: x < 3 - 1, solutions x = 0, 1; x <= 1, solutions x = 0, 1; |
+; = {}
+;  x + 2 < y + 1
+; = {Symbol dynamics: `+ 1` formation of the `=`}
+;  x + 2 <= y // Check: x = 0, [0 + 2 <= 3], x = 1, [1 + 2 <= 3] |
+;--------------------------------------------------------------------------------------------------------------------|
