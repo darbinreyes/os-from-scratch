@@ -1,6 +1,7 @@
 ; @TODO
 ; - [x] What is bochs physical memory setting? ANS: The default is 32MB.
 ; - [x] What happens if we try to read above the physical memory limit? ANS: Since we are using segment limit == 4GB, the CPU will not generate an exception.
+; - [ ] How do I tell NASM to align things?
 
 ;
 ; @header Global Descriptor Table (GDT).
@@ -22,9 +23,10 @@
 ; limit value. For brevity, we call these regions of memory "segments". The GDT
 ; is Intel's mechanism for the programmer to describe various segments. Each
 ; entry in the GDT is an 8-byte value called a "segment descriptor".
+; @remark For brevity, where the Intel SDM use "processor" I use "CPU".
 ;
 ;
-; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3 Protected-Mode Memory Management]
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3 Protected-Mode Memory Management - through Chapter.3.4.4]
 ; @note Segmentation == mechanism of isolating individual code, data, and stack modules.
 ; @note In 32-bit mode, some form of segmentation is required to be used. It cannot be disabled.
 ; @note Linear address space == processor's addressable memory.
@@ -58,7 +60,7 @@
 ; @note linear address == 32-bit address in the processor's linear address space.
 ; @note If no paging is used, a logical address is translated into a linear address. linear address == physical address == the address that goes out on the CPU's address bus.
 ; @note
-;   *A segment selector is 16-bits, points to a segment descriptor in the GDT or LDT. But, it also encodes a little more info:
+;   * A segment selector is 16-bits, points to a segment descriptor in the GDT or LDT. But, it also encodes a little more info:
 ;     * segment_selector[bit 15:3] == Index into GDT or LDT. Is multiplied by 8 to object the GDT/LDT byte offset.
 ;     * segment_selector[bit 2]    == TI == Table indicator flag. 0 (GDT). 1 (LDT).
 ;     * segment_selector[bit 1:0]  == RPL == Requested Privilege Level == Specifies the privilege level of the **selector** (vs. the descriptor). @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 5.5 Privilege Levels].
@@ -75,8 +77,13 @@
 ; @note Instructions that **implicitly** load the **CS** (and possibly **other segment registers**): far pointer versions of CALL, JMP, and RET. Also, SYSENTER, SYSEXIT, IRET, INT n, INTO, INT3, and INT1.
 ;
 ; @doc [Writing a Simple Operating System - from Scratch, by Nick Blundell, Chapter 4.2 Understanding the Global Descriptor Table]
-; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 3.4.5 Segment Descriptors]
 ;
+
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 3.4.5 Segment Descriptors]
+; @note Each entry in the GDT/LDT is called a "segment descriptor".
+; @note A segment descriptor contains all the details about a segment that the CPU needs.
+; @note Every segment descriptor is exactly 8 bytes in size.
+; @note Every segment descriptor has the same general format. @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3.8 Segment Descriptor].
 
 
 
@@ -93,15 +100,196 @@
 ; |---------------------------------------------------|----------------------------------|-----|
 ; |                                Base Address 15:00 |              Segment Limit 15:00 |    0|
 ; |--------------------------------------------------------------------------------------------|
-; Table 3-1. Code- and Data-Segment Types
-; Table 3-2. System-Segment and Gate-Descriptor Types
+;
+; The full names of the fields in Figure 3.8 are as follows:
+;
+; | Abbrev. | Name
+; |---------|-----------------
+; | LIMIT   | Segment limit
+; | BASE    | Segment base address
+; | TYPE    | Segment type
+; | S       | Descriptor type
+; | DPL     | Descriptor privilege level
+; | P       | Segment present
+; | L       | 64-bit code segment (IA-32e mode only)
+; | D/B     | Default operation size (0 = 16-bit segment; 1 = 32-bit segment)
+; | G       | Granularity
+;
+
+; @note
+; * Segment limit
+;   * The Intel SDM uses the phrases like "the SS segment", which is somewhat ambiguous. It means "a memory access that uses the SS segment register to specify the segment selector part of a logical address".
+;   * The segment limit is a 20-bit value that specifies the size of the segment.
+;   * The size is interpreted as having units of 1 Byte or 4 KB depending on the Granularity (G) setting.
+;     * if (G == 0) "size is in 1 Byte units"; Min. segment size = 1 Byte. Max = 2^20 Bytes = 1 MB. Since the max 20-bit integer is = 2^20 - 1, from this we can infer that, LIMIT == 0 defines a segment whose size is exactly 1 Byte. LIMIT == F_FFFFH defines a segment whose size is 2^20 - 1 + 1 = 2^20 = 1 MB. So the size of the segment is always segment limit + 1.
+;     * if (G == 1) "size is in 4 KB units"; Min. segment size = 4 KB. Max = 4 GB = 2^20 * 4 KB = 2^20 * 2^12 = 2^32 = 4 GB.
+;   * If the segment type == data segment descriptor type, TYPE[bit 10] == "expansion-direction (E)". @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3.4.5.1 Code- and Data-Segment Descriptor Types]
+;     * The CPU uses the segment limit in one of two ways, depending on the "expansion-direction (E)" setting.
+;     * 1.
+;       if (TYPE[bit 11] == 0 && TYPE[bit 10] == 0 ) { // (Is data segment descriptor type) && (Expansion-direction is expand-up)
+;           if (!(0 <= logical_address.offset <= segment_limit)) {
+;               if ("is SS segment")
+;                   "generate a #SS";
+;               else
+;                   "generate a #GP";
+;           }
+;       }
+;     * 2. "the segment limit has the reverse function"
+;       if (TYPE[bit 11] == 0 && TYPE[bit 10] == 1 ) { // (Is data segment descriptor type) && (Expansion-direction is expand-down)
+;           if (D/B == 0) segment_upper_bound = FFFFH;
+;           if (D/B == 1) segment_upper_bound = FFFF_FFFFH;
+;           if (!(segment_limit + 1 <= logical_address.offset <= segment_upper_bound)) { // Here the segment limit value defines the lower bound of the logical_address.offset. As the segment limit is increased, the size of the segment decreases. Notice that the upper limit check can never trigger a fault because the logical_address.offset is 32-bits.
+;
+;               "generate a #GP or a #SS"; // "Offsets less than or equal to the segment limit generate a #GP or a #SS."
+;               // @note "for an expand-down segment"  "Decreasing the value in the segment limit field allocates new memory at the bottom of the segment's address space"
+;               // @IMPORTANT "IA-32 architecture stacks always grow downwards, making this mechanism convenient for expandable stacks.
+;               // @note Here, to get a 1 Byte segment, we set the segment limit to FFFF_FFFFH - 1 = FFFF_FFFEH. In general, for a size n segment, set the segment limit to FFFF_FFFFH - n.
+;           }
+;       }
+;
+; @note
+; * Base address
+;   * 32-bit address of byte 0 of the segment withing the 4 GB linear address space.
+;   * @IMPORTANT Segment bases addresses **should** aligned to 16-byte boundaries. This is equivalent to having the lowest order 4 bits of the base address == 0000B = 0H. This alignment is not required but ensuring it will maximize performance.
+;
+; @note
+; * Type
+;   * Segment descriptors are classified into 2 broad categories:
+;   * 1. Code or data segment descriptors (a.k.a application segment descriptors). These sorts of descriptors will be familiar to most programmers.
+;   * 2. System segment descriptors. These sorts of descriptors are involved in the use of lesser known CPU features.
+;   * if (segment_descriptor.S == 1) descriptor is a #1 descriptor.
+;   * if (segment_descriptor.S == 0) descriptor is a #2 descriptor.
+;   * The particular values in Type[bit 11:8] depends on the individual segment descriptor type. The Intel SDM devotes an entire section to each type.
+;
+; @note
+;   * S - descriptor type.
+;     * if (segment_descriptor.S == 0) segment descriptor is for a system segment.
+;     * if (segment_descriptor.S == 1) segment descriptor is for a code or data segment.
+;
+; @note
+;   * DPL - descriptor privilege level
+;     * "Specifies the privilege level of the segment." "used to control access to the segment." @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter 5.5 Privilege Levels].
+;
+; @note
+;   * P - segment-present
+;     * 1 = the segment is present in memory.
+;     * 0 = not present in memory.
+;     * if (segment register is loaded with a segment_selector.P == 0) "generates a segment-not-present exception (#NP)."
+;     * "use this flag to control which segments are actually loaded into physical memory at a given time". "It offers control in addition to paging for managing virtual memory." @remark We don't have a secondary store at the moment, so where would a segment reside if it is not present in physical memory?
+;     * @IMPORTANT When P == 0, the segment descriptor's interpretation changes drastically. See Figure 3-9.
+;       * "Available" == "the OS is free to use the locations marked Available to store its own data". @remark To me, this strongly implies that we would use these bits to store the location on secondary store of a page on disk under a demand-paging memory management scheme.
+;
+; |@doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-9 Segment Descriptor When Segment-Present Flag is Clear]
+; |------------------------------------------------------------------------------------------------|
+; |31                                               16|     15|14 13| 12|11   8|7           0| Byte|
+; |---------------------------------------------------|-------|-----|---|------|-------------|-----|
+; |                                         Available | (P) 0 | DPL | S | Type |   Available |    4|
+; |------------------------------------------------------------------------------------------------|
+
+; |------------------------------------------------------------------------------------------------|
+; |31                                                                                       0| Byte|
+; |------------------------------------------------------------------------------------------|-----|
+; |                                                                                Available |    0|
+; |------------------------------------------------------------------------------------------------|
+;
+; @note
+;   * D/B - default operation size/default stack pointer size and/or upper bound.
+;     * 1 = 32-bit code or data segment. 0 = 16-bit code or data segment.
+;     * The effect of this bit is different according to the particular kind of segment. 3 kinds of segments apply here. Each case calls the flag either the "D flag" or the "B flag", hence the name "D/B".
+;       1. Executable code segment. D flag.
+;       2. Stack segment. (A stack segment is simply a read/write data segment pointed to by the SS registers). B (big) flag.
+;       3. Expand-down data segment. B (big) flag.
+
+;   * if (is case #1)
+;     * Called the D flag. "indicates the default length of effective addresses and operands referenced by instructions in the segment."
+;     * The 32-bit offset part of a logical address is also called an "effective address". @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-5 Logical Address to Linear Address Translation]
+;     * 1 = 32-bit **addresses** and 32-bit or 8-bit **operands** are assumed.
+;     * 0 = 16-bit **addresses** and 16-bit or 8-bit **operands** are assumed.
+;     * "The instruction prefix 66H" - used to select an **operand** size other than the default.
+;     * "The instruction prefix 67H" - used to select an **address** size other than the default.
+;   * if (is case #2)
+;     * Called B (big) flag. "specifies the size of the stack **pointer** used for **implicit** stack operations" (e.g. PUSH, POP, CALL).
+;     * 1 = "32-bit stack pointer is used, stored in the ESP register"
+;     * 0 = "16-bit stack pointer is used, stored in the SP register"
+;     * if (segment_descriptor.Type.E == "Expansion-direction is expand-down" == 1) {
+;       * if (B == 0) segment_upper_bound = FFFFH;
+;       * if (B == 1) segment_upper_bound = FFFF_FFFFH; // See segment limit definition.
+;       }
+;   * if (is case #3)
+;     * Called the B (big) flag. "specifies the **upper bound** of the segment"
+;       * if (B == 0) segment_upper_bound = FFFFH;
+;       * if (B == 1) segment_upper_bound = FFFF_FFFFH; // See segment limit definition.
+;
+; @note
+;   * G - granularity.
+;     * "Determines the scaling of the segment limit field."
+;     * 0 = byte units. a.k.a. "byte granular"
+;     * 1 = 4 KB units.
+;       * if (G == 1) "low order 12-bits of a logical_address.offset are not tested when checking the offset against the segment_descriptor.limit"
+;         * e.g. if (segment_descriptor.limit == 0) a valid offsets satisfy ( 0 <= logical_address.offset <= 4095)
+;           * @remark Why not test those 12-bits? ANS: We can think of a logical_address.offset as a pair {20-bit 4 KB page number, 12-bit page offset}, paging isn't involved, its just a convenient name to use. The logical_address.offset can range from {00000H, 000H} to {00000H, FFFH}. Since FFFH == 4095, it will never be out of range with respect to locating a byte inside a 4KB unit, therefore, we need not test that part of the logical address against the segment limit. All we need to test is that [logical_address.page_number <= segment_descriptor.limit].
+;     * @note This flag does not affect the granularity of the segment_descriptor.base_address. It is always byte granular.
+;
+; @note
+;   * L - 64-bit codes segment flag.
+;     * if (CPU mode == ***IA-32e mode**)
+;       * 1 = **code segment** contains native 64-bit code.
+;       * 0 = "code segment executed in compatibility mode".
+;       * if (L == 1) "segment_descriptor.D/B must == 0".
+;     * else
+;           L should always == 0.
+;     * @note I'm not using 64-bit mode any time soon.
+;
+; @note
+;   * AVL - Available and reserved bits.
+;     * The AVL bit "is available for use by system software." @remark I assume this means the OS can set/clear this bit at will, and assign to it whatever meaning it wishes. Perhaps it could be used as a dirty bit indicator under a paging memory management scheme.
 
 
-;
-; | Abbrev. |            Name |                                                                                            Meaning |
-; |---------|-----------------|----------------------------------------------------------------------------------------------------|
-; | S       | Descriptor type | 0 = this is a system descriptor; 1 = this is a code segment descriptor or a data segment descriptor|
-;
+;--------------------------------------------------------------------------------------------------------------------|
+; @dijkstra "Our proof format". "Everywhere operator" e.g. [X]. "boolean scalars: true, false.".
+; @remark Notes taken as part of understanding the segment limit field of a segment descriptor.
+; I call this the "absorption of the one's rule". For all integers x, y:
+;-----------------------------------------------------
+;  x + 1 <= y
+; = {}
+;  x <= y - 1
+; = {}
+;  x < y // Example:  x <= 5 - 1, solutions: x = 0, 1, 2, 3, 4; | x < 5, has identical solutions: x = 0, 1, 2, 3, 4; |
+;-----------------------------------------------------
+;  !(x + 1 <= y)
+; = {}
+;   (x + 1 > y)
+; = {}
+;   (y < x + 1)
+; = {}
+;   (y <= x) // Example: y < 4 + 1, solutions: y = 0, 1, 2, 3, 4; | y <= 4, solutions: y = 0, 1, 2, 3, 4; |
+;-----------------------------------------------------
+; Summary
+;-----------------------------------------------------
+;  x + 1 <= y
+; = {Symbol dynamics: `+ 1` elimination of the `=`}
+;  x < y
+;-----------------------------------------------------
+;  x - 1 <= y  // Example x - 1 <= 3, solutions x = 0, 1, 2, 3, 4; | x < 3 + 2, solutions x = 0, 1, 2, 3, 4; |
+; = {}
+;  x + 1 <= y + 2
+; = {Symbol dynamics: `+ 1` elimination of the `=`}
+;  x < y + 2
+;-----------------------------------------------------
+;  x < y + 1
+; = {Symbol dynamics: `+ 1` formation of the `=`}
+;  x <= y
+;-----------------------------------------------------
+;  x < y - 1 // Example: x < 3 - 1, solutions x = 0, 1; x <= 1, solutions x = 0, 1; |
+; = {}
+;  x + 2 < y + 1
+; = {Symbol dynamics: `+ 1` formation of the `=`}
+;  x + 2 <= y // Check: x = 0, [0 + 2 <= 3], x = 1, [1 + 2 <= 3] |
+;--------------------------------------------------------------------------------------------------------------------|
+
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1. Code- and Data-Segment Types]
+; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types]
+
 ; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-1 Code- and Data-Segment Types]
 ;
 ; If GDT.segment_descriptor.S = 1 (code or data). GDT.segment_descriptor.Type
@@ -157,7 +345,7 @@ gdt_code: ; the code segment descriptor
 dw 0xffff    ; Limit (bits 0-15)                ; 16 bits
 dw 0x0000    ; Base (bits 0-15)                 ; 16 bits
 db 0x00      ; Base (bits 16-23)                ; 8 bits
-db 1001```1010b ; 1st flags and type flags         ; 8 bits
+db 10011010b ; 1st flags and type flags         ; 8 bits
 db 11001111b ; 2nd flags and Limit (bits 16-19) ; 8 bits
 db 0x00      ; Base (bits 24-31)                ; 8 bits
 
