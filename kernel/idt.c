@@ -19,10 +19,10 @@
 #include "test.h"
 
 // @spec Intel SDM Vol.3.Chapter.6.11.
-#define IDT_TASK_TYPE (0x00000500)
-#define IDT_INTR_TYPE (0x00000600)
-#define IDT_TRAP_TYPE (0x00000700)
-
+// @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
+#define IDT_TASK_TYPE (0x00000500) // Type[bit 11:8] == 0101B ==  5 == Task gate.
+#define IDT_INTR_TYPE (0x00000600) // Type[bit 11:8] == 1110B == 14 == 32-bit interrupt gate.
+#define IDT_TRAP_TYPE (0x00000700) // Type[bit 11:8] == 1111B == 15 == 32-bit trap gate.
 #define IDT_DESCRIPTOR_H(offset, p, dpl, d, type) ( (offset & 0xFFFF0000U) | (type) | ( (p & 0x00000001U) << 15 ) | ( (dpl & 0x00000003U) << 13 ) | ( (d & 0x00000001U) << 11 ) )
 
 #define IDT_DESCRIPTOR_L(segment_sel, offset)                         ( ((segment_sel & 0x0000FFFFU) << 16) | (offset & 0x0000FFFFU) )

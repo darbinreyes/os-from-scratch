@@ -1,7 +1,7 @@
 ; @TODO
 ; - [x] What is bochs physical memory setting? ANS: The default is 32MB.
 ; - [x] What happens if we try to read above the physical memory limit? ANS: Since we are using segment limit == 4GB, the CPU will not generate an exception.
-; - [ ] How do I tell NASM to align things?
+; - [ ] How do I tell NASM to align things? // @IMPORTANT The base address of the GDT should be 8-byte aligned. //  @IMPORTANT Segment bases addresses **should** aligned to 16-byte boundaries. This is equivalent to having the lowest order 4 bits of the base address == 0000B = 0H.
 
 ;
 ; @header Global Descriptor Table (GDT).
@@ -24,6 +24,7 @@
 ; is Intel's mechanism for the programmer to describe various segments. Each
 ; entry in the GDT is an 8-byte value called a "segment descriptor".
 ; @remark For brevity, where the Intel SDM use "processor" I use "CPU".
+; @remark I have adopted the Intel SDM notational conventions. @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.1 About This Manual]
 ;
 ;
 ; @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3 Protected-Mode Memory Management - through Chapter.3.4.4]
@@ -45,7 +46,7 @@
 ; @note
 ; * Basic flat model hides the segmentation mechanism to the greatest extent possible.
 ;   * 2 descriptors. 1. code segment. 2. data segment.
-;   * Both descriptors have the same base address 0H and limit of 4GB (= FFFF`FFFFH).
+;   * Both descriptors have the same base address 0H and limit of 4GB (= FFFF_FFFFH).
 ;   * @IMPORTANT Using limit == 4GB here will cause the CPU to silently ignore memory references outside of the physical address space. Normally, such a reference generates an exception.
 ;   * "ROM (EPROM) is generally located at the top of the physical address space".
 ;   * "because the processor begins execution at FFFF_FFF0H." Since I only have 32 MB of physical memory, the CPU must be memory mapping this part of the memory space to the ROM chip.
@@ -278,16 +279,74 @@
 ; * @note "Nonconforming" means that a transfer of execution to this segment is only allowed if CPL == DPL otherwise a #GP is generated. "Utilities that need to be protected from less privileged programs and procedures should be placed in nonconforming code segments." For details on conforming and nonconforming code segments see @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.5.8.1 Direct Calls or Jumps to Code Segments].
 ; * @note Regardless of the conforming flag value, "Execution cannot be transferred by a call or a jump to a less-privileged (numerically higher privilege level, CPL > DPL) code segment, regardless of whether the target segment is a conforming or nonconforming code segment." An attempt to do this generates a #GP.
 ; * @IMPORTANT "If the segment descriptors in the GDT or an LDT are placed in ROM, the processor can enter an indefinite loop if software or the processor attempts to update (write to) the ROM-based segment descriptors. To prevent this problem, set the accessed bits for all segment descriptors placed in a ROM. Also, remove operating-system or executive code that attempts to modify segment descriptors located in ROM."
-; segment_limit | F`FFFFH
+; segment_limit | F_FFFFH
 ;   segment_limit[bit 19:16] | FH
 ;   segment_limit[bit 15:0]  | FFFFH
-; base_address | 0000`0000H
+; base_address | 0000_0000H
 ;   base_address[bit 31:24] | 00H
 ;   base_address[bit 23:16] | 00H
 ;   base_address[bit 15:00] | 0000H
 
-; NEXT!!!!!!!!!!!!!!!! @note @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3.5 System Descriptor Type]
-; @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types]
+; * @note
+;   * @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3.5 System Descriptor Types]
+;   * In the above we have discussed the entries in the GDT/LDT which are called "Segment Descriptors". They are 8-byte entries that describe code segments of data segments in the linear address space.
+;   * The is one more kind of "descriptor" other than "Segment Descriptors". They are called "System Descriptors".
+;   * System descriptors have the same general format as segment descriptors. To indicate a system-descriptor type, the S flag should be clear (S == 0). @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3.8 Segment Descriptor].
+;   * System descriptors fall into 2 categories:
+;     * 1. System-**segment** descriptors - these descriptors are used to point to "system segments" (in contrast to code segments and data segments). There are 2 kinds of system segments: a local descriptor-table segment descriptor (LDT segment), and a task-state segment descriptor (TSS segment).
+;     * 2. **Gate** descriptors - there are 4 kinds. call-gates, interrupt-gates, and trap-gates - these descriptors hold pointers to procedure entry points in **code segments**. A task-gate descriptor "which hold segment selectors for TSS's".
+;   * To specify a system-segment, set the Type[bit 11:8] field according to @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
+;     * @remark From having configured the IDT, I recognize:
+;       * Type[bit 11:8] == 0101B ==  5 == Task gate.
+;       * Type[bit 11:8] == 1110B == 14 == 32-bit interrupt gate.
+;       * Type[bit 11:8] == 1111B == 15 == 32-bit trap gate.
+;   * @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.7.2.2 TSS Descriptor]
+;   * @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.5.8.3 Call Gates]
+;   * @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.7.2.5 IDT Descriptors]
+
+; * @note
+;   * @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3.5.1 Segment Descriptor Tables]
+;   * A segment descriptor table is an array of segment descriptors.
+;   * A "descriptor table" can contain up to 8192 = 2^13, 8-byte descriptors. @remark Why 2^13? Because an offset into the table is specified by the 16-bit logical_address.segment_selector, in which the low order 3-bits have a special meaning: TI, RPL. @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-6 Segment Selector].
+;   * There are only 2 kinds of descriptor tables:
+;     * 1. The global descriptor table (GDT).
+;     * 2. The local descriptor table (LDT).
+;     * @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-10 Global and Local Descriptor Tables].
+;   * The programmer is required to define one GDT, it is used for all programs and tasks in the system.
+;   * LDT's are optional, they are used by tasks. You can defined one LDT per task being run. Or, you can have a subset or all tasks share a single LDT.
+;   * The GDT is a data structure that resides in the linear address space. You inform the CPU of its location and size by loading the GDTR. @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 2-6 Memory Management Registers].
+;   * @IMPORTANT The base address of the GDT should be 8-byte aligned.
+;   * The limit value of the GDTR has 1 byte units. The limit should be set to the offset of the last valid byte, as with segment descriptor limits. A limit value of 0 means that the size of the GDT is 1 byte. Since each GDT entry is 8 bytes, the limit should  always be a multiple of 8-bytes minus 1.
+;   * The first descriptor in the GDT is not used. It should be set to all 0's and is called the null descriptor.
+;     * It is allowed to the load the 4 data segment registers DS, ES, FS, GS with a segment selector pointing the the null descriptor i.e. loading those registers will not generate an exception. Notice that the CS and SS registers were not mentioned here, you should never load them with the null descriptor.
+;     * However, if a memory access is attempted with the null descriptor a #GP will be generate.
+;     * "accidental reference to **unused segment registers** can be guaranteed to generate a exception."
+;   * An LDT is defining by an LDT segment descriptor in the GDT. Each LDT requires its own LDT segment descriptor in the GDT. LDT segment descriptors may be located anywhere in the GDT.
+;   * "An LDT is accessed with its segment selector. To eliminate address translations when accessing the LDT, the segment selector, base linear address, limit, and access rights of the LDT are stored in the LDTR register". @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.2.4 Memory-Management Registers].
+;   * The GDTR can be stored using the SGDT instruction. When the 48-bit GDTR is stored in memory it is called a "pseudo-descriptor". @remark Why is it called that?
+;     * @IMPORTANT
+;       * A strange quirk about using the SGDT instruction is that, to prevent alignment check faults (#AC) when executing at privilege level 3, "the pseudo-descriptor should be located at an odd word address (i.e. address MOD 4 == 2).
+;       * "This causes the CPU to store an aligned word, followed by an aligned doubleword."
+;       * "Privilege level 3 programs normally do not store pseudo-descriptors, but the possibility of generating an #AC can be avoided by aligning pseudo-descriptors in this way."
+;     * @IMPORTANT
+;      * "The same alignment should be used when storing the IDTR register when using the SIDT instruction."
+;     * @IMPORTANT
+;       * "When storing the LDTR or task register using the SLDT or STR instruction, respectively), the pseudo-descriptor should be located at a doubleword address (i.e. address MOD 4 == 0)."
+;   * @IMPORTANT The lesson here is that, when storing any special purpose registers like the GDTR, make sure you check the Intel SDM for any alignment requirements.
+
+;TODO @remark What is meant by "located at an odd word address"?
+;       * ANS: Notice below word address 1 (which is odd), has byte address == 2, and 2 MOD 4 == 2. Similarly, word address 3 == byte address 6, 6 MOD 4 == 2.
+;TODO @remark What is meant by "store an aligned word, followed by an aligned double word"?
+;       * ANS: Since a pseudo descriptor is 48-bits (== 6 bytes == 16-bits + 32-bits == word + doubleword). Notice that if we store the pseudo-descriptor at byte address 2, its first word is word aligned since 2 MOD 2 == 0, and, its remaining doubleword is also doubleword aligned since it is stored at byte address 4 and 4 MOD 4 = 0.
+; |  |  | 6 <<               3 << // 6
+; |  |  | 4 <<               2 << // 4 = 100B
+; |  |  | 2 <<               1 << // 2 = 010B
+; |  |  | 0 << byte address, 0 << word address
+;TODO @remark What is meant by "should be located at a doubleword address (i.e. address MOD 4 == 0)"?
+;       * ANS: A doubleword == 32-bits == 4 bytes. Therefore, any byte address such that (address MOD 4 == 0) is doubleword aligned.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;END OF VOL.3 CHAPTER.3 NOTES ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; This configures a basic flat model of memory with 2 overlapping segments: a
@@ -300,7 +359,7 @@ dd 0x0 ; dd = declare double word = 32 bit values
 dd 0x0
 
 gdt_code: ; the code segment descriptor
-; base = 0x0000`0000, limit = 0xf`ffff
+; base = 0x0000_0000, limit = 0xf_ffff
 ; type flags:       (code) 1     (conforming) 0 (readable) 1 (accessed) 0   = 1010b
 ; 1st flags:     (present) 1      (privilege) 00 (descriptor type) 1        = 1001b
 ; 2nd flags: (granularity) 1 (32 bit default) 1 (64 bit seg) 0 (AVL) 0      = 1100b
