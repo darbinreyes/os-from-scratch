@@ -1,47 +1,76 @@
-; Section 3.6.4 Putting it all Together.
-; load DH sectors to ES:BX from drive DL.
-
+; @procedure    disk_load    Procedure to read DH number of sectors from a drive
+;                            DL into memory at address ES:BX. Uses the int 0x13
+;                            BIOS ISR.
+;
+; @register    DL    The drive number identifying the drive from which sectors
+;                    will be read.
+;
+; @register    DH    The requested number of sectors to read from the drive.
+;
+; @register    ES    The segment base address value to use when reading sectors
+;                    into memory at ES:BX.
+;
+; @register    BX    The segment offset value to use when reading sectors into
+;                    memory at ES:BX.
+;
+; @discussion
+; @doc [Writing a Simple Operating System - from Scratch by Nick Blundell,
+; Chapter 3.6.4]
 disk_load:
-    push dx ; Push DX on the stack so we can use DH for error checking after
-            ; int 0x13 returns.
+    push dx      ; Push DX on the stack so we can use DH for error checking
+                 ; after int 0x13 returns.
 
-    mov ah, 0x02 ; Specify the BIOS read sector function.
-    mov al, dh   ; Specify the number of sectors to read.
+    mov ah, 0x02 ; BIOS ISR usage convention. AH := 2, means we want to use the
+                 ; BIOS read sector function.
 
-    ; DL contains the drive number to read from, below, we specify the
-    ; starting cylinder-head-sector address.
-    mov ch, 0x00 ; Select cylinder 0.
-    mov dh, 0x00 ; Select head (= track) 0.
-    mov cl, 0x02 ; Select 2nd sector. (This is a 1 based index).
-                 ; (If DL is set to the boot disk drive, this sector is the one
-                 ;  after our boot sector.)
+    mov al, dh   ; BIOS ISR usage convention. AL specifies the number of sectors
+                 ; to read.
 
-    int 0x13 ; BIOS interrupt for disk device access.
+    ;
+    ; BIOS ISR usage convention. Specifying the starting cylinder-head-sector
+    ; address for the read operation.
+    ; CH := cylinder (a.k.a. track) number (0 based index).
+    ; DH := head number (0 based index).
+    ; CL := sector number (1 based index).
+    ;
 
+    mov ch, 0x00             ; Select cylinder 0.
+    mov dh, 0x00             ; Select head 0.
+    mov cl, 0x02             ; Select sector 2, since sector 1 contains this
+                             ; boot program. (This is a 1 based index).
 
-    jc disk_error ; Carry flag set means general fault (= error) occurred.
+    int 0x13                 ; BIOS ISR for disk device access.
 
-    pop dx ; Restore DX register value, DH = requested number of sectors
-           ; DL = disk drive number. (DX is set by caller of this function.)
+    jc disk_error_1          ; If the carry flag is set it means a general fault
+                             ; (a.k.a. error) occurred.
 
-    cmp dh, al ; AL = number of sectors actually read, if these aren't equal an
-              ; error occurred.
-    jne disk_error_al
+    pop dx                   ; Restore DX register value.
 
-    ret ; DONE!
+    cmp dh, al               ; BIOS ISR usage convention. AL = number of sectors
+                             ; actually read. If DH != AL, an has error
+                             ; occurred.
+    jne disk_error_2
 
-disk_error:
-    mov bx, DISK_ERROR_MSG
+    ret                      ; DONE!
+
+disk_error_1:
+    mov bx, STR_DISK_ERROR_1
     call print_string
-    jmp $ ; Infinite loop.
+    jmp $                    ; Infinite loop.
 
-disk_error_al:
-    mov bx, DISK_ERROR_MSG_AL
+disk_error_2:
+    mov bx, STR_DISK_ERROR_2
     call print_string
-    jmp $ ; Infinite loop.
+    jmp $                    ; Infinite loop.
 
-; Variables.
-DISK_ERROR_MSG: db "CF set. Disk read error!", 0 ; NEED ":" HERE? ANS: No. Works the same. Assembler doesn't report an error .
-DISK_ERROR_MSG_AL: db "DH != AL. Disk read error!", 0
+;
+; Global variables - strings.
+;
+; @remark Is the colon needed here? ANS: No. Works the same. Assembler doesn't
+; report an error and the runtime behavior is the same.
+;
+STR_DISK_ERROR_1: db "Carry flag (CF) set. Disk read error!", 0xa, 0x0d, 0
+
+STR_DISK_ERROR_2: db "Sector read count mismatch. Requested != Actual. DH != AL. Disk read error!", 0xa, 0x0d, 0
 
 
