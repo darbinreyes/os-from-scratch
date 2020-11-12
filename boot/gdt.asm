@@ -2,9 +2,10 @@
 ; This file defines the GDT. Defining the GDT is a necessary prerequisite step
 ; to switching the CPU mode from 16-bit to 32-bit mode. The definition of the
 ; GDT in this file consists of two segment descriptors. A code segment
-; descriptor and a data segment descriptor.
-; @doc [Writing a Simple Operating System - from Scratch, by Nick Blundell,
-; Chapter 4.2 Understanding the Global Descriptor Table]
+; descriptor and a data segment descriptor. The original GDT definition was
+; based on @doc [Writing a Simple Operating System - from Scratch, by Nick
+; Blundell, Chapter 4.2 Understanding the Global Descriptor Table]. For
+; important notes about the GDT from the Intel SDM see @doc [doc/gdt.md].
 ;
 ; @abstract Definition of the global descriptor table (GDT).
 ;
@@ -18,14 +19,10 @@
 ; of memory "segments". The GDT is Intel's mechanism for the programmer to
 ; describe various segments. Each entry in the GDT is an 8-byte value called a
 ; "segment descriptor".
-; @remark For brevity, where the Intel SDM uses "processor" I use "CPU".
-; @remark I have adopted the Intel SDM notational conventions. @doc [Intel 64 &
-; IA-32 SDM, Vol.3, Chapter.1 About This Manual]
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; This configures a basic flat model of memory with 2 overlapping segments: a
-; code segment and a data segment, after the standard null descriptor.
+; Configures a basic flat model of memory with 2 overlapping segments: a code
+; segment and a data segment, after the standard null descriptor.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 gdt_start:
 

@@ -1,4 +1,7 @@
-# @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3 Protected-Mode Memory Management]
+# Notes on @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter.3 Protected-Mode Memory Management]
+* @remark For brevity, where the Intel SDM uses "processor" I use "CPU".
+* @remark I have adopted the Intel SDM notational conventions. @doc [Intel 64 &
+  IA-32 SDM, Vol.3, Chapter.1 About This Manual]
 * Segmentation == mechanism of isolating individual code, data, and stack
   modules.
 * In 32-bit mode, some form of segmentation is required to be used. It cannot
