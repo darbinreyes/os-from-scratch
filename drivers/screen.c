@@ -357,12 +357,7 @@ void print_byteh (unsigned char b, int pf) {
     print_ch_at(c, 0, -1, -1);
 }
 
-void print_uint32h(unsigned int i) {
-    // print_byteh ((i & 0xFFU) >> 24, 0); // YOU ZEROED OUT ALL HIGH ORDER BYTES DUMBASS!
-    // print_byteh ((i & 0xFFU) >> 16, 0);
-    // print_byteh ((i & 0xFFU) >> 8, 0);
-    // print_byteh ((i & 0xFFU), 0);
-
+void print_uint32h(uint32_t i) {
     print_byteh ((i >> 24) & 0xFFU, 0);
     print_byteh ((i >> 16) & 0xFFU, 0);
     print_byteh ((i >> 8) & 0xFFU, 0);
@@ -513,7 +508,57 @@ int atoi(const char *str) {
 }
 
 /*!
-    @function itoa
-    @discussion Not part of the standard library.
+    @function    itoa
+    @discussion Converts an integer to a string. This function not part of the
+                standard C library.
+
+    @param    i the integer to convert to a string.
+
+    @result    String containing the result of the conversion.
+
 */
-void itoa(int i, char *s);
+// char *itoa(int32_t i, char *s) {
+//     //static char str[1 + 10 + 1]; // Max int32_t value = 2**31 - 1 = 2,147,483,647. Min. 2**31 = -2147483648. 1 negative sign, 10 digits, 1 null terminator.
+//     int64_t pwr;
+
+//     /*
+// i | pwr | i / pwr
+// 57| 10  | 5
+// 57 | 100| 0
+//     */
+//     pwr = 10;
+//     while (i / pwr > 0) {
+//         pwr *= 10;
+//     }
+
+//     //str[0] = '\0';
+
+//     // @TODO
+//     return s;
+// }
+
+/*!
+    @function    dead_loop
+    @discussion Infinite loop.
+
+*/
+void dead_loop(void) {
+    while (1)
+        ;
+}
+/*!
+    @function    print_assert
+    @discussion Prints a message associated with the assert macro.
+                @doc [assert.h].
+
+*/
+void print_assert(char *e, char *f, int l) {
+    print(f);
+    print(":");
+    print_uint32h(l);
+    print(": failed assertion `");
+    print(e);
+    print("'\n");
+}
+
+
