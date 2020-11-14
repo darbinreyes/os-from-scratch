@@ -17,7 +17,7 @@
 ; block) from the device into memory. The BIOS transfers control to that sector
 ; if that sector that ends with the magic number 0xaa55.
 
-[org 0x7c00] ;Tell assembler where this program will be loaded into memory i.e.
+[org 0x7c00] ; Tell assembler where this program will be loaded into memory i.e.
              ; the address of the first instruction. All program addresses are
              ; treated as relative to this value. The specific address value is
              ; a BIOS convention.
@@ -37,12 +37,12 @@ KERNEL_OFFSET equ 0x1000 ; This is the address at which we intend to load our
                          ; kernel. The specific value has been chosen
                          ; arbitrarily.
 
-mov [BOOT_DRIVE], dl ; By convention, the BIOS stores the boot drive number in
-                     ; the DL register. Here, we are storing the boot driver
-                     ; number in memory for later use viz. to load our kernel
-                     ; from the same drive.
+mov [BOOT_DRIVE], dl  ; By convention, the BIOS stores the boot drive number in
+                      ; the DL register. Here, we are storing the boot driver
+                      ; number in memory for later use viz. to load our kernel
+                      ; from the same drive.
 
-mov bp, STACK_ADDR    ; Initialize our frame pointer and stack pointer registers.
+mov bp, STACK_ADDR    ; Initialize frame pointer and stack pointer registers.
 mov sp, bp
 
 mov bx, STR_REAL_MODE ; print_string(STR_REAL_MODE).
@@ -51,7 +51,7 @@ call print_string
 call load_kernel      ; Load our kernel from disk to memory.
 
 call switch_to_pm     ; Switch from 16-bit real mode to 32-bit protected mode.
-                      ; If successful, this function will not return HERE, but
+                      ; If successful, this function will not return here, but
                       ; will jump instead to BEGIN_PM below.
 
 jmp $                 ; Infinite loop.
@@ -105,7 +105,7 @@ BEGIN_PM:
 
     call KERNEL_OFFSET ; Jump to the kernel's entry point.
 
-    jmp $ ; Infinite loop. In case the kernel returns.
+    jmp $              ; Infinite loop. In case the kernel returns.
 
 ;
 ; Global variables - Misc.
