@@ -44,6 +44,7 @@ os-image: boot_sect.bin kernel.bin
 boot_sect.bin: boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm boot/gdt.asm boot/print_string_pm.asm boot/switch_to_pm.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
+# @IMPORTANT kernel_entry.o must go first in here.
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
 
@@ -60,10 +61,7 @@ test.o: kernel/test.s kernel/test.h
 # Generic rule for building 'somefile.o' from 'somefile.c'.
 # IMPORTANT: The % operator does not match sub-directories, hence `kernel/%.c`.
 # kernel/%.c
-kernel.o: kernel/kernel.c kernel/kernel.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
-
-idt_v_print.o: kernel/idt_v_print.c kernel/idt_v_print.h
+kernel.o: kernel/kernel.c
 	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 screen.o: drivers/screen.c drivers/screen.h
