@@ -8,6 +8,63 @@
 #include "../kernel/low_level.h"
 #include "../mylibc/mylibc.h"
 
+/*!
+    @defined VIDEO_ADDRESS
+    @discussion
+    Start of video memory address in text mode, 2 bytes each, first byte is
+    the ASCII code of the character, second byte is the character display
+    attributes e.g. text color.
+*/
+#define VIDEO_ADDRESS 0xB8000
+
+/*!
+    @defined MAX_ROWS
+    @discussion
+    In text mode, the total number of character rows.
+*/
+#define MAX_ROWS 25
+
+/*!
+    @defined MAX_COLS
+    @discussion
+    In text mode, the total number of character columns.
+*/
+#define MAX_COLS 80
+
+/*!
+    @defined CHAR_ATTR_WHITE_ON_BLACK
+    @discussion
+    Character attribute byte for white/black foreground/background.
+*/
+#define CHAR_ATTR_WHITE_ON_BLACK 0x0F
+
+/*!
+    @defined REG_SCREEN_CTRL_IO_PORT
+    @discussion
+    Screen device control I/O port.
+*/
+#define REG_SCREEN_CTRL_IO_PORT 0x3D4
+
+/*!
+    @defined REG_SCREEN_DATA_IO_PORT
+    @discussion
+    Screen device data I/O port.
+*/
+#define REG_SCREEN_DATA_IO_PORT 0x3D5
+
+/*!
+    @defined CURSOR_LOCATION_HIGH_BYTE
+    CRTC Registers - Cursor position control. Cursor Location High 0xE.
+Cursor Location Low 0xF.
+*/
+#define CURSOR_LOCATION_HIGH_BYTE 0x0E
+
+/*!
+    @defined CURSOR_LOCATION_LOW_BYTE
+    CRTC Registers - Cursor position control. Cursor Location Low 0xF.
+*/
+#define CURSOR_LOCATION_LOW_BYTE 0x0F
+
 int row_col_to_screen_video_mem_offset(int row, int col);
 
 int vid_mem_offset_to_row (int vid_mem_offset);
@@ -63,13 +120,6 @@ void print_ch_at(char c, char cattr, int row, int col) {
     int vid_mem_offset;
     int trow;
 
-    /*
-
-        Start of video memory address in text mode, 2 bytes each, first byte is
-        the ASCII code of the character, second byte is the character display
-        attributes e.g. text color.
-
-    */
     vid_mem = (unsigned char *) VIDEO_ADDRESS;
 
     if (cattr == 0)
