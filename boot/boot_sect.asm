@@ -1,4 +1,4 @@
-; @header The boot sector program.
+; @abstract The boot sector program.
 ; The BIOS transfers control to this program, this program transfers control to
 ; the kernel.
 ; The steps taken by this program are:
