@@ -1,59 +1,7 @@
-/*
-
-    A rudimentary IBM VGA driver.
-
-    Driver Interface Features:
-    * Printing to the screen.
-
-    The author does not go into detail about where this numbers came from. The
-    notes below are a summary of my search for legitimate/accurate
-    documentation.
-
-    Relevant documentation.
-    ===
-
-    The screen device we use here is called the "IBM VGA". This is a screen
-    device from the late 1990's. The low level interface to this device
-    involves:
-
-    1. Over 300 internal registers.
-    2. MMIO, the device in its default mode responds to
-    host memory access in a range starting at address 0xB8000 up to 0xBFFFF.
-    3. About a dozen I/O ports are used to access registers in #1.
-
-    Links:
-
-    [A concise intro. to the IBM VGA device](https://wiki.osdev.org/VGA_Hardware)
-    [Deep dive, every possible detail you might want to know. Well written.](http://www.osdever.net/FreeVGA/home.htm#vga)
-    [Further reading, (1998!) home page of above link](http://www.osdever.net/FreeVGA/home.htm)
-    [Manipulating the Text-mode Cursor](http://www.osdever.net/FreeVGA/vga/textcur.htm)
-    [Cathode Ray Tube Controller (CRTC) Registers, in here we find the registers that allow us to control text mode cursor position](http://www.osdever.net/FreeVGA/vga/crtcreg.htm)
-
-    Remark: In 1998, engineers had to reference this immense documentation on
-    physical paper tomes, flipping back and forth to cope with inter-chapter
-    references. Sounds painful.
-
-    Remark: In order to control 300+ internal VGA registers with roughly 12 I/O
-    ports a register indexing scheme is used. For example, an I/O port will be
-    used to provide an index, which selects a particular register, then a second
-    I/O port is used to read/write a single byte of data to the index-selected
-    register. This scheme is used with the 0x3D4 and 0x3D5 I/O ports.
-
-
-    Related to Nick Blundel's Text
-    ===
-
-    Remark: This is clearly chosen as our first driver implementation because
-    the use of interrupts is not absolutely necessary. At least no interrupts
-    are needed for implementing print.
-
-    Goal: print("Dijkstra").
-
-    Remark: Note the lack of features in our function, "print()" ,compared to
-    C's printf(), recall that the "f" == formatted, i.e. we are not implementing
-    format specifier support, nor making use of C's variable argument mechanism
-    that printf requires in order to implement.
-
+/*!
+    @header A screen device driver.
+    Implements function for printing text to the screen. The underlying screen
+    device is IBM VGA.
 */
 
 #include "screen.h"
@@ -71,8 +19,19 @@ void set_cursor(int vid_mem_offset);
 int handle_scrolling(int vid_mem_offset);
 
 
-/*
+/*!
+    @function    print_ch_at
+    @abstraction Prints a single character to the screen at the specified
+    position and specified background/foreground color.
 
+    @param    c    The ASCII code of the character to print
+
+    @param    cattr    Sets background/foreground color.
+
+    @param    row    Row position of the character.
+    @param    col    Column position of the character.
+
+    @discussion
     Print a single character to the screen at the specified position. The
     meaning of "position": the screen is treated as a 25x80 grid of characters
     i.e. 25 rows, 80 columns. The special position <row, col> == <-1, -1>
@@ -91,9 +50,9 @@ int handle_scrolling(int vid_mem_offset);
     by 1 row, thus overwriting row == 0 and clearing row == 24, and the cursor
     position is set to <row, col> == <24, 0>.
 
-    cattr is used to set the character's foreground and background color (TODO:
-    specifics). If cattr == 0, the function uses foreground/background color
-    == WHITE/BLACK, otherwise the given cattr value is used.
+    cattr is used to set the character's foreground and background color. If
+    cattr == 0, the function uses foreground/background color == WHITE/BLACK,
+    otherwise the given cattr value is used.
 
     c == '\n' is handled specially, it has the natural behavior: it moves the
     cursor position 1 row below the current row.
