@@ -87,6 +87,7 @@
     sizeof(unsigned long) == 4
     sizeof(unsigned long long) == 8
     sizeof(void*) == 4
+    @TODO Move these typedefs to stdint.h.
 */
 typedef unsigned char uint8_t;
 
