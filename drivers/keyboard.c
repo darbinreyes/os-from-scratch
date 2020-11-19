@@ -1,65 +1,46 @@
-// while(1) { // Test getting both 1 byte and 2 byte scan codes using a single function.
-//     r = get_scan_code2(sc);
+/*!
+    @header PS/2 keyboard driver.
+    Provides basic functions for getting input from a PS/2 keyboard.
 
-//     if (r != 0) {
-//         print("Error 2.\n");
-//         return 1;
-//     }
-
-//     if (sc[1] != 0x00) {
-//         print(" 2 byte sc.");
-//         print("[");
-//         print_byteh(sc[0]);
-//         print("]");
-//         print("[");
-//         print_byteh(sc[1]);
-//         print("]\n");
-//     } else {
-//         print(" 1 byte sc.");
-//         print("[");
-//         print_byteh(sc[0]);
-//         print("]\n");
-//     }
-// }
-
-/*
-
-INCREMENTAL GOAL:
-[] short get_scn_code(void);
-[] char getch(void);
-[] char *prompt_user_for_str(char *prompt);
-[] With interrupts.
-
+  * @TODO
+    * [] Test all scan codes.
+    * [] short get_scn_code(void);
+    * [] char getch(void);
+    * [] char *prompt_user_for_str(char *prompt);
+    * [] With interrupts.
+    * [] Implement key state table so shift key works. 0 = released 1 = pressed.
+    * [] osdev.org "driver model".
 */
 
 #include "../mylibc/mylibc.h"
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
 
-// TODO: driver start()
-// TODO: driver stop()
+/*!
+    @defined    KEY_CODE_TO_ASCII_ROWS
 
-
-/*
-
-From my notes:
-
-* As an OS dev. you are free to set the key codes as you wish. There are
-* commonly used schemes however: 8-bits total per key code, upper 3 bits = KB
-* row, lower 5 bits = KB col, KB treated as a grid. Once you define your key
-* codes you must ensure that all KB drivers use the same key codes. FYI: your
-* key codes can also be used by non-KB devices, like a mouse, in which a right
-* click might be reported as “key code 0xF1”. Thus, when your state machine
-* receives a complete, possibly multi-byte, scan code, you convert it to your
-* single byte key code.
-
+    @discussion The maximum number of rows in the kc_rc_to_ascii and
+    shift_kc_rc_to_ascii table.
 */
-
-//int sc_to_kc_tbl_row_len[] = {21, 21, 21, 17, 16, 13};
 #define KEY_CODE_TO_ASCII_ROWS 6
+
+/*!
+    @defined    KEY_CODE_TO_ASCII_COLS
+
+    @discussion The maximum number of columns in the kc_rc_to_ascii and
+    shift_kc_rc_to_ascii table. The actual number of columns in the tables
+    varies. The number of columns in each of the 6 rows is currently:
+    21, 21, 21, 17, 16, 13, respectively.
+*/
 #define KEY_CODE_TO_ASCII_COLS 21
 
-char kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
+/*!
+    @const    kc_rc_to_ascii
+
+    @discussion Table used to convert a key code (kc) row and column (rc) to
+    an ASCII character code.
+*/
+const char kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
 /* Apple USB Keyboard Model A1243 */
  {  '?'/*<ESC>*/,      'X'/*<F1>*/,   'X'/*<F2>*/,       'X'/*<F3>*/,   'X'/*<F4>*/,                    'X'/*<F5>*/,              'X'/*<F6>*/,                 'X'/*<F7>*/,                   'X'/*<F8>*/,                 'X'/*<F9>*/,       'X'/*<F10>*/,  'X'/*<F11>*/,                   'X'/*<F12>*/,   '?'/*<EJECT>*/,        '?'/*<F13>*/,        '?'/*<F14>*/,     '?'/*<F15>*/,         '?'/*<F16>*/,                 '?'/*<F17>*/,        '?'/*<F18>*/,    '?'/*<F19>*/         },
  {  '`',               '1',           '2',               '3',           '4',                            '5',                      '6',                         '7',                           '8',                         '9',               '0',           '-',                            '=',            '?'/*<BACKSPACE>*/,    '?'/*<Fn>*/,         '?'/*<HOME>*/,    '?'/*<PG-UP>*/,       '?'/*<NUMPAD-CLEAR/NUMLOCK>*/,'='/*NUMPAD"="NoSc*/, '/'/*NUMPAD-/*/,'*'/*NUMPAD"*"*/     },
@@ -69,7 +50,13 @@ char kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
  {  '?'/*<L-CTRL>*/,   '?'/*<L-ALT>*/,'?'/*<L-CMD>NoSc*/,' '/*<SPACE>*/,                                                                                                                                                   '?'/*<R-CMD>NoSc*/,'?'/*<R-ALT>*/,                                '?'/*<R-CTRL>*/,                       '?'/*<CUR-LEFT>*/,   '?'/*<CUR-DOWN>*/,'?'/*<CUR-RIGHT>*/,   '0',                                               '.',             '?'/*<NUMPAD-ENTER>*/}
 };
 
-char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
+/*!
+    @const    shift_kc_rc_to_ascii
+
+    @discussion Table used to convert a key code (kc) row and column (rc) to
+    an ASCII character code when the shift key is held down.
+*/
+const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
 /* Apple USB Keyboard Model A1243 */
  {  '?'/*<ESC>*/,      'X'/*<F1>*/,   'X'/*<F2>*/,       'X'/*<F3>*/,   'X'/*<F4>*/,                    'X'/*<F5>*/,              'X'/*<F6>*/,                 'X'/*<F7>*/,                   'X'/*<F8>*/,                 'X'/*<F9>*/,       'X'/*<F10>*/,  'X'/*<F11>*/,                   'X'/*<F12>*/,   '?'/*<EJECT>*/,        '?'/*<F13>*/,        '?'/*<F14>*/,     '?'/*<F15>*/,         '?'/*<F16>*/,                 '?'/*<F17>*/,        '?'/*<F18>*/,    '?'/*<F19>*/         }, // 21
  {  '~',               '!',           '@',               '#',           '$',                            '%',                      '^',                         '&',                           '*',                         '(',               ')',           '_',                            '+',            '?'/*<BACKSPACE>*/,    '?'/*<Fn>*/,         '?'/*<HOME>*/,    '?'/*<PG-UP>*/,       '?'/*<NUMPAD-CLEAR/NUMLOCK>*/,'='/*NUMPAD"="NoSc*/, '/'/*NUMPAD-/*/,'*'/*NUMPAD"*"*/     },
@@ -79,30 +66,85 @@ char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] = {
  {  '?'/*<L-CTRL>*/,   '?'/*<L-ALT>*/,'?'/*<L-CMD>NoSc*/,' '/*<SPACE>*/,                                                                                                                                                   '?'/*<R-CMD>NoSc*/,'?'/*<R-ALT>*/,                                '?'/*<R-CTRL>*/,                       '?'/*<CUR-LEFT>*/,   '?'/*<CUR-DOWN>*/,'?'/*<CUR-RIGHT>*/,   '0',                                               '.',             '?'/*<NUMPAD-ENTER>*/}
 };
 
+/*!
+    @defined    KEY_CODE_FROM_ROW_COL(r, c)
 
-#define KEY_CODE_FROM_ROW_COL(r, c)  ( ( ( (r) & 0x07) << 5 ) | ( (c) & 0x1F) ) // Row = upper 3 bits. Col. = lower 5 bits.
+    @discussion Macro used to create an 8-bit key code from a given row and
+    column number. The row number is placed into the high order 3-bits and the
+    column number is placed in the low order 5-bits.
+*/
+#define KEY_CODE_FROM_ROW_COL(r, c)  ( ( ( (r) & 0x07) << 5 ) | ( (c) & 0x1F) )
+
+/*!
+    @defined    NOT_A_SCAN_CODE
+
+    @discussion Used in the scan code (sc) to key code (kc) tables to indicate
+    that the scan code value normally corresponding to this entry is not defined
+    in scan code set 1. Its value, 0xFF, does not correspond to a valid scan
+    code in any scan code set (1, 2, or 3).
+*/
 #define NOT_A_SCAN_CODE 0xFF
+
+/*!
+    @defined    SCAN_CODE_TODO
+
+    @discussion Used in the scan code (sc) to key code (kc) tables to indicate
+    that the scan code value normally corresponding to this entry is assigned a
+    key in scan code set 1 but it does not exist on my physical (Apple)
+    keyboard. Its value, 0xFE, does not correspond to a valid scan code in any
+    scan code set (1, 2, or 3).
+*/
 #define SCAN_CODE_TODO  0xFE
+
+/*!
+    @defined    KEY_CODE_TO_ROW(kc)
+
+    @discussion Macro for obtaining the row part of a key code.
+*/
 #define KEY_CODE_TO_ROW(kc) ( ( (kc) & 0xE0 ) >> 5 )
+
+/*!
+    @defined    KEY_CODE_TO_COL(kc)
+
+    @discussion Macro for obtaining the column part of a key code.
+*/
 #define KEY_CODE_TO_COL(kc) ( (kc) & 0x1F )
 
-// 1 byte scan codes. // State == pressed.
-unsigned char sc_to_kc_tbl2[] = {
-    NOT_A_SCAN_CODE, /*0x00 Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(0, 0),/*0x01 <ESC> p.|r,c=0,0*/
-    KEY_CODE_FROM_ROW_COL(1, 1),/*0x02 1 p.|r,c=1,1*/
-    KEY_CODE_FROM_ROW_COL(1, 2),/*0x03 2 p.|r,c=1,2*/
-    KEY_CODE_FROM_ROW_COL(1, 3),/*0x04 3 p.|r,c=1,3*/
-    KEY_CODE_FROM_ROW_COL(1, 4),/*0x05 4 p.|r,c=1,4*/
-    KEY_CODE_FROM_ROW_COL(1, 5),/*0x06 5 p.|r,c=1,5*/
-    KEY_CODE_FROM_ROW_COL(1, 6),/*0x07 6 p.|r,c=1,6*/
-    KEY_CODE_FROM_ROW_COL(1, 7),/*0x08 7 p.|r,c=1,7*/
-    KEY_CODE_FROM_ROW_COL(1, 8),/*0x09 8 p.|r,c=1,8*/
-    KEY_CODE_FROM_ROW_COL(1, 9),/*0x0A 9 p.|r,c=1,9*/
-    KEY_CODE_FROM_ROW_COL(1, 10),/*0x0B 0 p.|r,c=1,10*/
-    KEY_CODE_FROM_ROW_COL(1, 11),/*0x0C - p.|r,c=1,11*/
-    KEY_CODE_FROM_ROW_COL(1, 12),/*0x0D = p.|r,c=1,12*/
-    KEY_CODE_FROM_ROW_COL(1, 13),/*0x0E <BACKSPACE> p.|r,c=1,13*/
+/*!
+    @const  sc_to_kc_tbl1
+
+    @discussion Table used for converting a **single** byte scan code (scan code
+    set 1) into a key code. A scan code is used as an index into the table and
+    the entry obtained is the key code. Entries that do not contain a valid key
+    code are set to either SCAN_CODE_TODO or NOT_A_SCAN_CODE. The scan codes
+    used to index into this table must be those that correspond to "pressed" and
+    not "released". A "key released" scan code will be out of this table's
+    bounds. Since the key code for a key is the same regardless of whether it
+    was "pressed" or "released", this table can be used for obtaining the key
+    code for a key "released" by clearing the high order bit of the scan code
+    before indexing into this table. This is possible because the "released"
+    scan code is identical to the "pressed" scan code, except for that the high
+    order bit is set for a "released" scan code. For example, the "pressed" scan
+    code for the ESCAPE key is 0x01, while the "released" scan code is 0x81.
+*/
+const unsigned char sc_to_kc_tbl1[] = {
+                                 /* Scan Code | Key        | Tested           */
+                                 /* ----------|------------|------------------*/
+    NOT_A_SCAN_CODE,             /* 0x00      |            | Not a scan code. */
+    KEY_CODE_FROM_ROW_COL(0, 0), /* 0x01      | <ESC>      |                  */
+    KEY_CODE_FROM_ROW_COL(1, 1), /* 0x02      | 1          |*/
+    KEY_CODE_FROM_ROW_COL(1, 2), /* 0x03      | 2          |*/
+    KEY_CODE_FROM_ROW_COL(1, 3), /* 0x04      | 3          |*/
+    KEY_CODE_FROM_ROW_COL(1, 4), /* 0x05      | 4          |*/
+    KEY_CODE_FROM_ROW_COL(1, 5), /* 0x06      | 5          |*/
+    KEY_CODE_FROM_ROW_COL(1, 6), /* 0x07      | 6          |*/
+    KEY_CODE_FROM_ROW_COL(1, 7), /* 0x08      | 7          |*/
+    KEY_CODE_FROM_ROW_COL(1, 8), /* 0x09      | 8          |*/
+    KEY_CODE_FROM_ROW_COL(1, 9), /* 0x0A      | 9          |*/
+    KEY_CODE_FROM_ROW_COL(1, 10),/* 0x0B      | 0          |*/
+    KEY_CODE_FROM_ROW_COL(1, 11),/* 0x0C      | -          |*/
+    KEY_CODE_FROM_ROW_COL(1, 12),/* 0x0D      | =          |*/
+    KEY_CODE_FROM_ROW_COL(1, 13),/* 0x0E      | <BACKSPACE>|*/
 
     KEY_CODE_FROM_ROW_COL(2, 0),/*0x0F <TAB> p.|r,c=2,0*/
     KEY_CODE_FROM_ROW_COL(2, 1),/*0x10 q p.|r,c=2,1*/
@@ -171,9 +213,11 @@ unsigned char sc_to_kc_tbl2[] = {
     KEY_CODE_FROM_ROW_COL(0, 9),/*0x43 <F9> p.|r,c=0,9*/
     KEY_CODE_FROM_ROW_COL(0, 10),/*0x44 <F10> p.|r,c=0,10*/
 
-    KEY_CODE_FROM_ROW_COL(1, 17),/*0x45 <NUMLOCK> p.|r,c=1,17|Not a key on my keyboard.|Try <CLEAR>*/
+    KEY_CODE_FROM_ROW_COL(1, 17),/*0x45 <NUMLOCK> p.|r,c=1,17|Not a key on my
+                                   keyboard.|Try <CLEAR>*/
 
-    KEY_CODE_FROM_ROW_COL(0, 15),/*0x46 <SCROLL-LOCK> p.|r,c=0,15|Not a key on my keyboard.|Try <F14>*/
+    KEY_CODE_FROM_ROW_COL(0, 15),/*0x46 <SCROLL-LOCK> p.|r,c=0,15|Not a key on
+                                   my keyboard.|Try <F14>*/
 
     KEY_CODE_FROM_ROW_COL(2, 17),/*0x47 NUMPAD-7 p.|r,c=2,17*/
     KEY_CODE_FROM_ROW_COL(2, 18),/*0x48 NUMPAD-8 p.|r,c=2,18*/
@@ -200,9 +244,26 @@ unsigned char sc_to_kc_tbl2[] = {
     KEY_CODE_FROM_ROW_COL(0, 12)/*0x58 <F12> p.|r,c=0,12*/
 };
 
-// 2 byte scan codes. With 0xE0 for first byte. // State == pressed.
-unsigned char sc_to_kc_tbl3[] = {
+/*!
+    @const  sc_to_kc_tbl2
 
+    @discussion Table used for converting a **two** byte scan code (scan code
+    set 1) into a key code. This table is used similarly to the table for
+    converting single byte scan codes to key codes. All two byte scan codes have
+    0xE0 as the first byte, the second byte of the scan code, minus 0x10, is
+    used as an index into this table to obtain its key code. To obtain the key
+    code of a key "released", clear the high order bit of the second byte, and
+    subtract 0x10, before indexing into this table. For example, the
+    NUMPAD-ENTER "pressed" scan code is 0xE0, 0x1C, to obtain its key code use
+    index 0x1C - 0x10 = 0x0C into this table. Similarly, the NUMPAD-ENTER
+    "released" scan code is 0xE0, 0x9C, the key code is obtained at the same
+    index (0x9C & 0x7F) - 0x10 = 0x0C. Entries that do not contain a valid key
+    code are set to either SCAN_CODE_TODO or NOT_A_SCAN_CODE. Note that most
+    entries in this table do not contain valid key codes.
+*/
+const unsigned char sc_to_kc_tbl2[] = {
+                                 /* Scan Code | Key        | Tested           */
+                                 /* ----------|------------|------------------*/
     SCAN_CODE_TODO,/*0x10 <(Media)PREV-TRACK> p.|r,c=,*/
     NOT_A_SCAN_CODE, /*0x11 Not a scan code .*/
     NOT_A_SCAN_CODE, /*0x12 Not a scan code .*/
@@ -299,33 +360,54 @@ unsigned char sc_to_kc_tbl3[] = {
     SCAN_CODE_TODO/*0x6D <(Media)WWW-Media-Select> p.|r,c=,*/
 };
 
-/* ********************** TODO:START ********************** */
+/*******************************************************************************
+The only remaining scan codes are the following 4-byte and 6-byte scan codes
+are not handled by this driver.
 
+Scan code                          | Meaning
+-----------------------------------|--------
+0xE0, 0x2A, 0xE0, 0x37             | print screen pressed
+0xE0, 0xB7, 0xE0, 0xAA             | print screen released
+0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed
 
+@remark There is no scan code for "pause key released" (it behaves as
+if it is released as soon as it's pressed)
 
-/*0xE0, 0x2A, 0xE0, 0x37| print screen pressed. */
-/*0xE0, 0xB7, 0xE0, 0xAA| print screen released. */
+@IMPORTANT @TODO Make sure the function that gets scan codes works correctly
+in case more than 2 byte scan codes are received. Note the prefix bytes.
+*******************************************************************************/
 
-/*0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5| pause pressed.*/ /*Note: There is no scan code for "pause key released" (it behaves as if it is released as soon as it's pressed)*/
+/*!
+    @function   get_key_code
 
-/* ********************** TODO:END   ********************** */
+    @discussion Converts a scan code into a key code.
 
-/* Returns the key code corresponding to the given key code. 0xFF indicates the
-given scan code does not exist. 0xFE indicates the given scan code is a "TODO",
-i.e. is valid but not currently assigned a key code. */
-unsigned char get_key_code(unsigned char sc) {
+    @param  sc  The scan code.
+
+    @result The key code.
+*/
+unsigned char get_key_code(unsigned char sc) { // @TODO
 
     if (sc == 0xE0 || sc == 0xE1) // Multi-byte scan codes.
         return 0xFF; // For now.
 
     if (sc > 0x00 && sc < 0x59) { // A valid single byte scan code.
-        return sc_to_kc_tbl2[sc];
+        return sc_to_kc_tbl1[sc];
     }
 
     return 0xFF;
 }
 
-char scan_code_to_ascii (unsigned char sc) {
+/*!
+    @function   scan_code_to_ascii
+
+    @discussion Converts a scan code to an ASCII code.
+
+    @param  sc  The scan code.
+
+    @result An ASCII character.
+*/
+char scan_code_to_ascii (unsigned char sc) { // @TODO
     unsigned char kc, r, c;
 
     kc = get_key_code(sc);
@@ -343,8 +425,17 @@ char scan_code_to_ascii (unsigned char sc) {
     return '^';
 }
 
-// Returns a 1 byte scan code from the keyboard.
-int get_scan_code(unsigned char *sc) {
+/*!
+    @function   get_scan_code
+
+    @discussion Polling based implementation. Returns a 1 byte scan code from
+    the keyboard.
+
+    @param  sc  Pointer in which to return the single scan code.
+
+    @result 0 on success. Non-0 on error.
+*/
+int get_scan_code(unsigned char *sc) { // @TODO
     ps_2_ctrl_stat_t stat;
     int r;
     unsigned char b;
@@ -354,7 +445,8 @@ int get_scan_code(unsigned char *sc) {
     if (r != 0)
         return 1;
 
-    while (stat.obuf_full == PS2_BUF_EMPTY) { // Loop until a scan code is received.
+    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
+                                                 received. */
         r = get_ctlr_stat(&stat);
 
         if (r != 0)
@@ -371,7 +463,16 @@ int get_scan_code(unsigned char *sc) {
     return 0;
 }
 
-// Returns a 2 byte scan code from the keyboard. Caller must ensure that `sc` is 2 bytes in size.
+/*!
+    @function get_scan_code2
+
+    @discussion Returns a 2 byte scan code from the keyboard. Caller must ensure
+    that `sc` is 2 bytes in size.
+
+    @param  sc  Pointer in which to return the 2-byte scan code.
+
+    @result 0 on success. Non-0 on error.
+*/
 int get_scan_code2(unsigned char *sc) {
     ps_2_ctrl_stat_t stat;
     int r;
@@ -382,7 +483,8 @@ int get_scan_code2(unsigned char *sc) {
     if (r != 0)
         return 1;
 
-    while (stat.obuf_full == PS2_BUF_EMPTY) { // Loop until a scan code is received.
+    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
+                                                 received. */
         r = get_ctlr_stat(&stat);
 
         if (r != 0)
@@ -403,7 +505,8 @@ int get_scan_code2(unsigned char *sc) {
     }
 
     // Get the second scan code byte.
-    while (stat.obuf_full == PS2_BUF_EMPTY) { // Loop until a scan code is received.
+    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
+                                                 received. */
         r = get_ctlr_stat(&stat);
 
         if (r != 0)

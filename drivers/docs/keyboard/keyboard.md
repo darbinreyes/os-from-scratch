@@ -34,3 +34,20 @@ intended to use them for. From this I must infer that this device is
 designed to be used very specifically, viz. wired up with an x86 CPU and
 connected in some manner to I/O port 0x60 and 0x64.
 
+### Scan codes
+
+A PS/2 keyboard does not return ASCII codes. Instead it returns 1 or more bytes
+called scan codes. See @doc [osdev.org]
+(https://wiki.osdev.org/Keyboard#Scan_Code_Set_1) documentation for a list of
+scan code values.
+
+### Key codes
+
+The recommended way of implementing a keyboard driver involves converting a
+scan code into a single byte value called a key code. For reasons not explained
+here, the recommended way of assigning key code values is by treating each key
+on the keyboard as a located on a 2D grid and defining the key code as the
+row and column number of the key packed into 8-bits. Specifically, the high
+order 3-bits encode the row number, and the low order 5-bits encode the column
+number. For example, the ESCAPE key is usually assigned the key code value 00H
+because it is physically located at row 0, column 0 on the keyboard.
