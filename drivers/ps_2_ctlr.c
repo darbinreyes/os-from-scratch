@@ -1,6 +1,7 @@
 /*!
     @header Driver for a PS/2 controller.
-    Typically used to interface with a PS/2 keyboard and PS/2 mouse.
+    Used to interface with a PS/2 device, typically a PS/2 keyboard and PS/2
+    mouse.
 
     @TODO Status register bit 3 definition is ambiguous. Is there a test I can
     perform to determine its meaning?
