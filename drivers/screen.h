@@ -14,15 +14,17 @@ void dead_loop(void);
 void print_assert(char *e, char *f, int l);
 
 /*!
-    @defined    assert
+    @defined assert
+
     @discussion An approximation to the assert macro found in the standard C
-                library header <assert.h>.
+    library header <assert.h>.
 */
 #define assert(e) \
     ( (void) ( (e) ? ((void) 0) : __assert(#e, __FILE__, __LINE__) ) )
 
 /*!
-    @defined    __assert
+    @defined __assert
+
     @discussion helper macro for assert macro.
 */
 #define __assert(e, file, line) \
