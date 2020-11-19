@@ -1,7 +1,7 @@
 /*!
-    @header A screen device driver.
-    Implements function for printing text to the screen. The underlying screen
-    device is IBM VGA.
+    @header A VGA screen driver.
+    Implements functions for printing text to the screen. The underlying screen
+    device is IBM VGA. @doc [docs/screen/screen.md].
 */
 
 #include "screen.h"
@@ -10,74 +10,237 @@
 
 /*!
     @defined VIDEO_ADDRESS
-    @discussion
-    Start of video memory address in text mode, 2 bytes each, first byte is
-    the ASCII code of the character, second byte is the character display
-    attributes e.g. text color.
+
+    @discussion Start of video memory address in text mode, 2 bytes each, first
+    byte is the ASCII code of the character, second byte is the character
+    display attributes e.g. text color.
+
 */
 #define VIDEO_ADDRESS 0xB8000
 
 /*!
     @defined MAX_ROWS
-    @discussion
-    In text mode, the total number of character rows.
+
+    @discussion In text mode, the total number of character rows.
 */
 #define MAX_ROWS 25
 
 /*!
     @defined MAX_COLS
-    @discussion
-    In text mode, the total number of character columns.
+
+    @discussion In text mode, the total number of character columns.
 */
 #define MAX_COLS 80
 
 /*!
     @defined CHAR_ATTR_WHITE_ON_BLACK
-    @discussion
-    Character attribute byte for white/black foreground/background.
+
+    @discussion Character attribute byte for white/black foreground/background.
 */
 #define CHAR_ATTR_WHITE_ON_BLACK 0x0F
 
 /*!
     @defined REG_SCREEN_CTRL_IO_PORT
-    @discussion
-    Screen device control I/O port.
+
+    @discussion Screen device control I/O port.
 */
 #define REG_SCREEN_CTRL_IO_PORT 0x3D4
 
 /*!
     @defined REG_SCREEN_DATA_IO_PORT
-    @discussion
-    Screen device data I/O port.
+
+    @discussion Screen device data I/O port.
 */
 #define REG_SCREEN_DATA_IO_PORT 0x3D5
 
 /*!
     @defined CURSOR_LOCATION_HIGH_BYTE
-    CRTC Registers - Cursor position control. Cursor Location High 0xE.
-Cursor Location Low 0xF.
+
+    @discussion CRTC Registers - Cursor position control. Cursor Location High
+    0xE.
+
 */
 #define CURSOR_LOCATION_HIGH_BYTE 0x0E
 
 /*!
     @defined CURSOR_LOCATION_LOW_BYTE
-    CRTC Registers - Cursor position control. Cursor Location Low 0xF.
+
+    @discussion CRTC Registers - Cursor position control. Cursor Location Low
+    0xF.
 */
 #define CURSOR_LOCATION_LOW_BYTE 0x0F
 
-int row_col_to_screen_video_mem_offset(int row, int col);
+/*!
+    @function row_col_to_screen_video_mem_offset
 
-int vid_mem_offset_to_row (int vid_mem_offset);
+    @discussion Converts a row and column number to an offset into video memory.
 
-int get_cursor(void);
+    @param    row    The row number.
+    @param    col    The column number.
 
-void set_cursor(int vid_mem_offset);
+    @result The offset into video memory corresponding to the given row and
+    column.
+*/
+static inline int row_col_to_screen_video_mem_offset(int row, int col) {
+    return ((row * MAX_COLS) + col) * 2;
+}
 
-int handle_scrolling(int vid_mem_offset);
+/*!
+    @function vid_mem_offset_to_row
+
+    @discussion Returns the row number corresponding to the given offset into
+    video memory.
+
+    @param    vid_mem_offset    An offset into video.
+
+    @result The row number that corresponds to the given video memory offset.
+*/
+static inline int vid_mem_offset_to_row (int vid_mem_offset) {
+    /* The algebra is: `(row * MAX_COLS + col) * 2` / `(MAX_COLS* 2)` == row. */
+    return vid_mem_offset / (MAX_COLS * 2);
+}
+
+/*!
+    @function get_cursor
+
+    @discussion Returns the video memory offset corresponding to the current
+    position of the cursor.
+
+    @result The video memory offset corresponding to the current cursor
+    position.
+*/
+static inline int get_cursor(void) {
+    int vid_mem_offset;
+
+    /* The cursor position is stored in the VGA's internal registers in the
+    form of a character cell offset, as opposed to a video memory offset. A
+    character cell offset is = `row * MAX_COLS + col` while the video memory
+    offset is = `(row * MAX_COLS + col) * 2` since in video memory space
+    each character cell gets 2 bytes: viz. <ASCII CODE> and <ATTRIBUTES>. */
+    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    vid_mem_offset = port_byte_in(REG_SCREEN_DATA_IO_PORT) << 8; // High byte.
+    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    vid_mem_offset += port_byte_in(REG_SCREEN_DATA_IO_PORT); // Low byte.
+
+    return vid_mem_offset * 2;
+}
+
+/*!
+    @function set_cursor
+
+    @discussion Takes a cursor position in the form of a video memory offset,
+    converts that into a character offset, and finally writes that character
+    offset into the appropriate VGA internal registers.
+
+    @param    vid_mem_offset    The desired position of the cursor in the form
+                                of a video memory offset.
+*/
+static inline void set_cursor(int vid_mem_offset) {
+
+    /* The algebra is: character offset = `(row * MAX_COLS + col) * 2` / `2` ==
+    `(row * MAX_COLS + col)`. */
+    vid_mem_offset /= 2;
+
+    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    port_byte_out(REG_SCREEN_DATA_IO_PORT, (unsigned char) (vid_mem_offset >> 8) );
+    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
+
+}
+
+/*!
+    @TODO Replace with to string.h->memcpy().
+    FYI: size_t is defined in stddef.h. On my mac is is a typedef of unsigned
+    long.
+*/
+static void memory_copy (void *dst, void *src, int n) {
+    unsigned char *d, *s;
+
+    if (dst == NULL || src == NULL || n == 0)
+        return;
+
+    d = dst;
+    s = src;
+
+    for (int i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+}
+
+/*!
+    @TODO Replace with to string.h->memset().
+*/
+static void zero_memory (void *dst, int n) {
+    unsigned char *d;
+
+    if (dst == NULL || n == 0)
+        return;
+
+    d = dst;
+
+    for (int i = 0; i < n; i++)
+        d[i] = 0;
+}
+
+/*!
+    @function handle_scrolling
+
+    @discussion Performs a scrolling operation if the given video memory offset
+    indicates that the cursor has fallen off the bottom of the
+    screen. Scrolling means copying every row upwards and clearing
+    the last row.
+
+    @param    vid_mem_offset    The video memory offset of the current cursor
+                                position.
+
+    @result The video memory offset of the cursor position after scrolling is
+    performed.
+*/
+static int handle_scrolling(int vid_mem_offset) {
+    int trow;
+    unsigned char *vid_mem;
+
+    /*
+        Steps:
+
+        Check if scrolling must be done.
+        if no, return vid_mem_offset unchanged.
+        if yes,
+            Copy row to row-1, starting at row == 1, ending at row == 24.
+            Clear row == 24.
+            Return video memory offset of row == 24, col == 0.
+
+    */
+
+    trow = vid_mem_offset_to_row (vid_mem_offset);
+
+    if (trow < 25)
+        return vid_mem_offset;
+
+    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+
+    /*!
+        @defined SCROLL_MEM_COPY_SIZE
+
+        @discussion The number of bytes that must be copied to perform a scroll
+        operation. Scrolling requires copying 24 out of the 25 rows.
+    */
+    #define SCROLL_MEM_COPY_SIZE (((MAX_ROWS - 1) * MAX_COLS) * 2)
+
+    /* Copy rows. */
+    memory_copy(vid_mem, vid_mem + MAX_COLS * 2, SCROLL_MEM_COPY_SIZE);
+
+    /* Clear last row. */
+    zero_memory (vid_mem + SCROLL_MEM_COPY_SIZE, MAX_COLS * 2);
+
+    vid_mem_offset = row_col_to_screen_video_mem_offset (24, 0);
+
+    return vid_mem_offset;
+}
 
 
 /*!
-    @function    print_ch_at
+    @function print_ch_at
     @abstraction Prints a single character to the screen at the specified
     position and specified background/foreground color.
 
@@ -88,13 +251,12 @@ int handle_scrolling(int vid_mem_offset);
     @param    row    Row position of the character.
     @param    col    Column position of the character.
 
-    @discussion
-    Print a single character to the screen at the specified position. The
-    meaning of "position": the screen is treated as a 25x80 grid of characters
-    i.e. 25 rows, 80 columns. The special position <row, col> == <-1, -1>
-    instructs the function to print the character at the current cursor
-    position. The cursor position is automatically advanced after any print,
-    regardless of the arguments.
+    @discussion Print a single character to the screen at the specified
+    position. The meaning of "position": the screen is treated as a 25x80 grid
+    of characters i.e. 25 rows, 80 columns. The special position
+    <row, col> == <-1, -1> instructs the function to print the character at the
+    current cursor position. The cursor position is automatically advanced after
+    any print, regardless of the arguments.
 
     The cursor position is automatically advanced after each call to this
     function, so that a subsequent call prints to the next adjacent cursor
@@ -125,7 +287,7 @@ void print_ch_at(char c, char cattr, int row, int col) {
     if (cattr == 0)
         cattr = CHAR_ATTR_WHITE_ON_BLACK;
 
-    /* Determine where the character wills be printed. */
+    /* Determine where the character will be printed. */
     if (row >= 0 && col >= 0) {
         vid_mem_offset = row_col_to_screen_video_mem_offset(row, col);
     } else {
@@ -135,179 +297,60 @@ void print_ch_at(char c, char cattr, int row, int col) {
     if (c == '\n') {
         /* Move cursor to a new line. */
 
-        /*
-
-            Convert vid_mem_offset into current row position. The algebra is:
-            `(row * MAX_COLS + col) * 2` / `(MAX_COLS* 2)` == row.
-
-        */
         trow = vid_mem_offset_to_row (vid_mem_offset);
-        /*
 
-            Set the video memory offset to the last column of the current row.
-            Then the code below will increment the video memory offset, which
-            has the net effect of leaving the cursor at the first column of the
-            next row.
-
-        */
+        /* Set the video memory offset to the last column of the current row.
+        Then the code below will increment the video memory offset, which
+        has the net effect of leaving the cursor at the first column of the
+        next row. */
         vid_mem_offset = row_col_to_screen_video_mem_offset(trow, 79);
     } else {
-        /* Print the character as-is. */
+        /* Print the given character. */
         vid_mem[vid_mem_offset] = c;
         vid_mem[vid_mem_offset + 1] = cattr;
     }
 
-    /* Implement rudimentary auto scrolling. */
+
 
     /* Advance the cursor position. */
     vid_mem_offset += 2;
 
+    /* Auto scroll. */
     vid_mem_offset = handle_scrolling(vid_mem_offset);
 
     set_cursor(vid_mem_offset);
 }
 
-/****** Helper functions. *******/
+/*!
+    @function clear_screen
 
-int row_col_to_screen_video_mem_offset(int row, int col) {
-    return ((row * MAX_COLS) + col) * 2;
-}
-
-int vid_mem_offset_to_row (int vid_mem_offset) {
-    /*
-
-        Convert vid_mem_offset into current row position. The algebra is:
-        `(row * MAX_COLS + col) * 2` / `(MAX_COLS* 2)` == row.
-
-    */
-    return vid_mem_offset / (MAX_COLS * 2);
-}
-
-/*
-
-    Returns the video memory offset corresponding to the current position of the
-    cursor.
-
+    @discussion Sets every character cell to the background color.
 */
-int get_cursor(void) {
-    int vid_mem_offset;
-
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    vid_mem_offset = port_byte_in(REG_SCREEN_DATA_IO_PORT) << 8;
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    vid_mem_offset += port_byte_in(REG_SCREEN_DATA_IO_PORT);
-
-    /*
-
-        The cursor position is stored in the VGA's internal registers in the
-        form of a character cell offset, as opposed to a video memory offset. A
-        character cell offset is = `row * MAX_COLS + col` while the video memory
-        offset is = `(row * MAX_COLS + col) * 2` since in video memory space
-        each character cell gets 2 bytes: viz. <ASCII CODE> and <ATTRIBUTES>.
-
-    */
-
-
-    return vid_mem_offset * 2;
-}
-
-/*
-
-    Takes a cursor position in the form of a video memory offset, converts that
-    into a character offset, and finally writes that character offset into the
-    appropriate VGA internal registers.
-
-
-*/
-void set_cursor(int vid_mem_offset) {
-
-    /*
-
-        The algebra is: character offset = `(row * MAX_COLS + col) * 2` / `2` ==
-        `(row * MAX_COLS + col)`.
-
-    */
-    vid_mem_offset /= 2;
-
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (unsigned char) (vid_mem_offset >> 8) );
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
-
-}
-
-void memory_copy (void *dst, void *src, int n) {
-    unsigned char *d, *s;
-
-    if (dst == NULL || src == NULL || n == 0)
-        return;
-
-    d = dst;
-    s = src;
-
-    for (int i = 0; i < n; i++) {
-        d[i] = s[i];
-    }
-}
-
-void zero_memory (void *dst, int n) {
-    unsigned char *d;
-
-    if (dst == NULL || n == 0)
-        return;
-
-    d = dst;
-
-    for (int i = 0; i < n; i++)
-        d[i] = 0;
-}
-
-int handle_scrolling(int vid_mem_offset) {
-    int trow;
-    unsigned char *vid_mem;
-
-    /*
-        Steps:
-
-        Check if scrolling must be done.
-        if no, return vid_mem_offset unchanged.
-        if yes,
-            Copy row to row-1, starting at row == 1, ending at row == 24.
-            Clear row == 24.
-            Return video memory offset of row == 24, col == 0.
-
-    */
-
-    trow = vid_mem_offset_to_row (vid_mem_offset);
-
-    if (trow < 25)
-        return vid_mem_offset;
-
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
-
-    /* Scrolling requires copying 24 out of the 25 rows. */
-    #define SCROLL_MEM_COPY_SIZE (((MAX_ROWS - 1) * MAX_COLS) * 2)
-
-    memory_copy(vid_mem, vid_mem + MAX_COLS * 2, SCROLL_MEM_COPY_SIZE); // Copy rows.
-
-    zero_memory (vid_mem + SCROLL_MEM_COPY_SIZE, MAX_COLS * 2); // Clear last row.
-
-    vid_mem_offset = row_col_to_screen_video_mem_offset (24, 0);
-
-    return vid_mem_offset;
-}
-
 void clear_screen(void) {
     unsigned char *vid_mem;
 
     vid_mem = (unsigned char *) VIDEO_ADDRESS;
 
+    /*!
+        @defined CLEAR_SIZE
+
+        @discussion The number of bytes that must be zeroed to perform a clear
+        screen operation.
+    */
     #define CLEAR_SIZE (MAX_ROWS * MAX_COLS * 2)
 
     zero_memory (vid_mem, CLEAR_SIZE);
 }
 
-/* Note: Empty string is a NO-OP. */
+/*!
+    @function print_at
+
+    @discussion Prints a string starting at the specified position.
+
+    @param    s    The string to print.
+    @param    row    Row number of the position.
+    @param    col    Column number of the position.
+*/
 void print_at(const char *s, int row, int col) {
 
     if (*s == '\0')
@@ -322,6 +365,13 @@ void print_at(const char *s, int row, int col) {
     }
 }
 
+/*!
+    @function print
+
+    @discussion Prints a string at the current cursor position.
+
+    @param    s    The string to print.
+*/
 void print(const char *s) {
 
     while (*s != '\0') {
@@ -330,7 +380,13 @@ void print(const char *s) {
     }
 }
 
-/* Prints a byte in binary format.*/
+/*!
+    @function print_byteb
+
+    @discussion Prints a byte in binary format.
+
+    @param    b    The byte value to print.
+*/
 void print_byteb (unsigned char b) {
     print("0b");
     for (int i = 7; i >= 0; i--)
@@ -340,9 +396,19 @@ void print_byteb (unsigned char b) {
             print_ch_at('0', 0, -1, -1);
 }
 
-// Nibble to ASCII hexit. Upper nibble is masked out, lower nibble is converted to an ASCII character in the set [0-9|A-F].
-char nibtoa (unsigned char b) {
-    b = 0x0F & b; // lower nibble.
+/*!
+    @function nibtoa
+
+    @discussion Converts a nibble to an ASCII hexadecimal digit. Upper nibble is
+    masked out, lower nibble is converted to an ASCII character in the set
+    [0-9|A-F].
+
+    @param    b    The nibble to convert to ASCII.
+
+    @result The ASCII encoded hexadecimal digit.
+*/
+static inline char nibtoa (unsigned char b) {
+    b = 0x0F & b; // Take the lower nibble.
 
     if (b <= 9)
         b += '0';
@@ -351,6 +417,16 @@ char nibtoa (unsigned char b) {
     return b;
 }
 
+/*!
+    @function print_byteh
+
+    @discussion Prints a given byte value in hexadecimal format.
+
+    @param    b    The byte value to print.
+
+    @param    pf    Flag indicating whether or not to include a 0x prefix. 1 =
+                    include prefix.
+*/
 void print_byteh (unsigned char b, int pf) {
     char c;
 
@@ -366,6 +442,13 @@ void print_byteh (unsigned char b, int pf) {
     print_ch_at(c, 0, -1, -1);
 }
 
+/*!
+    @function print_uint32h
+
+    @discussion Prints an unsigned 32-bit value in hexadecimal format.
+
+    @param    i    The 32-bit value to print.
+*/
 void print_uint32h(uint32_t i) {
     print_byteh ((i >> 24) & 0xFFU, 0);
     print_byteh ((i >> 16) & 0xFFU, 0);
@@ -375,21 +458,21 @@ void print_uint32h(uint32_t i) {
 
 /*!
     @defined    EOF
+
     @discussion    End of file. @doc [stdio.h].
 */
 #define EOF (-1)
 
 /*!
-    @function    isspace
+    @function isspace
 
-    @discussion    The isspace() function tests for the white-space characters.
-                   @doc [man isspace / ctype.h].
+    @discussion The isspace() function tests for the white-space characters.
+    @doc [man isspace / ctype.h].
 
     @param    c    The character to test.
 
-    @result    The isspace() function returns zero if the character tests false
-               and returns non-zero if the character tests true.
-
+    @result The isspace() function returns zero if the character tests false
+    and returns non-zero if the character tests true.
 */
 static inline int isspace(int c) {
     switch (c) {
@@ -410,11 +493,12 @@ static inline int isspace(int c) {
 }
 
 /*!
-    @function    isdigit
-    @discussion    The isdigit() function tests for a decimal digit character.
+    @function isdigit
 
-    @result    The isdigit() function returns zero if the character tests false
-               and returns non-zero if the character tests true.
+    @discussion The isdigit() function tests for a decimal digit character.
+
+    @result The isdigit() function returns zero if the character tests false
+    and returns non-zero if the character tests true.
 */
 static inline int isdigit(int c) {
     if (c >= '0' && c <= '9')
@@ -424,12 +508,13 @@ static inline int isdigit(int c) {
 }
 
 /*!
-    @function    isxdigit
-    @discussion    The isxdigit() function tests for any hexadecimal-digit
-                   character.
+    @function isxdigit
 
-    @result    The isxdigit() function returns zero if the character tests false
-               and returns non-zero if the character tests true.
+    @discussion The isxdigit() function tests for any hexadecimal-digit
+    character.
+
+    @result The isxdigit() function returns zero if the character tests false
+    and returns non-zero if the character tests true.
 */
 static inline int isxdigit(int c) {
     if ((c >= '0' && c <= '9') ||  (c >= 'A' && c <= 'F') ||  (c >= 'a' && c <= 'f'))
@@ -439,17 +524,16 @@ static inline int isxdigit(int c) {
 }
 
 /*!
-    @function    digittoint
-    @discussion    The digittoint() function converts a numeric character to its
-                   corresponding integer value.  The character can be any
-                   decimal digit or hexadecimal digit.  With hexadecimal
-                   characters, the case of the values does not matter.
-                   @doc [man digittoint / ctype.h].
+    @function digittoint
 
-    @result     The digittoint() function always returns an integer from the
-                range of 0 to 15. If the given character was not a digit as
-                defined by isxdigit(3), the function will return 0.
+    @discussion The digittoint() function converts a numeric character to its
+    corresponding integer value.  The character can be any decimal digit or
+    hexadecimal digit. With hexadecimal characters, the case of the values does
+    not matter. @doc [man digittoint / ctype.h].
 
+    @result The digittoint() function always returns an integer from the
+    range of 0 to 15. If the given character was not a digit as
+    defined by isxdigit(3), the function will return 0.
 */
 static inline int digittoint(int c) {
     if (!isxdigit(c))
@@ -468,15 +552,15 @@ static inline int digittoint(int c) {
 }
 
 /*!
-    @function    atoi
-    @discussion    The atoi() function converts the initial portion of the
-                   string pointed to by str to int representation. It is
-                   equivalent to: `(int)strtol(str, (char **)NULL, 10);`.
-                   @doc [man atoi / stdlib.h].
+    @function atoi
+
+    @discussion The atoi() function converts the initial portion of the
+    string pointed to by str to int representation. It is equivalent to:
+    `(int)strtol(str, (char **)NULL, 10);`. @doc [man atoi / stdlib.h].
 
     @param    str    The string to convert to an integer.
 
-    @result    The result of the conversion to an integer.
+    @result The result of the conversion to an integer.
 
     @TODO Test negative numbers.
 */
@@ -517,14 +601,14 @@ int atoi(const char *str) {
 }
 
 /*!
-    @function    itoa
-    @discussion Converts an integer to a string. This function not part of the
-                standard C library.
+    @function itoa
 
-    @param    i the integer to convert to a string.
+    @discussion Converts an integer to a string. @remark This function not part
+    of the standard C library.
 
-    @result    String containing the result of the conversion.
+    @param    i    The integer to convert to a string.
 
+    @result String containing the result of the conversion.
 */
 // char *itoa(int32_t i, char *s) {
 //     //static char str[1 + 10 + 1]; // Max int32_t value = 2**31 - 1 = 2,147,483,647. Min. 2**31 = -2147483648. 1 negative sign, 10 digits, 1 null terminator.
@@ -547,7 +631,8 @@ int atoi(const char *str) {
 // }
 
 /*!
-    @function    dead_loop
+    @function dead_loop
+
     @discussion Infinite loop.
 
 */
@@ -556,9 +641,10 @@ void dead_loop(void) {
         ;
 }
 /*!
-    @function    print_assert
-    @discussion Prints a message associated with the assert macro.
-                @doc [assert.h].
+    @function print_assert
+
+    @discussion Prints a message associated with the assert macro. @doc
+    [assert.h].
 
 */
 void print_assert(char *e, char *f, int l) {
