@@ -26,6 +26,7 @@ enum _ps2_kbd_cmd_t {
         before checking for the response.
       * "Response: default" means "Response: 0xFA=ACK/0xFE=RESEND."
     ***************************************************************************/
+    // @TODO Cleanup ugly comments.
     SET_LEDS = 0xED, // [x] Tested. Expects Data: Yes. Response: default.
     ECHO = 0xEE, /* [x] Tested. Expects Data: No. Response:
                     0xEE=echo/0xFE=RESEND. */

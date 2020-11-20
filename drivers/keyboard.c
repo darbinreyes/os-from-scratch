@@ -2,14 +2,17 @@
     @header PS/2 keyboard driver.
     Provides basic functions for getting input from a PS/2 keyboard.
 
-  * @TODO
-    * [] Test all scan codes.
-    * [] short get_scn_code(void);
-    * [] char getch(void);
-    * [] char *prompt_user_for_str(char *prompt);
-    * [] With interrupts.
-    * [] Implement key state table so shift key works. 0 = released 1 = pressed.
-    * [] osdev.org "driver model".
+    * @TODO
+      * [] Test all scan codes.
+      * [] short get_scn_code(void);
+      * [] char getch(void);
+      * [] char *prompt_user_for_str(char *prompt);
+      * [] With interrupts.
+      * [] Implement key state table so shift key works. 0 = released 1 =
+        pressed.
+      * [] @doc [See "driver model"]
+        (https://wiki.osdev.org/Keyboard#Driver_Model). Also see @doc
+        [My keyboard driver notes](./docs/keyboard/keyboard.md)
 */
 
 #include "../mylibc/mylibc.h"
@@ -386,7 +389,8 @@ in case more than 2 byte scan codes are received. Note the prefix bytes.
 
     @result The key code.
 */
-unsigned char get_key_code(unsigned char sc) { // @TODO
+unsigned char get_key_code(unsigned char sc) {
+    // @TODO Handle multi-byte scan codes correctly.
 
     if (sc == 0xE0 || sc == 0xE1) // Multi-byte scan codes.
         return 0xFF; // For now.
@@ -434,6 +438,8 @@ char scan_code_to_ascii (unsigned char sc) { // @TODO
     @param  sc  Pointer in which to return the single scan code.
 
     @result 0 on success. Non-0 on error.
+            1 error, failed to get PS/2 controller status register.
+            2 error, failed to receive data byte from PS/2 keyboard.
 */
 int get_scan_code(unsigned char *sc) { // @TODO
     ps_2_ctrl_stat_t stat;
@@ -504,7 +510,7 @@ int get_scan_code2(unsigned char *sc) {
         return 0;
     }
 
-    // Get the second scan code byte.
+    /* Get the second scan code byte. */
     while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
                                                  received. */
         r = get_ctlr_stat(&stat);
