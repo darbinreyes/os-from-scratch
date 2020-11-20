@@ -1,4 +1,5 @@
-; @abstract Calls the kernel's entry point function.
+;!
+; @header Calls the kernel's entry point function.
 ; The purpose of this small assembly program is to ensure that the kernel's
 ; entry point function is successfully called irrespective of where in the
 ; kernel binary the kernel's entry point happens to be located.

@@ -1,3 +1,4 @@
+;!
 ; @abstract
 ; Printing routine for 32-bit protected mode. We cannot use the BIOS ISRs after
 ; the switch into protected mode.
@@ -21,6 +22,7 @@ WHITE_ON_BLACK equ 0x0f  ; Character attributes - white foreground, black
 [bits 32]                ; NASM assembler directive - generate code to be
                          ; executed in 32-bit mode.
 
+;!
 ; @procedure    print_string_pm    Procedure for printing a null terminated
 ;                                  string to the screen in 32-bit protected
 ;                                  mode. Printing always starts at the

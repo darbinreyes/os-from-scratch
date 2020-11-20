@@ -1,3 +1,4 @@
+;!
 ; @abstract The boot sector program.
 ; The BIOS transfers control to this program, this program transfers control to
 ; the kernel.
@@ -6,7 +7,7 @@
 ; 2. Switches the CPU mode from real-mode to protected-mode. This is necessary
 ;    because the kernel is compiled in 32-bit code.
 ; 3. Transfers control to the kernel.
-
+;
 ; @discussion
 ; Initially, the machine is under the control of the BIOS. Towards the end of
 ; its execution, the BIOS will attempt to boot an operating system by following
@@ -70,6 +71,7 @@ jmp $                 ; Infinite loop.
           ; contain the [bits 32] assembler directive.
           ; @doc [NASM manual, Chapter 7.1]
 
+;!
 ; @procedure    load_kernel    Loads the kernel from BOOT_DRIVE into memory at
 ;                              address KERNEL_OFFSET. It is assumed that the
 ;                              kernel is stored in the second sector of the
@@ -97,6 +99,7 @@ load_kernel:
 [bits 32] ; NASM assembler directive - generate code to be executed in 32-bit
           ; mode.
 
+;!
 ; @procedure    BEGIN_PM    We jump here if we successfully switch into 32-bit
 ;                           protected mode.
 BEGIN_PM:

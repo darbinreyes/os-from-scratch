@@ -6,7 +6,7 @@
 
     @discussion Commands that can be sent to the PS/2 controller.
 
-    @constant   R_CMD_BYTE
+    @constant   R_CMD_BYTE  @TODO
     @constant   W_CMD_BYTE
     @constant   SELF_TEST
     @constant   INTERFACE_TEST

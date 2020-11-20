@@ -1,4 +1,5 @@
-; @abstract Definition of the global descriptor table (GDT).
+;!
+; @header Definition of the global descriptor table (GDT).
 ; This file defines the GDT. Defining the GDT is a necessary prerequisite step
 ; to switching the CPU mode from 16-bit to 32-bit mode. The definition of the
 ; GDT in this file consists of two segment descriptors. A code segment

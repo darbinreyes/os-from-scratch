@@ -1,7 +1,7 @@
 /*!
     @header A VGA screen driver.
     Implements functions for printing text to the screen. The underlying screen
-    device is IBM VGA. @doc [docs/screen/screen.md].
+    device is IBM VGA. @doc [IBM VGA docs](./docs/screen/screen.md).
 */
 
 #include "screen.h"
@@ -640,6 +640,7 @@ void dead_loop(void) {
     while (1)
         ;
 }
+
 /*!
     @function print_assert
 

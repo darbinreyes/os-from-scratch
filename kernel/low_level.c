@@ -10,6 +10,8 @@ unsigned char port_byte_in (unsigned short port) {
 
     unsigned char result;
 
+    // @TODO Replace with assembly code wrapper per lil OS book.
+
     __asm__("in %%dx, %%al" : "=a" (result) : "d" (port) );
 
     return result;

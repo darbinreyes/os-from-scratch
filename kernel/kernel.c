@@ -12,7 +12,7 @@
 #include "../mylibc/mylibc.h"
 #include "idt.h"
 
-extern uint64_t idt[];
+extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
 
 /*!
     @function    main

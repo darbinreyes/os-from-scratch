@@ -1,3 +1,4 @@
+;!
 ; @abstract
 ; Performs the final steps of switching the CPU mode from 16-bit real-address
 ; mode to 32-bit protected-mode (PM). @doc [Intel 64 & IA-32 SDM, Vol.3, Chapter
@@ -14,7 +15,7 @@ STACK_ADDR_PM equ 0x90000 ; Address used to initialize the frame pointer (EBP)
 [bits 16] ; NASM assembler directive - generate code to be executed in 16-bit
           ; mode.
 
-
+;!
 ; @procedure    switch_to_pm    Procedure to switch the CPU mode from 16-bit
 ;                               real-address mode to 32-bit protected mode.
 ;
@@ -53,6 +54,7 @@ switch_to_pm:
 [bits 32] ; NASM assembler directive - generate code to be executed in 32-bit
           ; mode.
 
+;!
 ; @procedure    init_pm    Procedure jumped to immediately following the CPU
 ;                          mode switch into 32-bit protected mode. This
 ;                          procedure loads all segment registers, except the

@@ -63,15 +63,14 @@ int get_ctlr_stat(ps_2_ctrl_stat_t *stat) {
     pb = (unsigned char *) stat;
     *pb = b;
 
-    /* FYI:
+    /*
+        @FYI
+        * Type conversion not allowed.
+          * struct <- int
 
-        Type conversion not allowed.
-            struct <- int
-
-        Allowed
-            int* <- struct*
-            *struct = int
-
+        * Allowed
+          * int* <- struct*
+          * *struct = int
     */
 
     return 0;
