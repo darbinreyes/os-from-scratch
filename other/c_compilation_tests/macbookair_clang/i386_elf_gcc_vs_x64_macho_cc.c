@@ -35,6 +35,8 @@ int main(void) {
     */
 
     printf("a[x] = %d.\n", a[1]); //  warning: array index 3 is past the end of the array
+    printf("sizeof(int) = %lu.\n", sizeof(int));
+    printf("sizeof(size_t) = %lu.\n", sizeof(size_t));
     printf("sizeof(void*) = %lu.\n", sizeof(void*));
     printf("sizeof(unsigned long) = %lu.\n", sizeof(unsigned long));
     printf("sizeof(foo) = %lu.\n", sizeof(foo));

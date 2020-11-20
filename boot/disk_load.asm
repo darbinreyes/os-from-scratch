@@ -1,3 +1,4 @@
+;!
 ; @procedure    disk_load    Procedure to read DH number of sectors from a drive
 ;                            DL into memory at address ES:BX. Uses the int 0x13
 ;                            BIOS ISR.
@@ -33,7 +34,6 @@ disk_load:
     ; DH := head number (0 based index).
     ; CL := sector number (1 based index).
     ;
-
     mov ch, 0x00             ; Select cylinder 0.
     mov dh, 0x00             ; Select head 0.
     mov cl, 0x02             ; Select sector 2, since sector 1 contains this

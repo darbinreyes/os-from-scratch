@@ -1,4 +1,4 @@
-;
+;!
 ; @abstract
 ; Printing routine for 32-bit protected mode. We cannot use the BIOS ISRs after
 ; the switch into protected mode.
@@ -11,19 +11,25 @@
 ; EBX.
 ;
 
-VIDEO_MEMORY equ 0xb8000 ;;;
-; Address of the first pair of bytes (ASCII code, character attributes) for
-; writing to the screen device in text mode. It corresponds to the upper-left
-; character cell.
+VIDEO_MEMORY equ 0xb8000 ; Address of the first pair of bytes (ASCII code,
+                         ; character attributes) for writing to the screen
+                         ; device in text mode. It corresponds to the upper-left
+                         ; character cell.
 
-WHITE_ON_BLACK equ 0x0f ; Character attributes - white foreground, black background.
+WHITE_ON_BLACK equ 0x0f  ; Character attributes - white foreground, black
+                         ; background.
 
-[bits 32] ; NASM assembler directive - generate code to be executed in 32-bit mode.
+[bits 32]                ; NASM assembler directive - generate code to be
+                         ; executed in 32-bit mode.
 
+;!
+; @procedure    print_string_pm    Procedure for printing a null terminated
+;                                  string to the screen in 32-bit protected
+;                                  mode. Printing always starts at the
+;                                  upper-left character cell.
 ;
-; @function.label    print_string_pm    Procedure for printing a null terminated string to the screen in 32-bit protected mode. Printing always starts at the upper-left character cell.
-;
-; @param.register    EBX                The address of the first character of a null terminated ASCII string.
+; @register    EBX                 The address of the first character of a null
+;                                  terminated ASCII string.
 ;
 print_string_pm:
     pusha
@@ -31,16 +37,18 @@ print_string_pm:
 
     print_string_pm_loop:
 
-    mov al, [ebx] ; Store the character at EBX in AL. AL := *EBX.
-    mov ah, WHITE_ON_BLACK ; Store the character attributes in AH. AH := WHITE_ON_BLACK.
+    mov al, [ebx]          ; Store the character at EBX in AL. AL := *EBX.
+    mov ah, WHITE_ON_BLACK ; Store the character attributes in AH.
+                           ; AH := WHITE_ON_BLACK.
 
-    cmp al, 0 ; Check if this is the end of the string.
+    cmp al, 0              ; Check if this is the end of the string.
     je print_string_pm_done
 
-    mov [edx], ax ; Store the character and its attributes at the current character cell.
+    mov [edx], ax          ; Store the character and its attributes at the
+                           ; current character cell.
 
-    add ebx, 1 ; Advance to the next character of the string.
-    add edx, 2 ; Advance to the next pair of bytes in video memory.
+    add ebx, 1              ; Advance to the next character of the string.
+    add edx, 2              ; Advance to the next pair of bytes in video memory.
 
     jmp print_string_pm_loop
 
