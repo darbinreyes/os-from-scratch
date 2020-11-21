@@ -1,6 +1,6 @@
 /*!
     @header Temporary and non-standard definitions.
-    Temporary place for standard C library definition used definitions. Also,
+    Temporary place for standard C library definition definitions. Also,
     definitions which are not part of the standard C library.
 
 */
