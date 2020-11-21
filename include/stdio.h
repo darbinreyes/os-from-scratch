@@ -8,6 +8,6 @@
     constant NULL is often used in place of zero, as a mnemonic to indicate more
     clearly that this is a special value for a pointer."
 */
-#define NULL (0)
+#define NULL ((void *)0)
 
 #endif
