@@ -8,13 +8,6 @@
 #define __MY_LIB_C_H__
 
 /*!
-    @defined    NULL
-
-    @discussion An alias for 0. Typically used with pointers.
-*/
-#define NULL (0)
-
-/*!
     @defined    BITN(b)
 
     @discussion Macro for creating an integer with bit `b` set and all other
