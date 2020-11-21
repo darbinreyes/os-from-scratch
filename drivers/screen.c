@@ -4,9 +4,12 @@
     device is IBM VGA. @doc [IBM VGA docs](./docs/screen/screen.md).
 */
 
+#include "../include/mylibc.h"
+#include "../include/stdio.h" // NULL
+#include "../include/stdint.h" // uint32_t
 #include "screen.h"
 #include "../kernel/low_level.h"
-#include "../mylibc/mylibc.h"
+
 
 /*!
     @defined VIDEO_ADDRESS

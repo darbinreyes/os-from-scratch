@@ -9,7 +9,7 @@
 
 
 #include "../drivers/screen.h"
-#include "../mylibc/mylibc.h"
+#include "../include/stdint.h" // uint64_t
 #include "idt.h"
 
 extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
