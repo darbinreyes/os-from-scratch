@@ -13,4 +13,11 @@
 */
 #define NULL ((void *)0)
 
+/*!
+    @defined    EOF
+
+    @discussion    End of file.
+*/
+#define EOF (-1)
+
 #endif

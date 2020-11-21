@@ -87,3 +87,5 @@ kernel.dis: kernel.bin
 
 clean:
 	rm -Rf *.bin *.o os-image
+
+# @TODO add stdlib.c etc.
