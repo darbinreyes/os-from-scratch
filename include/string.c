@@ -14,7 +14,7 @@ RETURN VALUES
 
 
 */
-void *memcpy(void * dst, const void * src, size_t n) {
+void *memcpy(void *restrict dst, const void *restrict src, size_t n) {
     return NULL;
 }
 
