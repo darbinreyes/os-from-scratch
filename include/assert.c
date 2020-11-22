@@ -1,3 +1,5 @@
+#include "../drivers/screen.h"
+
 /*!
     @function dead_loop
 
@@ -6,8 +8,10 @@
 
 */
 void dead_loop(void) {
+#ifndef NDEADLOOP
     while (1)
         ;
+#endif
 }
 
 /*!

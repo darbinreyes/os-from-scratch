@@ -3,7 +3,15 @@
 */
 
 #ifndef __ASSERT_H__
-#define __ASSERT_H__
+#define __ASSERT_H__ // @TODO Local assert.h does not use include guard. Removing it doesn't fix NDEBUG.
+
+/* NDEADLOOP */ /* If defined the assert message is printed and the dead loop
+                   is compiled out, execution continues as usual. */
+
+#define NDEGUG // @TODO This is not working.
+
+//#undef assert
+//#undef __assert
 
 #ifdef NDEBUG
 #define assert(e)    ((void)0) // Implements disabling asserts. See man.
@@ -32,9 +40,9 @@ void dead_loop(void);
 /*! See .c */
 void print_assert(char *e, char *f, int l);
 
-#endif
+#endif /* NDEBUG */
 
-#endif
+#endif /* __ASSERT_H__ */
 /*******************************************************************************
 ASSERT(3)                BSD Library Functions Manual                ASSERT(3)
 
