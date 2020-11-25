@@ -1,5 +1,5 @@
-#include "stdlib.h"
-#include "assert.h"
+#include "../include/stdlib.h"
+#include "../include/assert.h"
 
 void test_atoi(void) {
     int i;
@@ -22,5 +22,5 @@ void test_atoi(void) {
     str = "777";
     r = atoi(str);
 
-    assert(i != r);
+    assert(i == r);
 }
