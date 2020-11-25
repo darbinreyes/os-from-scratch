@@ -48,8 +48,7 @@ os-image: boot_sect.bin kernel.bin
 # Assemble the boot sector to raw machine code.
 # @remark nasm reports file not found errors with "fatal: unable to open include
 # file"
-boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm\
-				$(TEST_OBJ_FILES)
+boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
 # @IMPORTANT kernel_entry.o must go first here.
