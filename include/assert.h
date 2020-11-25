@@ -3,15 +3,16 @@
 */
 
 #ifndef __ASSERT_H__
-#define __ASSERT_H__ // @TODO Local assert.h does not use include guard. Removing it doesn't fix NDEBUG.
+#define __ASSERT_H__ // @TODO Local assert.h does not use include guard.
 
-/* NDEADLOOP */ /* If defined the assert message is printed and the dead loop
-                   is compiled out, execution continues as usual. */
+#include "../drivers/screen.h" // print()
 
-#define NDEGUG // @TODO This is not working.
+/* #define NDEADLOOP */ /* If defined, the assert message is printed and the
+                           dead loop is compiled out, execution continues as
+                           usual. */
 
-//#undef assert
-//#undef __assert
+/* #define NDEBUG */ /* The assert() macro may be removed at compile time with
+                        the gcc option -DNDEBUG. */
 
 #ifdef NDEBUG
 #define assert(e)    ((void)0) // Implements disabling asserts. See man.
@@ -21,7 +22,16 @@
     @defined assert(e)
 
     @discussion An approximation to the assert macro found in the standard C
-    library header <assert.h>.
+    library header @doc [assert.h](<assert.h>) @doc [man assert](man assert).
+    The assert() macro tests the given `expression` and if it is false, a dead
+    loop is entered. A diagnostic message is written to the screen
+
+    If `expression` is true, the assert() macro does nothing.
+
+    The assert() macro may be removed at compile time with the gcc option
+    -DNDEBUG.
+
+    @param    e    Expression to evaluate.
 */
 #define assert(e) \
     ( (void) ( (e) ? ((void) 0) : __assert(#e, __FILE__, __LINE__) ) )

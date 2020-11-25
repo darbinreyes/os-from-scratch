@@ -14,6 +14,7 @@
 
 /************************** Testing *******************************************/
 #include "../include/test_assert.h"
+#include "../include/test_stdlib.h"
 /******************************************************************************/
 
 extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
@@ -29,6 +30,7 @@ int main(void) {
 
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
+    test_atoi();
     test_assert();
     init_idt();
     unsigned char *t = (unsigned char *) &idt[0];

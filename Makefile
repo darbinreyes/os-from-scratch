@@ -46,7 +46,7 @@ boot_sect.bin: boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm boot/
 
 # @IMPORTANT kernel_entry.o must go first here.
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o\
-test_assert.o assert.o
+			test_assert.o assert.o test_stdlib.o stdlib.o
 	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary
 
 idt.o: kernel/idt.c kernel/idt.h
@@ -96,5 +96,11 @@ test_assert.o: include/test_assert.c include/test_assert.h
 	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 
 assert.o: include/assert.c include/assert.h
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+
+test_stdlib.o: include/test_stdlib.c include/test_stdlib.h
+	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+
+stdlib.o: include/stdlib.c include/stdlib.h
 	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
 ################################################################################

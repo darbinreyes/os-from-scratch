@@ -1,8 +1,5 @@
 /*!
-    @header Test cases for assert macro.
-
-    @TODO Support disabling of the dead_loop() for testing purposes using a
-    @define.
+    @header Test cases for definitions in assert.h.
 */
 
 #ifndef __TEST_ASSERT_H__
@@ -11,7 +8,7 @@
 // * [x] Tested.
 void test_assert(void);
 
-// * [x] Tested. BROKEN.
+// * [x] Tested.
 // NDEBUG
 
 // * [x] Tested.
