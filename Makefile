@@ -19,9 +19,15 @@
 C_SOURCES = $(wildcard kernel/*.c drivers/*.c)
 HEADERS = $(wildcard kernel/*.h drivers/*.h)
 OBJ = ${C_SOURCES:.c=.o}
+CC := i386-elf-gcc
+CC_FLAGS = -Wall -Wextra -Werror -O0 -ffreestanding
+LD := i386-elf-ld
 TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o assert.o stdlib.o
 
+$(info $(TEST_MODE))
+
 all: os-image
+
 
 run: all
 	bochs -q -f bochsrc.txt # run bochs installed by mac ports.
@@ -48,25 +54,25 @@ boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm\
 # @IMPORTANT kernel_entry.o must go first here.
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o\
 			$(TEST_OBJ_FILES)
-	i386-elf-ld -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000
+	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000
 
 idt.o: kernel/idt.c kernel/idt.h
-	i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC)  $(CC_FLAGS) -c $< -o $@
 
 test.o: kernel/test.s kernel/test.h
 	nasm -O0 $< -f elf -o $@
 
 # @IMPORTANT:The % operator does not match sub-directories, hence `kernel/%.c`.
 kernel.o: kernel/kernel.c
-	i386-elf-gcc -DTEST_MODE -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC) -DTEST_MODE $(CC_FLAGS) -c $< -o $@
 
 %.o: drivers/%.c drivers/%.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
 # @remark The use of -masm=intel changes the syntax for the inline assembly from
 # GAS to NASM.
 low_level.o: kernel/low_level.c kernel/low_level.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
 kernel_entry.o: kernel/kernel_entry.asm
 	nasm -O0 $< -f elf -o $@
@@ -82,8 +88,8 @@ clean:
 
 ############## Testing #########################################################
 %.o: tests/%.c tests/%.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
 %.o: include/%.c include/%.h
-	i386-elf-gcc -Wall -Wextra -Werror -O0 -ffreestanding -c $< -o $@
+	$(CC) $(CC_FLAGS) -c $< -o $@
 ################################################################################
