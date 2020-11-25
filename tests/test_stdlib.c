@@ -22,5 +22,5 @@ void test_atoi(void) {
     str = "777";
     r = atoi(str);
 
-    assert(i == r);
+    assert(i != r);
 }
