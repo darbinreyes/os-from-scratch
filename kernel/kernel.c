@@ -12,11 +12,19 @@
 #include "../include/stdint.h" // uint64_t
 #include "idt.h"
 
-/************************** Testing *******************************************/
-#include "../tests/test_all.h"
-/******************************************************************************/
-
 extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
+
+/************************** Testing *******************************************/
+#ifdef TEST_MODE
+#include "../tests/test_all.h"
+int main(void) {
+    clear_screen();
+    print_at("Edsger Dijkstra!\n", 0, 0);
+    test_all();
+    return 0;
+}
+#else
+/******************************************************************************/
 
 /*!
     @function    main
@@ -29,7 +37,6 @@ int main(void) {
 
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
-    test_all();
     init_idt();
     unsigned char *t = (unsigned char *) &idt[0];
 
@@ -39,3 +46,4 @@ int main(void) {
 
     return 0;
 }
+#endif

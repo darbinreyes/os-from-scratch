@@ -22,12 +22,14 @@ OBJ = ${C_SOURCES:.c=.o}
 CC := i386-elf-gcc
 CC_FLAGS = -Wall -Wextra -Werror -O0 -ffreestanding
 LD := i386-elf-ld
+# Use make TEST_MODE=1 for test mode.
+ifdef TEST_MODE
 TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o assert.o stdlib.o
-
-$(info $(TEST_MODE))
+else
+TEST_OBJ_FILES :=
+endif
 
 all: os-image
-
 
 run: all
 	bochs -q -f bochsrc.txt # run bochs installed by mac ports.
@@ -48,7 +50,7 @@ os-image: boot_sect.bin kernel.bin
 # @remark nasm reports file not found errors with "fatal: unable to open include
 # file"
 boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm\
-				boot/gdt.asm boot/print_string_pm.asm boot/switch_to_pm.asm
+				$(TEST_OBJ_FILES)
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
 # @IMPORTANT kernel_entry.o must go first here.
@@ -64,7 +66,11 @@ test.o: kernel/test.s kernel/test.h
 
 # @IMPORTANT:The % operator does not match sub-directories, hence `kernel/%.c`.
 kernel.o: kernel/kernel.c
+ifdef TEST_MODE
 	$(CC) -DTEST_MODE $(CC_FLAGS) -c $< -o $@
+else
+	$(CC) $(CC_FLAGS) -c $< -o $@
+endif
 
 %.o: drivers/%.c drivers/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
