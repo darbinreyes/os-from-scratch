@@ -15,10 +15,9 @@
 # @IMPORTANT Always disable optimizations.
 # @IMPORTANT Always turn on all warnings with -Wall gcc flag. "This enables all
 #            the warnings about constructions"
+#C_SOURCES = $(wildcard include/*.c)
+#OBJ = ${C_SOURCES:.c=.o}
 
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h)
-OBJ = ${C_SOURCES:.c=.o}
 CC := i386-elf-gcc
 CC_FLAGS = -Wall -Wextra -Werror -O0 -ffreestanding
 LD := i386-elf-ld
@@ -58,10 +57,7 @@ kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o\
 			$(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000
 
-idt.o: kernel/idt.c kernel/idt.h
-	$(CC)  $(CC_FLAGS) -c $< -o $@
-
-test.o: kernel/test.s kernel/test.h
+kernel_entry.o: kernel/kernel_entry.asm
 	nasm -O0 $< -f elf -o $@
 
 # @IMPORTANT:The % operator does not match sub-directories, hence `kernel/%.c`.
@@ -72,6 +68,12 @@ else
 	$(CC) $(CC_FLAGS) -c $< -o $@
 endif
 
+idt.o: kernel/idt.c kernel/idt.h
+	$(CC)  $(CC_FLAGS) -c $< -o $@
+
+test.o: kernel/test.s kernel/test.h
+	nasm -O0 $< -f elf -o $@
+
 %.o: drivers/%.c drivers/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
@@ -79,9 +81,6 @@ endif
 # GAS to NASM.
 low_level.o: kernel/low_level.c kernel/low_level.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
-
-kernel_entry.o: kernel/kernel_entry.asm
-	nasm -O0 $< -f elf -o $@
 
 # Disassemble our kernel - might be useful for debugging.
 kernel.dis: kernel.bin
@@ -97,5 +96,20 @@ clean:
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
 %.o: include/%.c include/%.h
+	$(CC) $(CC_FLAGS) -c $< -o $@
+
+# ctype.o: include/ctype.h
+# 	$(CC) $(CC_FLAGS) -c $< -o $@
+
+# mylibc.o: include/mylibc.h
+# 	$(CC) $(CC_FLAGS) -c $< -o $@
+
+# stddef.o: include/stddef.h
+# 	$(CC) $(CC_FLAGS) -c $< -o $@
+
+# stdint.o: include/stdint.h
+# 	$(CC) $(CC_FLAGS) -c $< -o $@
+
+%.o: include/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 ################################################################################

@@ -16,6 +16,6 @@
 
     @remark Verified at runtime: sizeof(sizeof(char)) == 4.
 */
-typedef unsigned int size_t
+typedef unsigned int size_t;
 
 #endif
