@@ -1,3 +1,8 @@
+/*******************************************************************************
+    This C program contains code compiled on my host machine using clang, its
+    purpose is to compare the output to equivalent C programs compiled with
+    i386-elf-gcc, e.g. to compile the size of (void*).
+*******************************************************************************/
 #include <stdio.h>
 
 int a[2] = {2,5};

@@ -1,3 +1,8 @@
+/*******************************************************************************
+    A variety of simple C programs and the corresponding x86 assembly.
+    Modify #if 0 to #if 1 and use Makefile to try it out.
+*******************************************************************************/
+
 #if 0
 int my_function(void) {
     return 0xbaba;
