@@ -149,7 +149,7 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
     order bit is set for a "released" scan code. For example, the "pressed" scan
     code for the ESCAPE key is 0x01, while the "released" scan code is 0x81.
 */
-const unsigned char sc_to_kc_tbl1[] = {
+const uint8_t sc_to_kc_tbl1[] = {
                                  /* Scan Code | Key        | Tested           */
                                  /* ----------|------------|------------------*/
     NOT_A_SCAN_CODE,             /* 0x00      |            | Not a scan code. */
@@ -283,7 +283,7 @@ const unsigned char sc_to_kc_tbl1[] = {
     code are set to either SCAN_CODE_TODO or NOT_A_SCAN_CODE. Note that most
     entries in this table do not contain valid key codes.
 */
-const unsigned char sc_to_kc_tbl2[] = {
+const uint8_t sc_to_kc_tbl2[] = {
                                  /* Scan Code | Key        | Tested           */
                                  /* ----------|------------|------------------*/
     SCAN_CODE_TODO,/*0x10 <(Media)PREV-TRACK> p.|r,c=,*/
@@ -408,7 +408,7 @@ in case more than 2 byte scan codes are received. Note the prefix bytes.
 
     @result The key code.
 */
-unsigned char get_key_code(unsigned char sc) {
+uint8_t get_key_code(uint8_t sc) {
     // @TODO Handle multi-byte scan codes correctly.
 
     if (sc == 0xE0 || sc == 0xE1) // Multi-byte scan codes.
@@ -430,8 +430,8 @@ unsigned char get_key_code(unsigned char sc) {
 
     @result An ASCII character.
 */
-char scan_code_to_ascii (unsigned char sc) { // @TODO
-    unsigned char kc, r, c;
+char scan_code_to_ascii (uint8_t sc) { // @TODO
+    uint8_t kc, r, c;
 
     kc = get_key_code(sc);
 
@@ -460,10 +460,10 @@ char scan_code_to_ascii (unsigned char sc) { // @TODO
             1 error, failed to get PS/2 controller status register.
             2 error, failed to receive data byte from PS/2 keyboard.
 */
-int get_scan_code(unsigned char *sc) { // @TODO
+int get_scan_code(uint8_t *sc) { // @TODO
     ps_2_ctrl_stat_t stat;
     int r;
-    unsigned char b;
+    uint8_t b;
 
     r = get_ctlr_stat(&stat);
 
@@ -498,10 +498,10 @@ int get_scan_code(unsigned char *sc) { // @TODO
 
     @result 0 on success. Non-0 on error.
 */
-int get_scan_code2(unsigned char *sc) {
+int get_scan_code2(uint8_t *sc) {
     ps_2_ctrl_stat_t stat;
     int r;
-    unsigned char b;
+    uint8_t b;
 
     r = get_ctlr_stat(&stat);
 

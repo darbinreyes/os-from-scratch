@@ -1,3 +1,5 @@
+#include "low_level.h"
+
 /*!
     @function    port_byte_in
     @discussion C wrapper for the `in` instruction.
@@ -6,9 +8,9 @@
 
     @result The 8-bit value read from the I/O port.
 */
-unsigned char port_byte_in (unsigned short port) {
+uint8_t port_byte_in (uint16_t port) {
 
-    unsigned char result;
+    uint8_t result;
 
     // @TODO Replace with assembly code wrapper per lil OS book.
 
@@ -24,6 +26,6 @@ unsigned char port_byte_in (unsigned short port) {
     @param    port    The 16-bit I/O port number to write to.
     @param    data    The 8-bit value to write.
 */
-void port_byte_out (unsigned short port, unsigned char data) {
+void port_byte_out (uint16_t port, uint8_t data) {
     __asm__("out %% al, %%dx" : :"a" (data), "d" (port) );
 }

@@ -2,6 +2,7 @@
 #define __KEYBOARD_H__
 
 #include "../mylibc/mylibc.h"
+#include "../include/stdint.h"
 
 /*!
     @typedef    ps2_kbd_cmd_t
@@ -117,9 +118,9 @@ enum _ps2_kbd_rsp_t {
 } ps2_kbd_rsp_t;
 
 /*! See .c */
-int get_scan_code(unsigned char *sc);
+int get_scan_code(uint8_t *sc);
 /*! See .c */
-char scan_code_to_ascii (unsigned char sc);
+char scan_code_to_ascii (uint8_t sc);
 /*! See .c */
-int get_scan_code2(unsigned char *sc);
+int get_scan_code2(uint8_t *sc);
 #endif

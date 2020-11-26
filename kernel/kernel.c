@@ -38,7 +38,7 @@ int main(void) {
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
     init_idt();
-    unsigned char *t = (unsigned char *) &idt[0];
+    uint8_t *t = (uint8_t *) &idt[0];
 
     for (int i = 7; i >= 0; i--) {
         print_byteh(t[i], 0);

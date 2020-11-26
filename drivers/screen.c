@@ -6,7 +6,6 @@
 
 #include "../include/mylibc.h"
 #include "../include/stdio.h" // NULL
-#include "../include/stdint.h" // uint32_t
 #include "screen.h"
 #include "../kernel/low_level.h"
 
@@ -145,7 +144,7 @@ static inline void set_cursor(int vid_mem_offset) {
     vid_mem_offset /= 2;
 
     port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (unsigned char) (vid_mem_offset >> 8) );
+    port_byte_out(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
     port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
     port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
 
@@ -157,7 +156,7 @@ static inline void set_cursor(int vid_mem_offset) {
     long.
 */
 static void memory_copy (void *dst, void *src, int n) {
-    unsigned char *d, *s;
+    uint8_t *d, *s;
 
     if (dst == NULL || src == NULL || n == 0)
         return;
@@ -174,7 +173,7 @@ static void memory_copy (void *dst, void *src, int n) {
     @TODO Replace with to string.h->memset().
 */
 static void zero_memory (void *dst, int n) {
-    unsigned char *d;
+    uint8_t *d;
 
     if (dst == NULL || n == 0)
         return;
@@ -201,7 +200,7 @@ static void zero_memory (void *dst, int n) {
 */
 static int handle_scrolling(int vid_mem_offset) {
     int trow;
-    unsigned char *vid_mem;
+    uint8_t *vid_mem;
 
     /*
         Steps:
@@ -220,7 +219,7 @@ static int handle_scrolling(int vid_mem_offset) {
     if (trow < 25)
         return vid_mem_offset;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     /*!
         @defined SCROLL_MEM_COPY_SIZE
@@ -280,12 +279,12 @@ static int handle_scrolling(int vid_mem_offset) {
     cursor position 1 row below the current row.
 
 */
-void print_ch_at(char c, char cattr, int row, int col) {
-    unsigned char *vid_mem;
+void print_ch_at(char c, uint8_t cattr, int row, int col) {
+    uint8_t *vid_mem;
     int vid_mem_offset;
     int trow;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     if (cattr == 0)
         cattr = CHAR_ATTR_WHITE_ON_BLACK;
@@ -330,9 +329,9 @@ void print_ch_at(char c, char cattr, int row, int col) {
     @discussion Sets every character cell to the background color.
 */
 void clear_screen(void) {
-    unsigned char *vid_mem;
+    uint8_t *vid_mem;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     /*!
         @defined CLEAR_SIZE
@@ -390,7 +389,7 @@ void print(const char *s) {
 
     @param    b    The byte value to print.
 */
-void print_byteb (unsigned char b) {
+void print_byteb (uint8_t b) {
     print("0b");
     for (int i = 7; i >= 0; i--)
         if (b & BITN(i))
@@ -410,7 +409,7 @@ void print_byteb (unsigned char b) {
 
     @result The ASCII encoded hexadecimal digit.
 */
-static inline char nibtoa (unsigned char b) {
+static inline char nibtoa (uint8_t b) {
     b = 0x0F & b; // Take the lower nibble.
 
     if (b <= 9)
@@ -430,7 +429,7 @@ static inline char nibtoa (unsigned char b) {
     @param    pf    Flag indicating whether or not to include a 0x prefix. 1 =
                     include prefix.
 */
-void print_byteh (unsigned char b, int pf) {
+void print_byteh (uint8_t b, int pf) {
     char c;
 
     if (pf)

@@ -1,6 +1,8 @@
 #ifndef __PS_2_CTLR_H__
 #define __PS_2_CTLR_H__
 
+#include "../include/stdint.h"
+
 /*!
     @typedef ctlr_cmd_t
 
@@ -69,26 +71,26 @@ enum _ctlr_cmd_t {
 */
 typedef
 struct _ps_2_ctrl_stat_t {
-    unsigned char obuf_full:1;     // bit 0 //                  // Value on power on = 0. // 0 = Buffer empty. 1 = buffer full.
-    unsigned char ibuf_full:1;     //                           // Value on power on = 0. // 0 = Buffer empty. 1 = buffer full.
-    unsigned char sys_flg:1;       //          [] How to test?  // Value on power on = 0. // 0=,1=
-    unsigned char data_or_cmd:1;   //          [] Test.         // Value on power on = 0. // 0=,1=
-    unsigned char dev_inhibited:1; //          [] Test.         // Value on power on = 1. // 0=,1=
-    unsigned char tx_timeout:1;    //          [] How to test?  // Value on power on = 0. // 0=,1=
-    unsigned char rcv_timeout:1;   //          [] How to test?  // Value on power on = 0. // 0=,1=
-    unsigned char par_err:1;       // bit 7 // [] How to test?  // Value on power on = 0. // 0=,1=
+    uint8_t obuf_full:1;     // bit 0 //                  // Value on power on = 0. // 0 = Buffer empty. 1 = buffer full.
+    uint8_t ibuf_full:1;     //                           // Value on power on = 0. // 0 = Buffer empty. 1 = buffer full.
+    uint8_t sys_flg:1;       //          [] How to test?  // Value on power on = 0. // 0=,1=
+    uint8_t data_or_cmd:1;   //          [] Test.         // Value on power on = 0. // 0=,1=
+    uint8_t dev_inhibited:1; //          [] Test.         // Value on power on = 1. // 0=,1=
+    uint8_t tx_timeout:1;    //          [] How to test?  // Value on power on = 0. // 0=,1=
+    uint8_t rcv_timeout:1;   //          [] How to test?  // Value on power on = 0. // 0=,1=
+    uint8_t par_err:1;       // bit 7 // [] How to test?  // Value on power on = 0. // 0=,1=
 } ps_2_ctrl_stat_t;
 
 /*! See .c */
 int get_ctlr_stat(ps_2_ctrl_stat_t *stat);
 
 /*! See .c */
-int send_byte (unsigned char b);
+int send_byte (uint8_t b);
 
 /*! See .c */
-int rcv_byte (unsigned char *b);
+int rcv_byte (uint8_t *b);
 
 /*! See .c */
-void send_byte_ctlr (unsigned char b);
+void send_byte_ctlr (uint8_t b);
 
 #endif
