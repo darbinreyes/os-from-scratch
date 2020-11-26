@@ -457,3 +457,16 @@ void print_uint32h(uint32_t i) {
     print_byteh ((i >> 8) & 0xFFU, 0);
     print_byteh ((i >> 0) & 0xFFU, 0);
 }
+
+/*!
+    @function print_d
+
+    @discussion Prints an int value in decimal format.
+
+    @param    d    The value to print.
+*/
+void print_d(int d) {
+    char s[21];
+    dtoa(d, s);
+    print(s);
+}

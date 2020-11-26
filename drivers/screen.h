@@ -17,5 +17,7 @@ void print_byteb(uint8_t b);
 void print_byteh(uint8_t b, int pf);
 /*! See .c */
 void print_uint32h(uint32_t i);
+/*! See .c */
+void print_d(int d);
 
 #endif

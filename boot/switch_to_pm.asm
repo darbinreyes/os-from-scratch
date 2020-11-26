@@ -8,9 +8,10 @@
 ; The initial steps consist in setting up the global descriptor table (GDT)
 ; which is currently done in gdt.asm.
 
-STACK_ADDR_PM equ 0x90000 ; Address used to initialize the frame pointer (EBP)
-                          ; and stack pointer (ESP) registers after switching
-                          ; the CPU mode to 32-bit protected-mode.
+STACK_ADDR_PM equ 0x900000 ; Address used to initialize the frame pointer (EBP)
+                           ; and stack pointer (ESP) registers after switching
+                           ; the CPU mode to 32-bit protected-mode.
+                           ; @remark Bochs physical mem. = 32 MB = 0x1ffffff
 
 [bits 16] ; NASM assembler directive - generate code to be executed in 16-bit
           ; mode.

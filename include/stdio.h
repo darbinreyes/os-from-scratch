@@ -17,4 +17,7 @@
 */
 #define EOF (-1)
 
+/*! See .c */
+int dtoa(int d, char *s);
+
 #endif

@@ -23,7 +23,8 @@ CC_FLAGS = -Wall -Wextra -Werror -O0 -ffreestanding
 LD := i386-elf-ld
 # Use `make TEST_MODE=1` for test mode.
 ifdef TEST_MODE
-TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o assert.o stdlib.o
+TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o test_stdio.o assert.o\
+stdlib.o stdio.o string.o
 else
 TEST_OBJ_FILES :=
 endif
@@ -94,5 +95,5 @@ clean:
 %.o: include/%.c include/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
-%.o: include/%.h
-	$(CC) $(CC_FLAGS) -c $< -o $@
+# %.o: include/%.h
+# 	$(CC) $(CC_FLAGS) -c $< -o $@

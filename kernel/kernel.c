@@ -9,7 +9,8 @@
 
 
 #include "../drivers/screen.h"
-#include "../include/stdint.h" // uint64_t
+#include "../include/stdint.h"
+#include "../include/stdio.h"
 #include "idt.h"
 
 extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
@@ -34,7 +35,6 @@ int main(void) {
     @result 0
 */
 int main(void) {
-
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
     init_idt();
@@ -46,4 +46,4 @@ int main(void) {
 
     return 0;
 }
-#endif
+#endif /* TEST_MODE */

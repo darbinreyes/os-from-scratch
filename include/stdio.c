@@ -2,33 +2,103 @@
     @header Standard C Header
 */
 
-/*! @remark This function not part of the standard C library. But it is
-    necessary to implement printf().
-    @function itoa
+#include "stdio.h"
+#include "assert.h"
 
-    @discussion Converts an integer to a string. @remark This function not part
+/*!
+    @function    rstr
+
+    @discussion Reverses the characters in the given null terminated string.
+
+    @param    s    The string to be reversed.
+
+    @result Return s.
+
+*/
+char *rstr(char *s) {
+    char t, *ct;
+
+    if (s == NULL) {
+        assert(0);
+        return s;
+    }
+
+    if (*s == '\0')
+        return s;
+
+    ct = s;
+
+    while (*ct != '\0')
+        ct++;
+
+    ct--;
+
+    while (s < ct) {
+        t = *s;
+        *s = *ct;
+        *ct = t;
+        s++;
+        ct--;
+    }
+
+    return s;
+}
+
+/*!
+    @defined D_STR_SIZE_MAX
+
+    @discussion The max size of a character string necessary to print a 64-bit
+                integer in decimal format.
+*/
+#define D_STR_SIZE_MAX 21
+
+/*!
+    @function    dtoa
+
+    @discussion This function converts an int to an ASCII string. It is not part
     of the standard C library.
 
-    @param    i    The integer to convert to a string.
+    @param    d    The integer to convert.
+    @param    s    Pointer to a character array at least 21 chars in size.
 
-    @result String containing the result of the conversion.
+    @result    0    If successful.
+               1    Invalid arg.
 */
-// char *itoa(int32_t i, char *s) {
-//     //static char str[1 + 10 + 1]; // Max int32_t value = 2**31 - 1 = 2,147,483,647. Min. 2**31 = -2147483648. 1 negative sign, 10 digits, 1 null terminator.
-//     int64_t pwr;
+int dtoa(int d, char *s) {
+    int sign;
+    const int pwr = 10;
+    char *t;
 
-//     /*
-// i | pwr | i / pwr
-// 57| 10  | 5
-// 57 | 100| 0
-//     */
-//     pwr = 10;
-//     while (i / pwr > 0) {
-//         pwr *= 10;
-//     }
+    assert(sizeof(d) <= 8); // Allow at most printing a 64-bit int.
 
-//     //str[0] = '\0';
+    if(s == NULL) {
+        assert(0);
+        return 1;
+    }
 
-//     // @TODO
-//     return s;
-// }
+    sign = 1;
+
+    if (d < 0) {
+        sign = -1;
+        d *= -1;
+    }
+
+    t = s; // Keep pointer to first char.
+
+    while (d > 0) {
+        *s = d % pwr + '0';
+        s++;
+        d /= pwr;
+    }
+
+    if (sign == -1) {
+        *s = '-';
+        s++;
+    }
+
+    *s = '\0';
+
+    rstr(t);
+
+    return 0;
+}
