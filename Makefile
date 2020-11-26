@@ -88,27 +88,11 @@ kernel.dis: kernel.bin
 clean:
 	rm -Rf *.bin *.o os-image
 
-# @TODO add stdlib.c etc.
-
-############## Testing #########################################################
 %.o: tests/%.c tests/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
 %.o: include/%.c include/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
-# ctype.o: include/ctype.h
-# 	$(CC) $(CC_FLAGS) -c $< -o $@
-
-# mylibc.o: include/mylibc.h
-# 	$(CC) $(CC_FLAGS) -c $< -o $@
-
-# stddef.o: include/stddef.h
-# 	$(CC) $(CC_FLAGS) -c $< -o $@
-
-# stdint.o: include/stdint.h
-# 	$(CC) $(CC_FLAGS) -c $< -o $@
-
 %.o: include/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
-################################################################################
