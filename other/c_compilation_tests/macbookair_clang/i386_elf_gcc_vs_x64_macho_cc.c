@@ -4,6 +4,7 @@
     i386-elf-gcc, e.g. to compile the size of (void*).
 *******************************************************************************/
 #include <stdio.h>
+#include <limits.h>
 
 int a[2] = {2,5};
 
@@ -52,5 +53,6 @@ int main(void) {
     printf("%%lx func_ptr = %lx.\n", (unsigned long)func_ptr);
     printf("%%lx idt[0] = %lx.\n", idt[0]);
     printf("%%lx sizeof(idt) = %lx.\n", sizeof(idt));
+    printf("%%lx INT_MAX = %d.\n", INT_MAX);
     return 0;
 }
