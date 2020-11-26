@@ -1,3 +1,7 @@
+/*!
+    @header Standard C Header
+*/
+
 #include "ctype.h" // digittoint() etc.
 #include "stdio.h" //  NULL
 /*!

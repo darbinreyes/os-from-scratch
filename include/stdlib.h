@@ -1,6 +1,3 @@
-/*!
-    @header Standard C Header
-*/
 #ifndef __STDLIB_H__
 #define __STDLIB_H__
 

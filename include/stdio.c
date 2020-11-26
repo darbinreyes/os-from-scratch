@@ -1,3 +1,6 @@
+/*!
+    @header Standard C Header
+*/
 
 /*! @remark This function not part of the standard C library. But it is
     necessary to implement printf().

@@ -1,7 +1,3 @@
-/*!
-    @header Standard C Header
-*/
-
 #ifndef __ASSERT_H__
 #define __ASSERT_H__ // @TODO Local assert.h does not use include guard.
 

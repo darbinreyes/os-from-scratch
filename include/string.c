@@ -1,3 +1,6 @@
+/*!
+    @header Standard C Header
+*/
 
 /*!
     @function    memcpy
