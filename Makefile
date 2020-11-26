@@ -21,7 +21,7 @@
 CC := i386-elf-gcc
 CC_FLAGS = -Wall -Wextra -Werror -O0 -ffreestanding
 LD := i386-elf-ld
-# Use make TEST_MODE=1 for test mode.
+# Use `make TEST_MODE=1` for test mode.
 ifdef TEST_MODE
 TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o assert.o stdlib.o
 else
