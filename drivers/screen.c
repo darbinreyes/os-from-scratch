@@ -4,9 +4,11 @@
     device is IBM VGA. @doc [IBM VGA docs](./docs/screen/screen.md).
 */
 
+#include "../include/mylibc.h"
+#include "../include/stdio.h" // NULL
 #include "screen.h"
 #include "../kernel/low_level.h"
-#include "../mylibc/mylibc.h"
+
 
 /*!
     @defined VIDEO_ADDRESS
@@ -142,7 +144,7 @@ static inline void set_cursor(int vid_mem_offset) {
     vid_mem_offset /= 2;
 
     port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (unsigned char) (vid_mem_offset >> 8) );
+    port_byte_out(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
     port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
     port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
 
@@ -154,7 +156,7 @@ static inline void set_cursor(int vid_mem_offset) {
     long.
 */
 static void memory_copy (void *dst, void *src, int n) {
-    unsigned char *d, *s;
+    uint8_t *d, *s;
 
     if (dst == NULL || src == NULL || n == 0)
         return;
@@ -171,7 +173,7 @@ static void memory_copy (void *dst, void *src, int n) {
     @TODO Replace with to string.h->memset().
 */
 static void zero_memory (void *dst, int n) {
-    unsigned char *d;
+    uint8_t *d;
 
     if (dst == NULL || n == 0)
         return;
@@ -198,7 +200,7 @@ static void zero_memory (void *dst, int n) {
 */
 static int handle_scrolling(int vid_mem_offset) {
     int trow;
-    unsigned char *vid_mem;
+    uint8_t *vid_mem;
 
     /*
         Steps:
@@ -217,7 +219,7 @@ static int handle_scrolling(int vid_mem_offset) {
     if (trow < 25)
         return vid_mem_offset;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     /*!
         @defined SCROLL_MEM_COPY_SIZE
@@ -277,12 +279,12 @@ static int handle_scrolling(int vid_mem_offset) {
     cursor position 1 row below the current row.
 
 */
-void print_ch_at(char c, char cattr, int row, int col) {
-    unsigned char *vid_mem;
+void print_ch_at(char c, uint8_t cattr, int row, int col) {
+    uint8_t *vid_mem;
     int vid_mem_offset;
     int trow;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     if (cattr == 0)
         cattr = CHAR_ATTR_WHITE_ON_BLACK;
@@ -327,9 +329,9 @@ void print_ch_at(char c, char cattr, int row, int col) {
     @discussion Sets every character cell to the background color.
 */
 void clear_screen(void) {
-    unsigned char *vid_mem;
+    uint8_t *vid_mem;
 
-    vid_mem = (unsigned char *) VIDEO_ADDRESS;
+    vid_mem = (uint8_t *) VIDEO_ADDRESS;
 
     /*!
         @defined CLEAR_SIZE
@@ -387,7 +389,7 @@ void print(const char *s) {
 
     @param    b    The byte value to print.
 */
-void print_byteb (unsigned char b) {
+void print_byteb (uint8_t b) {
     print("0b");
     for (int i = 7; i >= 0; i--)
         if (b & BITN(i))
@@ -407,7 +409,7 @@ void print_byteb (unsigned char b) {
 
     @result The ASCII encoded hexadecimal digit.
 */
-static inline char nibtoa (unsigned char b) {
+static inline char nibtoa (uint8_t b) {
     b = 0x0F & b; // Take the lower nibble.
 
     if (b <= 9)
@@ -427,7 +429,7 @@ static inline char nibtoa (unsigned char b) {
     @param    pf    Flag indicating whether or not to include a 0x prefix. 1 =
                     include prefix.
 */
-void print_byteh (unsigned char b, int pf) {
+void print_byteh (uint8_t b, int pf) {
     char c;
 
     if (pf)
@@ -455,206 +457,3 @@ void print_uint32h(uint32_t i) {
     print_byteh ((i >> 8) & 0xFFU, 0);
     print_byteh ((i >> 0) & 0xFFU, 0);
 }
-
-/*!
-    @defined    EOF
-
-    @discussion    End of file. @doc [stdio.h].
-*/
-#define EOF (-1)
-
-/*!
-    @function isspace
-
-    @discussion The isspace() function tests for the white-space characters.
-    @doc [man isspace / ctype.h].
-
-    @param    c    The character to test.
-
-    @result The isspace() function returns zero if the character tests false
-    and returns non-zero if the character tests true.
-*/
-static inline int isspace(int c) {
-    switch (c) {
-    case '\t': // horizontal tab
-    case '\n': // newline
-    case '\v': // vertical tab
-    case '\f': // formfeed
-    case '\r': // carriage return
-    case ' ':  // space
-        return 1;
-        break;
-    default:
-        return 0;
-        break;
-    }
-
-    return 0;
-}
-
-/*!
-    @function isdigit
-
-    @discussion The isdigit() function tests for a decimal digit character.
-
-    @result The isdigit() function returns zero if the character tests false
-    and returns non-zero if the character tests true.
-*/
-static inline int isdigit(int c) {
-    if (c >= '0' && c <= '9')
-        return 1;
-
-    return 0;
-}
-
-/*!
-    @function isxdigit
-
-    @discussion The isxdigit() function tests for any hexadecimal-digit
-    character.
-
-    @result The isxdigit() function returns zero if the character tests false
-    and returns non-zero if the character tests true.
-*/
-static inline int isxdigit(int c) {
-    if ((c >= '0' && c <= '9') ||  (c >= 'A' && c <= 'F') ||  (c >= 'a' && c <= 'f'))
-        return 1;
-
-    return 0;
-}
-
-/*!
-    @function digittoint
-
-    @discussion The digittoint() function converts a numeric character to its
-    corresponding integer value.  The character can be any decimal digit or
-    hexadecimal digit. With hexadecimal characters, the case of the values does
-    not matter. @doc [man digittoint / ctype.h].
-
-    @result The digittoint() function always returns an integer from the
-    range of 0 to 15. If the given character was not a digit as
-    defined by isxdigit(3), the function will return 0.
-*/
-static inline int digittoint(int c) {
-    if (!isxdigit(c))
-        return 0;
-
-    if (c >= '0' && c <= '9')
-        return c - '0';
-
-    if (c >= 'A' && c <= 'F')
-        return 10 + (c - 'A');
-
-    if (c >= 'a' && c <= 'f')
-        return 10 + (c - 'a');
-
-    return 0;
-}
-
-/*!
-    @function atoi
-
-    @discussion The atoi() function converts the initial portion of the
-    string pointed to by str to int representation. It is equivalent to:
-    `(int)strtol(str, (char **)NULL, 10);`. @doc [man atoi / stdlib.h].
-
-    @param    str    The string to convert to an integer.
-
-    @result The result of the conversion to an integer.
-
-    @TODO Test negative numbers.
-*/
-int atoi(const char *str) {
-    int sum;
-    int sign;
-
-    if (str == NULL)
-        return 0;
-
-    while (isspace(*str))
-        str++;
-
-    sign = 1;
-
-    if (*str == '+') {
-        str++;
-    } else if (*str == '-') {
-        sign = -1;
-        str++;
-    } else {
-        ;
-    }
-
-    /*
-    str | sum | sign
-    ----|-----|-----
-        |     |
-    */
-    sum = 0;
-
-    while (isdigit(*str)) {
-        sum = 10 * sum + digittoint(*str);
-        str++;
-    }
-
-    return sum * sign;
-}
-
-/*!
-    @function itoa
-
-    @discussion Converts an integer to a string. @remark This function not part
-    of the standard C library.
-
-    @param    i    The integer to convert to a string.
-
-    @result String containing the result of the conversion.
-*/
-// char *itoa(int32_t i, char *s) {
-//     //static char str[1 + 10 + 1]; // Max int32_t value = 2**31 - 1 = 2,147,483,647. Min. 2**31 = -2147483648. 1 negative sign, 10 digits, 1 null terminator.
-//     int64_t pwr;
-
-//     /*
-// i | pwr | i / pwr
-// 57| 10  | 5
-// 57 | 100| 0
-//     */
-//     pwr = 10;
-//     while (i / pwr > 0) {
-//         pwr *= 10;
-//     }
-
-//     //str[0] = '\0';
-
-//     // @TODO
-//     return s;
-// }
-
-/*!
-    @function dead_loop
-
-    @discussion Infinite loop.
-
-*/
-void dead_loop(void) {
-    while (1)
-        ;
-}
-
-/*!
-    @function print_assert
-
-    @discussion Prints a message associated with the assert macro. @doc
-    [assert.h].
-
-*/
-void print_assert(char *e, char *f, int l) {
-    print(f);
-    print(":");
-    print_uint32h(l);
-    print(": failed assertion `");
-    print(e);
-    print("'\n");
-}
-
-

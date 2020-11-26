@@ -11,7 +11,7 @@
 #ifndef __TEST_H__
 #define __TEST_H__
 
-#include "../mylibc/mylibc.h"
+#include "../include/stdint.h" // uint32_t
 
 /* load_idt_reg:
    Load the IDT register. Defined in test.s.

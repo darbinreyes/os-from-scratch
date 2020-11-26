@@ -9,10 +9,22 @@
 
 
 #include "../drivers/screen.h"
-#include "../mylibc/mylibc.h"
+#include "../include/stdint.h" // uint64_t
 #include "idt.h"
 
 extern uint64_t idt[]; // @IMPORTANT Remember the kernel.bin size limit!
+
+/************************** Testing *******************************************/
+#ifdef TEST_MODE
+#include "../tests/test_all.h"
+int main(void) {
+    clear_screen();
+    print_at("Edsger Dijkstra!\n", 0, 0);
+    test_all();
+    return 0;
+}
+#else
+/******************************************************************************/
 
 /*!
     @function    main
@@ -26,7 +38,7 @@ int main(void) {
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
     init_idt();
-    unsigned char *t = (unsigned char *) &idt[0];
+    uint8_t *t = (uint8_t *) &idt[0];
 
     for (int i = 7; i >= 0; i--) {
         print_byteh(t[i], 0);
@@ -34,3 +46,4 @@ int main(void) {
 
     return 0;
 }
+#endif

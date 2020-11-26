@@ -14,7 +14,7 @@
 ```
 
 */
-#include "../mylibc/mylibc.h"
+
 #include "../drivers/screen.h"
 #include "test.h"
 
