@@ -53,8 +53,8 @@ boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
 # @IMPORTANT kernel_entry.o must go first here.
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o\
-			$(TEST_OBJ_FILES)
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o stdio.o \
+			assert.o $(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000
 
 kernel_entry.o: kernel/kernel_entry.asm
