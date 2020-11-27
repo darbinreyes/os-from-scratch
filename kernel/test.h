@@ -13,10 +13,15 @@
 
 #include "../include/stdint.h" // uint32_t
 
-/* load_idt_reg:
-   Load the IDT register. Defined in test.s.
+/*!
+    @function    load_idt_reg
 
-   @param addr Address of the value to be loaded into the IDT register.
+    @discussion Loads the IDTR register with the given value and enable
+                interrupts.
+
+    @param  addr    Address of the value to be loaded into the IDT register.
+
+    @result The given address `addr`.
 */
 int load_idt_reg(uint32_t addr);
 
