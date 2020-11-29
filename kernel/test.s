@@ -16,25 +16,44 @@
 ; (https://littleosbook.github.io/#moving-the-cursor)
 ;-------------------------------------------------------------------------------
 
-global load_idt_reg  ; Make the label `load_idt_reg` visible outside this file.
+global lidt_and_sti  ; Make the label `lidt_and_sti` visible outside this file.
                      ; When a corresponding function declaration is provided in
                      ; a .h file, this enables you to call this assembly
                      ; procedure from a C program.
+                     ; @doc [NASM global assembler directive]
+                     ; (NASM manual ch.7.7).
 
-; @function    load_idt_reg
+;!
+;    See .h.
 ;
-; @discussion Loads the IDTR register with the given value and enable
-;             interrupts.
+;    @stack  [esp + 4] Arg. #1
+;            [esp    ] EIP
 ;
-; @param  [esp + 4] Arg. #1 - addr - Address of the value to be loaded into the
-;                                    IDT register.
-;         [esp    ] EIP
+; @discussion  Enable interrupts. "STI sets the interrupt flag (IF) in the
+;              EFLAGS register. This allows the processor to respond to maskable
+;              hardware interrupts."
+; @doc [Figure 6-1. Relationship of the IDTR and IDT]
+;      (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+; |------------------|-----------|
+; |47              16| 15       0|
+; |------------------|-----------|
+; | IDT Base Address | IDT Limit |
+; |------------------|-----------|
+;         |                |
+;         |                v                   _IDT_
+;         |-------------->(+)---------------->[     ] (N - 1) * 8
+;         |                                   [     ]
+;         |                                    . . .
+;         |---------------------------------->[     ] 0 (Byte offset)
 ;
-; @result The given address.
-load_idt_reg:
+; @remark The IDT limit is 1 less than the size of the table in bytes.
+;         Equivalent to the offset of the last byte of the table. Each entry is
+;         8 bytes in size.
+lidt_and_sti:
+    ; @TODO Do we need to use standard push/pop of ebp for gdb to work?
     mov eax, [esp + 4]
-    lidt [eax] ; @doc [Figure 6-1. Relationship of the IDTR and IDT](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
-    sti        ; Enable interrupts. "STI sets the interrupt flag (IF) in the EFLAGS register. This allows the processor to respond to mask-able hardware interrupts."
+    lidt [eax]
+    sti
     ret
 
 ; - - -  - - -  - - -

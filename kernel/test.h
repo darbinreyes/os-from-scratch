@@ -14,16 +14,17 @@
 #include "../include/stdint.h" // uint32_t
 
 /*!
-    @function    load_idt_reg
+    @function    lidt_and_sti
 
-    @discussion Loads the IDTR register with the given value and enable
-                interrupts.
+    @discussion Loads the IDTR register using the LIDTR instruction with the
+                value pointed to by `idtr` and enables interrupts using the STI
+                instruction.
 
-    @param  addr    Address of the value to be loaded into the IDT register.
+    @param    idtr    Pointer to the value to load into the IDT register.
 
-    @result The given address `addr`.
+    @result Returns `idtr`.
 */
-int load_idt_reg(uint32_t addr);
+void *lidt_and_sti(void *idtr);
 
 void init_pics(void);
 

@@ -154,10 +154,10 @@ void init_idt(void) {
     idtr.idt_base_addr = (uint32_t)idt;
 
     init_pics();
-    load_idt_reg((uint32_t)&idtr);
+    lidt_and_sti((void *) &idtr);
 
-    __asm__("int $0"); // Test IDT vector 0.
-    __asm__("int $1");
+    //__asm__("int $0"); // Test IDT vector 0.
+    //__asm__("int $1");
 }
 
 void intr_handler(uint32_t vn, uint32_t err_code) {

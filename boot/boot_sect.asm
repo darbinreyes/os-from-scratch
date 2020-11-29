@@ -69,7 +69,7 @@ jmp $                 ; Infinite loop.
 [bits 16] ; NASM assembler directive - generate code to be executed in 16-bit
           ; mode. This directive is necessary because some of the includes above
           ; contain the [bits 32] assembler directive.
-          ; @doc [NASM manual, Chapter 7.1]
+          ; @doc [NASM bits assembler directive](NASM manual ch.7.1).
 
 ;!
 ; @procedure    load_kernel    Loads the kernel from BOOT_DRIVE into memory at
