@@ -1,7 +1,7 @@
 # Related docs
 
 * @doc [How to call assembly code from C code.]
-  (https://littleosbook.github.io/#moving-the-cursor)
+       (https://littleosbook.github.io/#moving-the-cursor)
   * "The out assembly code instruction can’t be executed directly in C. Therefore
     it is a good idea to wrap out in a function in assembly code which can be
     accessed from C via the cdecl calling standard [25]"
@@ -13,8 +13,15 @@
   * Functions push ebp such that the caller-return-eip is 4 bytes above it, and
     set ebp to the address of the saved ebp.
   * This allows iterating through the existing stack frames.
+* @doc [Macros in NASM and defining interrupt/exception handlers with common
+       code.] (https://littleosbook.github.io/#interrupts-and-input).
+
+* NASM pointers
+  * @doc [NASM preprocessor multi-line macros](NASM manual ch.4.3)
 
 * Intel SDM pointers
+  * @doc [Errors codes and the stack](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
+  * @doc [Stack Usage on Transfers to Interrupt and Exception-Handling Routines](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
 
 - - -
 
