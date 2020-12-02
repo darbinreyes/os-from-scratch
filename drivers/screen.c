@@ -383,65 +383,16 @@ void print(const char *s) {
 }
 
 /*!
-    @function print_byteb
-
-    @discussion Prints a byte in binary format.
-
-    @param    b    The byte value to print.
-*/
-void print_byteb (uint8_t b) {
-    print("0b");
-    for (int i = 7; i >= 0; i--)
-        if (b & BITN(i))
-            print_ch_at('1', 0, -1, -1);
-        else
-            print_ch_at('0', 0, -1, -1);
-}
-
-/*!
-    @function nibtoa
-
-    @discussion Converts a nibble to an ASCII hexadecimal digit. Upper nibble is
-    masked out, lower nibble is converted to an ASCII character in the set
-    [0-9|A-F].
-
-    @param    b    The nibble to convert to ASCII.
-
-    @result The ASCII encoded hexadecimal digit.
-*/
-static inline char nibtoa (uint8_t b) {
-    b = 0x0F & b; // Take the lower nibble.
-
-    if (b <= 9)
-        b += '0';
-    else if (b > 9)
-        b = b - 10 + 'A';
-    return b;
-}
-
-/*!
     @function print_byteh
 
     @discussion Prints a given byte value in hexadecimal format.
 
     @param    b    The byte value to print.
-
-    @param    pf    Flag indicating whether or not to include a 0x prefix. 1 =
-                    include prefix.
 */
-void print_byteh (uint8_t b, int pf) {
-    char c;
-
-    if (pf)
-        print("0x");
-
-    c = nibtoa (b >> 4); // upper nibble
-
-    print_ch_at(c, 0, -1, -1);
-
-    c = nibtoa (b); // lower nibble
-
-    print_ch_at(c, 0, -1, -1);
+void print_byteh (uint8_t b) {
+    char s[21];
+    xtoa(b, s);
+    print(s + 6);
 }
 
 /*!
@@ -452,10 +403,9 @@ void print_byteh (uint8_t b, int pf) {
     @param    i    The 32-bit value to print.
 */
 void print_uint32h(uint32_t i) {
-    print_byteh ((i >> 24) & 0xFFU, 0);
-    print_byteh ((i >> 16) & 0xFFU, 0);
-    print_byteh ((i >> 8) & 0xFFU, 0);
-    print_byteh ((i >> 0) & 0xFFU, 0);
+    char s[21];
+    xtoa(i, s);
+    print(s);
 }
 
 /*!

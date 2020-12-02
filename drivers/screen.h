@@ -14,7 +14,7 @@ void clear_screen(void);
 /*! See .c */
 void print_byteb(uint8_t b);
 /*! See .c */
-void print_byteh(uint8_t b, int pf);
+void print_byteh(uint8_t b);
 /*! See .c */
 void print_uint32h(uint32_t i);
 /*! See .c */

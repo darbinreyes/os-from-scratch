@@ -19,5 +19,6 @@
 
 /*! See .c */
 int dtoa(int d, char *s);
-
+/*! See .c */
+int xtoa(int x, char *s);
 #endif

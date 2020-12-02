@@ -195,6 +195,9 @@ intr_handler_with_err_code 21
 intr_handler_no_err_code   32
 ;-------------------------------------------------------------------------------
 
+
+; @doc [sigops i386 Interupt Handling.pdf](./docs/interrupts)
+
 MASTER_PIC_PORT_A equ 0x0020
 MASTER_PIC_PORT_B equ 0x0021
 

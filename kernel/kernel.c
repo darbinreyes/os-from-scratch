@@ -41,7 +41,7 @@ int main(void) {
     uint8_t *t = (uint8_t *) &idt[0];
 
     for (int i = 7; i >= 0; i--) {
-        print_byteh(t[i], 0);
+        print_byteh(t[i]);
     }
 
     return 0;
