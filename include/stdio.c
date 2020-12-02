@@ -89,7 +89,11 @@ int _utoa(unsigned long int d, char *s) {
         *s = d % pwr + '0';
         s++;
         /* @IMPORTANT We cannot make `d` unsigned long long because "Division
-           using 64-bit operand is available only in 64-bit mode." */
+           using 64-bit operand is available only in 64-bit mode." Generates
+            __umoddi3 __udivdi3 undefined compiler error. See [here]
+           (http://fxr.watson.org/fxr/source/libkern/divdi3.c?v=DFBSD)
+           implementing this is outside the scope of my interest. Linking
+           libgcc did not work as suggested. */
         d /= pwr;
     }
 
@@ -145,8 +149,7 @@ int _dtoa(long int d, char *s) {
     while (d > 0) {
         *s = d % pwr + '0';
         s++;
-        /* @IMPORTANT We cannot make `d` unsigned long long because "Division
-           using 64-bit operand is available only in 64-bit mode." */
+        /* @IMPORTANT See comment about `__umoddi3`. */
         d /= pwr;
     }
 
