@@ -25,7 +25,7 @@
              ; @doc [BIOS Boot Spec.]
              ; @doc [NASM manual chapter 8.1.1]
 
-SECTOR_READ_COUNT equ 20 ; The number of sectors to read from the boot drive as
+SECTOR_READ_COUNT equ 32 ; The number of sectors to read from the boot drive as
                          ; part of loading the kernel into memory.
                          ; @IMPORTANT:
                          ; The size of kernel.bin <= SECTOR_READ_COUNT * 512.
