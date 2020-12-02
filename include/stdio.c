@@ -69,7 +69,7 @@ int dtoa(int d, char *s) {
     const int pwr = 10;
     char *t;
 
-    assert(sizeof(d) <= 8); // Allow at most printing a 64-bit int.
+    assert(sizeof(d) == 4); // Check size of int
 
     if(s == NULL) {
         assert(0);
@@ -143,47 +143,57 @@ static inline char nibtoa (uint8_t b, int cf) {
 
     @param    x    The integer to convert.
     @param    s    Pointer to a character array at least 21 chars in size.
+    @param    cf    Case flag. Case for letters. 0 = lower. 1 upper.
 
     @result    0    If successful.
                1    Invalid arg.
 */
-int xtoa(int x, char *s) {
+int xtoa(int x, char *s, int cf) {
     uint8_t b;
+    int sh;
 
     if(s == NULL) {
         assert(0);
         return 1;
     }
 
-    assert(sizeof(x) <= 8); // Allow at most printing a 64-bit int.
+    assert(sizeof(x) == 4);
 
-    // High order byte // @TODO Use loop.
-    b = (x >> 24) & 0xFFU;
-    *s = nibtoa (b >> 4, 0);
-    s++;
-    *s = nibtoa (b, 0);
-    s++;
-    // Next byte
-    b = (x >> 16) & 0xFFU;
-    *s = nibtoa (b >> 4, 0);
-    s++;
-    *s = nibtoa (b, 0);
-    s++;
-    // Next byte
-    b = (x >> 8) & 0xFFU;
-    *s = nibtoa (b >> 4, 0);
-    s++;
-    *s = nibtoa (b, 0);
-    s++;
-    // Low order byte
-    b = (x >> 0) & 0xFFU;
-    *s = nibtoa (b >> 4, 0);
-    s++;
-    *s = nibtoa (b, 0);
-    s++;
+    sh = 24;
+
+    while (sh >= 0) {
+        b = (x >> sh) & 0xFFU;
+        *s = nibtoa(b >> 4, cf);
+        s++;
+        *s = nibtoa(b, cf);
+        s++;
+        sh -= 8;
+    }
+
     *s = '\0';
 
     return 0;
+}
+
+int lxtoa(long int x, char *s, int cf) {
+    assert(sizeof(x) == 4);
+    return xtoa(x, s, cf);
+}
+
+int llxtoa(long long int x, char *s, int cf) {
+    int t;
+
+    assert(sizeof(x) == 8);
+
+    t = (int) (x >> 32);
+
+    xtoa(t, s, cf);
+
+    s += 8;
+
+    t = (int) x;
+
+    return xtoa(t, s, cf);
 }
 
 ///////////////////////////
