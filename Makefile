@@ -61,6 +61,7 @@ kernel_entry.o: kernel/kernel_entry.asm
 	nasm -O0 $< -f elf -o $@
 
 # @IMPORTANT:The % operator does not match sub-directories, hence `kernel/%.c`.
+# To compile in test mode use `make TEST_MODE=1`.
 kernel.o: kernel/kernel.c
 ifdef TEST_MODE
 	$(CC) -DTEST_MODE $(CC_FLAGS) -c $< -o $@

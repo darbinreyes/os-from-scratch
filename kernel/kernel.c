@@ -37,8 +37,6 @@ int main(void) {
 int main(void) {
     clear_screen();
     print_at("Edsger Dijkstra!\n", 0, 0);
-    print_uint32h(0xdeadbeef);
-    print_llx(0xdeadbeefcafebade);
     //init_idt();
     uint8_t *t = (uint8_t *) &idt[0];
 
