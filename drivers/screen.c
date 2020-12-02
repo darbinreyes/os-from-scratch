@@ -391,8 +391,8 @@ void print(const char *s) {
 */
 void print_byteh (uint8_t b) {
     char s[21];
-    xtoa(b, s, 0);
-    print(s + 6);
+    _xtoa(b, 8, s, 0);
+    print(s);
 }
 
 /*!
@@ -404,7 +404,7 @@ void print_byteh (uint8_t b) {
 */
 void print_uint32h(uint32_t i) {
     char s[21];
-    xtoa(i, s, 0);
+    _xtoa(i, 32, s, 0);
     print(s);
 }
 
@@ -417,12 +417,6 @@ void print_uint32h(uint32_t i) {
 */
 void print_d(int d) {
     char s[21];
-    dtoa(d, s);
-    print(s);
-}
-
-void print_llx(long long x) {
-    char s[21];
-    llxtoa(x, s, 0);
+    _dtoa(d, s);
     print(s);
 }

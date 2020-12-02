@@ -15,7 +15,7 @@
     @result Return s.
 
 */
-static char *rstr(char *s) {
+static inline char *rstr(char *s) {
     char t, *ct;
 
     if (s == NULL) {
@@ -53,20 +53,20 @@ static char *rstr(char *s) {
 #define D_STR_SIZE_MAX 21
 
 /*!
-    @function    dtoa
+    @function    _utoa
 
-    @discussion This function converts an int to an ASCII string in decimal. It
-    is not part of the standard C library. Example output: "-2147483648".
+    @discussion This function converts an unsigned int to an ASCII string in
+    decimal. It is not part of the standard C library. Example output:
+    "18446744073709551615".
 
     @param    d    The integer to convert.
     @param    s    Pointer to a character array at least 21 chars in size.
 
     @result    0    If successful.
-               1    Invalid arg.
+               1    s is NULL.
 */
-int dtoa(int d, char *s) {
-    int sign;
-    const int pwr = 10;
+int _utoa(unsigned long int d, char *s) {
+    const unsigned long int pwr = 10;
     char *t;
 
     assert(sizeof(d) == 4); // Check size of int
@@ -76,10 +76,67 @@ int dtoa(int d, char *s) {
         return 1;
     }
 
+    if (d == 0) {
+        *s = '0';
+        s++;
+        *s = '\0';
+        return 0;
+    }
+
+    t = s; // Keep pointer to first char.
+
+    while (d > 0) {
+        *s = d % pwr + '0';
+        s++;
+        /* @IMPORTANT We cannot make `d` unsigned long long because "Division
+           using 64-bit operand is available only in 64-bit mode." */
+        d /= pwr;
+    }
+
+    *s = '\0';
+
+    rstr(t);
+
+    return 0;
+}
+
+/*!
+    @function    _dtoa
+
+    @discussion This function converts an int to an ASCII string in decimal. It
+    is not part of the standard C library. Example output: "-2147483648".
+
+    @param    d    The integer to convert.
+    @param    s    Pointer to a character array at least 21 chars in size.
+
+    @result    0    If successful.
+               1    s is NULL.
+*/
+int _dtoa(long int d, char *s) {
+    int sign;
+    const long int pwr = 10;
+    char *t;
+
+    assert(sizeof(d) == 4); // Check size of int
+
+    if(s == NULL) {
+        assert(0);
+        return 1;
+    }
+
+    if (d == 0) {
+        *s = '0';
+        s++;
+        *s = '\0';
+        return 0;
+    }
+
     sign = 1;
 
     if (d < 0) {
         sign = -1;
+        /* @IMPORTANT This fails when d = INT32_MIN. Add bounds test using
+        limit.h */
         d *= -1;
     }
 
@@ -88,6 +145,8 @@ int dtoa(int d, char *s) {
     while (d > 0) {
         *s = d % pwr + '0';
         s++;
+        /* @IMPORTANT We cannot make `d` unsigned long long because "Division
+           using 64-bit operand is available only in 64-bit mode." */
         d /= pwr;
     }
 
@@ -102,6 +161,9 @@ int dtoa(int d, char *s) {
 
     return 0;
 }
+
+// int dtoa(int d, char *s) { // These wrappers are superfluous.
+
 
 /*!
     @function nibtoa
@@ -135,7 +197,7 @@ static inline char nibtoa (uint8_t b, int cf) {
 }
 
 /*!
-    @function    xtoa
+    @function    _xtoa
 
     @discussion This function converts an int to an ASCII string in hexadecimal
     format. It is not part of the standard C library. Example output:
@@ -143,12 +205,14 @@ static inline char nibtoa (uint8_t b, int cf) {
 
     @param    x    The integer to convert.
     @param    s    Pointer to a character array at least 21 chars in size.
+    @param    nbits The number of bits in x. One of 8, 16, 32, 64.
     @param    cf    Case flag. Case for letters. 0 = lower. 1 upper.
 
     @result    0    If successful.
-               1    Invalid arg.
+               1    s is NULL.
+               2    nbits is invalid.
 */
-int xtoa(int x, char *s, int cf) {
+int _xtoa(long long int x, int nbits, char *s, int cf) {
     uint8_t b;
     int sh;
 
@@ -157,9 +221,14 @@ int xtoa(int x, char *s, int cf) {
         return 1;
     }
 
-    assert(sizeof(x) == 4);
+    if (nbits <= 0 || nbits % 8 != 0) {
+        assert(0);
+        return 2;
+    }
 
-    sh = 24;
+    assert(sizeof(x) == 8);
+
+    sh = nbits - 8;
 
     while (sh >= 0) {
         b = (x >> sh) & 0xFFU;
@@ -173,27 +242,6 @@ int xtoa(int x, char *s, int cf) {
     *s = '\0';
 
     return 0;
-}
-
-int lxtoa(long int x, char *s, int cf) {
-    assert(sizeof(x) == 4);
-    return xtoa(x, s, cf);
-}
-
-int llxtoa(long long int x, char *s, int cf) {
-    int t;
-
-    assert(sizeof(x) == 8);
-
-    t = (int) (x >> 32);
-
-    xtoa(t, s, cf);
-
-    s += 8;
-
-    t = (int) x;
-
-    return xtoa(t, s, cf);
 }
 
 ///////////////////////////
