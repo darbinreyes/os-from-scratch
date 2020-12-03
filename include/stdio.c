@@ -4,6 +4,7 @@
 
 #include "stdio.h"
 #include "assert.h"
+#include "limits.h"
 
 /*!
     @function    rstr
@@ -68,14 +69,16 @@ static inline char *rstr(char *s) {
 int _utoa(unsigned long long d, char *s) {
     char *t;
 
+    assert(sizeof(d) == 8);
+
     if (s == NULL) {
         assert(0);
         return 1;
     }
 
-    t = s; // Keep pointer to first char.
+    *s = '\0';
 
-    assert(sizeof(d) == 8);
+    t = s; // Keep pointer to first char.
 
     if (d == 0) {
         *s = '0';
@@ -113,14 +116,16 @@ int _dtoa(long long d, char *s) {
     int sign;
     char *t;
 
+    assert(sizeof(d) == 8);
+
     if (s == NULL) {
         assert(0);
         return 1;
     }
 
-    t = s; // Keep pointer to first char.
+    *s = '\0';
 
-    assert(sizeof(d) == 8);
+    t = s; // Keep pointer to first char.
 
     if (d == 0) {
         *s = '0';
@@ -133,8 +138,6 @@ int _dtoa(long long d, char *s) {
 
     if (d < 0) {
         sign = -1;
-        /* @IMPORTANT This fails when d = INT64_MIN. Add bounds test using
-        limit.h? */
         d = -d;
     }
 
@@ -157,11 +160,28 @@ int _dtoa(long long d, char *s) {
 }
 
 /*!
+    @function    dectoa
+
+    @discussion Converts integer d to its ASCII equivalent digit in the set
+    [0-9]. If d is out of range (> 9) returns -1.
+
+    @param    d    The integer to convert.
+
+    @result The ASCII equivalent or -1.
+*/
+static inline char dectoa(uint8_t d) {
+    if (d > 9)
+        return -1;
+
+    return d + '0';
+}
+
+/*!
     @function nibtoa
 
     @discussion Converts a nibble to an ASCII hexadecimal digit. Upper nibble is
     masked out, lower nibble is converted to an ASCII character in the set
-    [0-9|A-F].
+    [0-9|A-F|a-f].
 
     @param    b    The nibble to convert to ASCII.
 
@@ -170,21 +190,17 @@ int _dtoa(long long d, char *s) {
     @result The ASCII encoded hexadecimal digit.
 */
 static inline char nibtoa (uint8_t b, int cf) {
-    char c;
+    char c = 'A';
+
+    b = 0x0F & b; // Take the lower nibble only.
 
     if(cf == 0)
         c = 'a';
-    else
-        c = 'A';
 
-    b = 0x0F & b; // Take the lower nibble.
+    if (b < 10)
+        return dectoa(b);
 
-    if (b <= 9)
-        b += '0';
-    else // if (b > 9)
-        b = b - 10 + c;
-
-    return b;
+    return b - 10 + c;
 }
 
 /*!
@@ -203,21 +219,23 @@ static inline char nibtoa (uint8_t b, int cf) {
                1    s is NULL.
                2    nbits is invalid.
 */
-int _xtoa(long long int x, int nbits, char *s, int cf) {
+int _xtoa(long long x, int nbits, char *s, int cf) {
     uint8_t b;
     int sh;
+
+    assert(sizeof(x) == 8);
 
     if(s == NULL) {
         assert(0);
         return 1;
     }
 
-    if (nbits <= 0 || nbits % 8 != 0) {
+    *s = '\0';
+
+    if (nbits <= 0 || nbits % 8 != 0 || nbits > 64) {
         assert(0);
         return 2;
     }
-
-    assert(sizeof(x) == 8);
 
     sh = nbits - 8;
 
@@ -234,6 +252,41 @@ int _xtoa(long long int x, int nbits, char *s, int cf) {
 
     return 0;
 }
+
+/*!
+    @function    _otoa
+
+    @discussion This function converts an int to an ASCII string in octal
+    format. It is not part of the standard C library. Example output:
+    "7654".
+
+    @param    o    The integer to convert.
+    @param    s    Pointer to a character array at least 21 chars in size.
+    @param    nbits The number of bits in x. One of 8, 16, 32, 64.
+    @param    cf    Case flag. Case for letters. 0 = lower. 1 upper.
+
+    @result    0    If successful.
+               1    s is NULL.
+               2    nbits is invalid.
+*/
+// int _otoa(long long o, int nbits, char *s) {
+
+//    assert(sizeof(x) == 8);
+
+//     if(s == NULL) {
+//         assert(0);
+//         return 1;
+//     }
+
+//     *s = '\0';
+
+//     if (nbits <= 0 || nbits % 8 != 0 || nbits > 64) {
+//         assert(0);
+//         return 2;
+//     }
+
+//     return 0;
+// }
 
 ///////////////////////////
 /*!

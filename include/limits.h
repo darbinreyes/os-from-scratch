@@ -15,7 +15,10 @@
 #define INT32_MIN -2147483648 // -2,147,483,648 = - 2**31
 #define INT32_MAX  2147483647 // 2,147,483,647 = 2**31 - 1
 
-#define INT64_MIN -9223372036854775808 // - 2**63
+/* @remark The compiler rejects `-2^63 = -9223372036854775808` so we must use
+   `-2^63 + 1 = 9223372036854775807`. It doesn't complain about this for the
+   smaller signed integer types. */
+#define INT64_MIN -9223372036854775807 // - 2**63 + 1
 #define INT64_MAX  9223372036854775807 // 2**63 - 1
 
 #define UINT8_MAX 255 // 2**8 - 1

@@ -22,7 +22,7 @@ int _utoa(unsigned long long d, char *s);
 /*! See .c */
 int _dtoa(long long d, char *s);
 /*! See .c */
-int _xtoa(long long int x, int nbits, char *s, int cf);
+int _xtoa(long long x, int nbits, char *s, int cf);
 
 
 
