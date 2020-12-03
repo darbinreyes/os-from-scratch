@@ -56,7 +56,7 @@ boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
 # workaround the `__udivdi3` undefined error.
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o stdio.o \
 			assert.o $(TEST_OBJ_FILES)
-	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
+	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
 
 kernel_entry.o: kernel/kernel_entry.asm
 	nasm -O0 $< -f elf -o $@
