@@ -1,22 +1,24 @@
-/*
-
-    Defining the IDT in C.
-
-```
-@spec Intel SDM Vol.3. Chapter 1.3.4.
-@myconventions
-
-1.3.4 Hexadecimal and Binary Numbers
-
-    Base 16 (hexadecimal) numbers are represented by a string of hexadecimal digits followed by the character H (for example, F82EH). A hexadecimal digit is a character from the following set: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, and F.
-
-    Base 2 (binary) numbers are represented by a string of 1s and 0s, sometimes followed by the character B (for example, 1010B). The “B” designation is only used in situations where confusion as to the type of number might arise.
-```
-
+/*!
+    @header
+    @discussion
 */
 
 #include "../drivers/screen.h"
 #include "test.h"
+
+/* IDT Gate Descriptors - Interrupt Gate
+
+31          16| 15 | 14 13 | 12   8 | 7  5 | 4      0 |
+Offset 31..16 | P  | D     |                          | Byte
+              |    | P     |
+              |    | L     |
+????H         | ?B | ??B   | 0D110B | 000B | Reserved | 4
+
+31             16|15           0|
+Segment Selector | Offset 15..0 | Byte
+?H               | ?H           | 0
+
+*/
 
 // @spec Intel SDM Vol.3.Chapter.6.11.
 // @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
@@ -100,7 +102,7 @@ V_N_HANDLER_FUNC(1)
 
 // void (*func_ptr)(unsigned char b, int pf);
 
-uint64_t idt[IDT_ENTRY_COUNT];
+uint64_t idt[IDT_ENTRY_COUNT]; // @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
 
 struct idt_reg_t idtr;
 
