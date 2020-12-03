@@ -135,7 +135,7 @@ int _dtoa(long long d, char *s) {
         sign = -1;
         /* @IMPORTANT This fails when d = INT64_MIN. Add bounds test using
         limit.h? */
-        d *= -1;
+        d = -d;
     }
 
     while (d > 0) {
