@@ -18,9 +18,12 @@
 #define EOF (-1)
 
 /*! See .c */
-int _utoa(unsigned long int d, char *s);
+int _utoa(unsigned long long d, char *s);
 /*! See .c */
-int _dtoa(long int d, char *s);
+int _dtoa(long long d, char *s);
 /*! See .c */
 int _xtoa(long long int x, int nbits, char *s, int cf);
+
+
+
 #endif

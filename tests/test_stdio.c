@@ -5,8 +5,29 @@
 // @TODO Add all corner case tests.
 
 void test_dtoa(void) {
-    int d;
+    long long d;
     char s[21];
+
+    d = -9223372036854775807;
+    _dtoa(d, s);
+    assert(strcmp(s, "-9223372036854775807") == 0);
+
+    d = 9223372036854775807;
+    _dtoa(d, s);
+    assert(strcmp(s, "9223372036854775807") == 0);
+
+    d = -2147483647;
+    _dtoa(d, s);
+    // @IMPORTANT Bug when d = INT64_MIN. Underflow.
+    assert(strcmp(s, "-2147483647") == 0);
+
+    d = 2147483647;
+    _dtoa(d, s);
+    assert(strcmp(s, "2147483647") == 0);
+
+    d = -587;
+    _dtoa(d, s);
+    assert(strcmp(s, "-587") == 0);
 
     d = 0;
     _dtoa(d, s);
@@ -15,26 +36,19 @@ void test_dtoa(void) {
     d = 257;
     _dtoa(d, s);
     assert(strcmp(s, "257") == 0);
-
-
-    d = -587;
-    _dtoa(d, s);
-    assert(strcmp(s, "-587") == 0);
-
-    d = -2147483647;
-    _dtoa(d, s);
-    // @IMPORTANT Bug when d = INT32_MIN = -2147483648. Underflow.
-    assert(strcmp(s, "-2147483647") == 0);
-
-    d = 2147483647;
-    _dtoa(d, s);
-    assert(strcmp(s, "2147483647") == 0);
 }
 
 void test_utoa(void) {
-    unsigned int d;
+    unsigned long long d;
     char s[21];
 
+    d = 9223372036854775807;
+    _utoa(d, s);
+    assert(strcmp(s, "9223372036854775807") == 0);
+
+    d = 18446744073709551615U;
+    _utoa(d, s);
+    assert(strcmp(s, "18446744073709551615") == 0);
 
     d = 0;
     _utoa(d, s);

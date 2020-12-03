@@ -65,16 +65,17 @@ static inline char *rstr(char *s) {
     @result    0    If successful.
                1    s is NULL.
 */
-int _utoa(unsigned long int d, char *s) {
-    const unsigned long int pwr = 10;
+int _utoa(unsigned long long d, char *s) {
     char *t;
 
-    assert(sizeof(d) == 4); // Check size of int
-
-    if(s == NULL) {
+    if (s == NULL) {
         assert(0);
         return 1;
     }
+
+    t = s; // Keep pointer to first char.
+
+    assert(sizeof(d) == 8);
 
     if (d == 0) {
         *s = '0';
@@ -83,18 +84,10 @@ int _utoa(unsigned long int d, char *s) {
         return 0;
     }
 
-    t = s; // Keep pointer to first char.
-
     while (d > 0) {
-        *s = d % pwr + '0';
+        *s = d % 10 + '0';
+        d /= 10;
         s++;
-        /* @IMPORTANT We cannot make `d` unsigned long long because "Division
-           using 64-bit operand is available only in 64-bit mode." Generates
-            __umoddi3 __udivdi3 undefined compiler error. See [here]
-           (http://fxr.watson.org/fxr/source/libkern/divdi3.c?v=DFBSD)
-           implementing this is outside the scope of my interest. Linking
-           libgcc did not work as suggested. */
-        d /= pwr;
     }
 
     *s = '\0';
@@ -116,17 +109,18 @@ int _utoa(unsigned long int d, char *s) {
     @result    0    If successful.
                1    s is NULL.
 */
-int _dtoa(long int d, char *s) {
+int _dtoa(long long d, char *s) {
     int sign;
-    const long int pwr = 10;
     char *t;
 
-    assert(sizeof(d) == 4); // Check size of int
-
-    if(s == NULL) {
+    if (s == NULL) {
         assert(0);
         return 1;
     }
+
+    t = s; // Keep pointer to first char.
+
+    assert(sizeof(d) == 8);
 
     if (d == 0) {
         *s = '0';
@@ -139,18 +133,15 @@ int _dtoa(long int d, char *s) {
 
     if (d < 0) {
         sign = -1;
-        /* @IMPORTANT This fails when d = INT32_MIN. Add bounds test using
-        limit.h */
+        /* @IMPORTANT This fails when d = INT64_MIN. Add bounds test using
+        limit.h? */
         d *= -1;
     }
 
-    t = s; // Keep pointer to first char.
-
     while (d > 0) {
-        *s = d % pwr + '0';
+        *s = d % 10 + '0';
+        d /= 10;
         s++;
-        /* @IMPORTANT See comment about `__umoddi3`. */
-        d /= pwr;
     }
 
     if (sign == -1) {
@@ -164,9 +155,6 @@ int _dtoa(long int d, char *s) {
 
     return 0;
 }
-
-// int dtoa(int d, char *s) { // These wrappers are superfluous.
-
 
 /*!
     @function nibtoa
