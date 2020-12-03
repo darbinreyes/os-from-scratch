@@ -15,6 +15,8 @@
   * This allows iterating through the existing stack frames.
 * @doc [Macros in NASM and defining interrupt/exception handlers with common
        code.] (https://littleosbook.github.io/#interrupts-and-input).
+* @doc [i386 Interrupt Handling w/ Programmable Interrupt Controller]
+        (./docs/interrupts/sigops_i386_Interrupt_Handling.pdf)
 
 * NASM pointers
   * @doc [NASM preprocessor multi-line macros](NASM manual ch.4.3)

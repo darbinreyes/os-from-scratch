@@ -63,7 +63,7 @@ lidt_and_sti:
 ;-------------------------------------------------------------------------------
 
 ;!
-; @function    intr_v%1_handler
+; @function    intr_handler_no_err_code/intr_v%1_handler
 ;
 ; @stack [esp + 12]        <- ESP before transfer to handler.
 ;        [esp + 8 ] EFLAGS
@@ -89,7 +89,7 @@ intr_v%1_handler:
 %endmacro
 
 ;!
-; @function    intr_v%1_handler
+; @function    intr_handler_with_err_code/intr_v%1_handler
 ;
 ; @stack [esp + 16]           <- ESP before transfer to handler.
 ;        [esp + 12] EFLAGS
@@ -117,11 +117,12 @@ intr_v%1_handler:
 ;
 ; @discussion
 ; Code common to all interrupt/exception handlers. We jump (not call) here from
-; the wrappers intr_handler_no_err_code/intr_handler_err_code.
+; the wrappers intr_handler_no_err_code/intr_handler_err_code above.
 ; The function `intr_handler` is implemented in the .c file.
 [extern intr_handler]
 intr_common_handler:
-    ; Save registers?
+    ; Save registers? - this would change the order of arguments passed. Seems
+    ; like we can do it inside the macros with pusha.
     call intr_handler ; Call the C function. Error code and Vector number are on
                       ; the stack.
     ; Restore registers?
@@ -130,6 +131,7 @@ intr_common_handler:
 
 ;-------------------------------------------------------------------------------
 ; @doc [Table 6-1. Protected-Mode Exceptions and Interrupts](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+;-------------------------------------------------------------------------------
 ; Vector | Mnemonic | Description                                | Type       | Error Code | Source
 ; -------|----------|--------------------------------------------|------------|------------|--------------------------------------------------------------------
 ; 0      |  #DE     | Divide Error                               | Fault      | No         | DIV and IDIV instructions.
@@ -169,6 +171,19 @@ intr_common_handler:
 ; ^5. This exception can occur only on processors that support the 1-setting of
 ;     the "EPT-violation #VE" VM-execution control.
 ;-------------------------------------------------------------------------------
+
+;!
+; @function    intr_v0_handler . . . intr_v32_handler
+;
+; @discussion
+; These lines define the exception and interrupt handlers for the pre-defined
+; interrupt sources given in the table above. The definitions are made using
+; NASM multi-line macros. For example, the macro `intr_handler_no_err_code 0`
+; defines the function `intr_v0_handler`. Each of these handlers is exported to
+; the .c file via the NASM `global` directive. None of these handlers are ever
+; called explicitly by the programmer. Instead, the entry point address of the
+; handler is saved in the IDT, and the CPU calls the appropriate handler when
+; the event that triggers the interrupt occurs.
 intr_handler_no_err_code   0
 intr_handler_no_err_code   1
 intr_handler_no_err_code   2
@@ -196,7 +211,8 @@ intr_handler_no_err_code   32
 ;-------------------------------------------------------------------------------
 
 
-; @doc [sigops i386 Interupt Handling.pdf](./docs/interrupts)
+; @doc [i386 Interrupt Handling w/ Programmable Interrupt Controller]
+;       (./docs/interrupts/sigops_i386_Interrupt_Handling.pdf)
 
 MASTER_PIC_PORT_A equ 0x0020
 MASTER_PIC_PORT_B equ 0x0021
@@ -204,8 +220,11 @@ MASTER_PIC_PORT_B equ 0x0021
 SLAVE_PIC_PORT_A equ 0x00A0
 SLAVE_PIC_PORT_B equ 0x00A1
 
+;!
+; @function    init_pics
+;
+; @discussion Initialize the programmable interrupt controllers (PICs). @TODO
 global init_pics
-
 init_pics:
     pusha
     ; ICW1
@@ -246,9 +265,10 @@ init_pics:
     popa
     ret
 
-
-
-; Send pic end of interrupt (EOI) byte.
+;!
+; @function    send_pic_eoi
+;
+; @discussion Send pic end of interrupt (EOI) byte. @TODO
 send_pic_eoi:
     pusha
     mov al, 0x20
@@ -259,8 +279,12 @@ send_pic_eoi:
     popa
     ret
 
+;!
+; @function    intr_v33_handler
+;
+; @discussion External interrupt handler tied to keyboard input.
+; Bare-bone keyboard input interrupt handler. @TODO
 global intr_v33_handler
-
 intr_v33_handler:
     ;pusha
     push dword 0
