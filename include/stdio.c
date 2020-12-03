@@ -46,14 +46,6 @@ static inline char *rstr(char *s) {
 }
 
 /*!
-    @defined D_STR_SIZE_MAX
-
-    @discussion The max size of a character string necessary to print a 64-bit
-                integer in decimal format. See limits.h.
-*/
-#define D_STR_SIZE_MAX 21
-
-/*!
     @function    _utoa
 
     @discussion This function converts an unsigned int to an ASCII string in
@@ -61,7 +53,8 @@ static inline char *rstr(char *s) {
     "18446744073709551615".
 
     @param    d    The integer to convert.
-    @param    s    Pointer to a character array at least 21 chars in size.
+    @param    s    Pointer to a character array at least STDIO_STR_SIZE_MAX
+                   chars in size.
 
     @result    0    If successful.
                1    s is NULL.
@@ -107,7 +100,8 @@ int _utoa(unsigned long long d, char *s) {
     is not part of the standard C library. Example output: "-2147483648".
 
     @param    d    The integer to convert.
-    @param    s    Pointer to a character array at least 21 chars in size.
+    @param    s    Pointer to a character array at least STDIO_STR_SIZE_MAX
+                   chars in size.
 
     @result    0    If successful.
                1    s is NULL.
@@ -211,7 +205,8 @@ static inline char nibtoa (uint8_t b, int cf) {
     "deadbeef".
 
     @param    x    The integer to convert.
-    @param    s    Pointer to a character array at least 21 chars in size.
+    @param    s    Pointer to a character array at least STDIO_STR_SIZE_MAX
+                   chars in size.
     @param    nbits The number of bits in x. One of 8, 16, 32, 64.
     @param    cf    Case flag. Case for letters. 0 = lower. 1 upper.
 
@@ -219,7 +214,7 @@ static inline char nibtoa (uint8_t b, int cf) {
                1    s is NULL.
                2    nbits is invalid.
 */
-int _xtoa(long long x, int nbits, char *s, int cf) {
+int _xtoa(unsigned long long x, int nbits, char *s, int cf) {
     uint8_t b;
     int sh;
 
@@ -261,32 +256,43 @@ int _xtoa(long long x, int nbits, char *s, int cf) {
     "7654".
 
     @param    o    The integer to convert.
-    @param    s    Pointer to a character array at least 21 chars in size.
-    @param    nbits The number of bits in x. One of 8, 16, 32, 64.
-    @param    cf    Case flag. Case for letters. 0 = lower. 1 upper.
+    @param    s    Pointer to a character array at least STDIO_STR_SIZE_MAX
+                   chars in size.
+    @param    nbits The number of bits in o. One of 8, 16, 32, 64.
 
     @result    0    If successful.
                1    s is NULL.
                2    nbits is invalid.
 */
-// int _otoa(long long o, int nbits, char *s) {
+int _otoa(unsigned long long o, int nbits, char *s) {
+    int sh;
 
-//    assert(sizeof(x) == 8);
+    assert(sizeof(o) == 8);
 
-//     if(s == NULL) {
-//         assert(0);
-//         return 1;
-//     }
+    if(s == NULL) {
+        assert(0);
+        return 1;
+    }
 
-//     *s = '\0';
+    *s = '\0';
 
-//     if (nbits <= 0 || nbits % 8 != 0 || nbits > 64) {
-//         assert(0);
-//         return 2;
-//     }
+    if (nbits <= 0 || nbits % 8 != 0 || nbits > 64) {
+        assert(0);
+        return 2;
+    }
 
-//     return 0;
-// }
+    sh = nbits - nbits % 3;
+
+    while (sh >= 0) {
+        *s =  dectoa((o >> sh) & 0x07);
+        s++;
+        sh -= 3;
+    }
+
+    *s = '\0';
+
+    return 0;
+}
 
 ///////////////////////////
 /*!

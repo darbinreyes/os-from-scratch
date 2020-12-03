@@ -390,7 +390,7 @@ void print(const char *s) {
     @param    b    The byte value to print.
 */
 void print_byteh (uint8_t b) {
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
     _xtoa(b, 8, s, 0);
     print(s);
 }
@@ -403,7 +403,7 @@ void print_byteh (uint8_t b) {
     @param    i    The 32-bit value to print.
 */
 void print_uint32h(uint32_t i) {
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
     _xtoa(i, 32, s, 0);
     print(s);
 }
@@ -416,7 +416,7 @@ void print_uint32h(uint32_t i) {
     @param    d    The value to print.
 */
 void print_d(int d) {
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
     _dtoa(d, s);
     print(s);
 }

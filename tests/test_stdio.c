@@ -4,9 +4,34 @@
 
 // @TODO Add all corner case tests.
 
+void test_otoa(void) {
+    long long d;
+    char s[STDIO_STR_SIZE_MAX];
+
+    d = 0xAC;
+    _otoa(d, 64, s);
+    assert(strcmp(s, "0000000000000000000254") == 0);
+
+    d = 0xffffffffffffffff;
+    _otoa(d, 64, s);
+    assert(strcmp(s, "1777777777777777777777") == 0);
+
+    d = 0xAC;
+    _otoa(d, 8, s);
+    assert(strcmp(s, "254") == 0);
+
+    d = 0xFF;
+    _otoa(d, 8, s);
+    assert(strcmp(s, "377") == 0);
+
+    d = 0x77;
+    _otoa(d, 8, s);
+    assert(strcmp(s, "167") == 0);
+}
+
 void test_dtoa(void) {
     long long d;
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
 
     d = -9223372036854775807;
     _dtoa(d, s);
@@ -18,7 +43,6 @@ void test_dtoa(void) {
 
     d = -2147483647;
     _dtoa(d, s);
-    // @IMPORTANT Bug when d = INT64_MIN. Underflow.
     assert(strcmp(s, "-2147483647") == 0);
 
     d = 2147483647;
@@ -40,7 +64,7 @@ void test_dtoa(void) {
 
 void test_utoa(void) {
     unsigned long long d;
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
 
     d = 9223372036854775807;
     _utoa(d, s);
@@ -61,7 +85,7 @@ void test_utoa(void) {
 
 void test_xtoa(void) {
     int x;
-    char s[21];
+    char s[STDIO_STR_SIZE_MAX];
 
     x = 0xdeadbeef;
     _xtoa(x, 32, s, 0);
@@ -103,6 +127,7 @@ void test_xtoa(void) {
 }
 
 void test_all_stdio(void) {
+    test_otoa();
     test_dtoa();
     test_utoa();
     test_xtoa();
