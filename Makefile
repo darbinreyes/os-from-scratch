@@ -1,3 +1,4 @@
+SHELL = /bin/sh
 ###########################
 # The first thing the compiler will do is preprocess the file. We can tell clang
 # to show us what it looks like if we stop after that step:
@@ -31,6 +32,9 @@ endif
 
 all: os-image
 
+testksize:
+	./testksize.sh
+
 run: all
 	bochs -q -f bochsrc.txt # run bochs installed by mac ports.
 
@@ -44,6 +48,7 @@ runq: all
 # This is the actual disk image that the computer loads, which is the
 # combination of our compiled boot sector and kernel.
 os-image: boot_sect.bin kernel.bin
+	./testksize.sh
 	cat $^ > $@
 
 # Assemble the boot sector to raw machine code.
@@ -57,6 +62,7 @@ boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o stdio.o \
 			assert.o $(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
+
 
 kernel_entry.o: kernel/kernel_entry.asm
 	nasm -O0 $< -f elf -o $@
