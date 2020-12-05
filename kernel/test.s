@@ -18,7 +18,7 @@
 ;         [esp    ] EIP
 ;
 ; @doc [Figure 6-1. Relationship of the IDTR and IDT]
-;      (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+;      (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
 ;
 ; |------------------|-----------|
 ; |47              16| 15       0|
@@ -59,7 +59,7 @@ lidt_and_sti:
 ;   exceptions.
 ; * "INTR pins" means external interrupt, therefore this applies to vectors
 ;   32 - 255.
-; * @doc [Errors codes and the stack](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
+; * @doc [Errors codes and the stack](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
 ;-------------------------------------------------------------------------------
 
 ;!
@@ -77,9 +77,9 @@ lidt_and_sti:
 ; CPU when the corresponding interrupt occurs.
 ;
 ; @doc [Stack Usage on Transfers to Interrupt and Exception-Handling Routines]
-;      (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
+;      (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
 ; @doc [NASM preprocessor multi-line macros](NASM manual ch.4.3)
-; @doc [Error Code](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.13 Figure 6-7)
+; @doc [Error Code](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13 Figure 6-7)
 %macro intr_handler_no_err_code 1
 global intr_v%1_handler
 intr_v%1_handler:
@@ -130,7 +130,7 @@ intr_common_handler:
     iret ; @IMPORTANT: This is not the usual `ret`. Interrupt specific return.
 
 ;-------------------------------------------------------------------------------
-; @doc [Table 6-1. Protected-Mode Exceptions and Interrupts](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+; @doc [Table 6-1. Protected-Mode Exceptions and Interrupts](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
 ;-------------------------------------------------------------------------------
 ; Vector | Mnemonic | Description                                | Type       | Error Code | Source
 ; -------|----------|--------------------------------------------|------------|------------|--------------------------------------------------------------------

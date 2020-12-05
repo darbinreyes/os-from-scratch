@@ -228,7 +228,7 @@
       would use these bits to store the location on secondary store of a
       page on disk under a demand-paging memory management scheme.
 
-### @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-9 Segment Descriptor 
+### @doc [Intel 64 & IA-32 SDM, Vol.3, Figure 3-9 Segment Descriptor
 ### When Segment-Present Flag is Clear]
 
  ------------------------------------------------------------------------------------------------
@@ -377,7 +377,7 @@
   this problem, set the accessed bits for all segment descriptors placed in a
   ROM. Also, remove operating-system or executive code that attempts to modify
   segment descriptors located in ROM."
-  
+
 ### For both our code segment and data segment we have set the following:
 * segment-limit | F_FFFFH
   * segment-limit[bit 19:16] | FH
@@ -393,7 +393,7 @@
 * In the above we have discussed the entries in the GDT/LDT which are called
   "Segment Descriptors". They are 8-byte entries that describe code segments
   or data segments in the linear address space.
-* The is one more kind of "descriptor" other than "Segment Descriptors". They
+* There is one more kind of "descriptor" other than "Segment Descriptors". They
   are called "System Descriptors".
 * System descriptors have the same general format as segment descriptors. To
   indicate a system-descriptor type, the S flag should be clear (S == 0).

@@ -8,7 +8,7 @@
 #include "test.h"
 
 /*******************************************************************************
-@doc [Figure 6-2. IDT Gate Descriptors](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.11)
+@doc [Figure 6-2. IDT Gate Descriptors](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.11)
 
  |------------------Task Gate--------------------------|
  | 31            16 | 15 | 14 13 | 12  8 | 7         0 | Bit
@@ -55,7 +55,7 @@
 
 @IMPORTANT
 @doc [Flag Usage By Exception- or Interrupt-Handler Procedure]
-     (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1.3)
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1.3)
 The only difference between an interrupt gate and a trap gate is the way the
 processor handles the IF flag in the EFLAGS register. When accessing an
 exception- or interrupt-handling procedure through an interrupt gate, the
@@ -158,7 +158,7 @@ static inline uint64_t intr_gate_d (uint32_t offset, uint32_t p, uint32_t dpl,
     return *((uint64_t *) &dt);
 }
 
-// @spec Intel SDM Vol.3.Chapter.6.11.
+
 // @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
 #define IDT_TASK_TYPE (0x00000500) // Type[bit 11:8] == 0101B ==  5 == Task gate.
 #define IDT_INTR_TYPE (0x00000600) // Type[bit 11:8] == 1110B == 14 == 32-bit interrupt gate.
@@ -264,7 +264,7 @@ idt_proc_t idt_proc_entry_p[IDT_LEN] = {
     @discussion Struct representing value loaded into the IDT register (IDTR).
 
     @doc [Figure 6-1. Relationship of the IDTR and IDT]
-         (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
 */
 struct idt_reg_t {
     uint16_t idt_limit;
@@ -277,7 +277,7 @@ struct idt_reg_t idtr;
     @defined IDT_RSVD_VECT(v)
     @discussion Returns true if v is an Intel reserved vector number.
     @doc [Table 6-1. Protected-Mode Exceptions and Interrupts]
-         (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
 */
 #define IDT_RSVD_VECT(v) ((v) == 15 || ((v) >= 22 && (v) <= 31))
 

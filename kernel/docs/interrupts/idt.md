@@ -22,8 +22,9 @@
   * @doc [NASM preprocessor multi-line macros](NASM manual ch.4.3)
 
 * Intel SDM pointers
-  * @doc [Errors codes and the stack](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
-  * @doc [Stack Usage on Transfers to Interrupt and Exception-Handling Routines](Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
+  * @doc [Errors codes and the stack](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
+  * @doc [Stack Usage on Transfers to Interrupt and Exception-Handling Routines]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
 
 - - -
 
