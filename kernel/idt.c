@@ -64,6 +64,13 @@ the current interrupt handler. A subsequent IRET instruction restores the IF
 flag to its value in the saved contents of the EFLAGS register on the stack.
 Accessing a handler procedure through a trap gate does not affect the IF flag.
 
+@remark
+For the relationship between GDT entries and IDT entries see
+@doc [Table 3-2. System-Segment and Gate-Descriptor Types]
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.3.5)
+For more info. on the meaning of fields inside descriptors in general, e.g. DPL
+and P, see
+@doc [Segment Descriptors](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.3.4.5)
 *******************************************************************************/
 
 /*!
@@ -74,74 +81,119 @@ Accessing a handler procedure through a trap gate does not affect the IF flag.
     of the three gate descriptors. sizeof(struct idt_gate_d_t) == 8.
 
     @field    offset_l    Offset[bit 15:0]
-
-    @field    seg_sel    Segment Selector for destination code segment
-
-    @field    rsvd    Reserved
-
-    @field    const0    Constant 000B
-
-    @field    const1    Gate Descriptor [byte 7:4][bit 10:8].
-                        One of: Task = 101B; Interrupt = 110B; Trap = 111B;
-
-    @field    d    Size of gate: 1 = 32 bits; 0 = 16 bits
-
-    @field    const2    Constant 0B
-
-    @field    dpl    Descriptor Privilege Level
-
-    @field    p    Segment Present Flag
-
+    @field    seg_sel     Segment Selector for destination code segment
+    @field    rsvd        Reserved
+    @field    const0      Constant 000B
+    @field    const1      Gate Descriptor [byte 7:4][bit 10:8].
+                          One of: Task = 101B; Interrupt = 110B; Trap = 111B;
+    @field    d           Size of gate: 1 = 32 bits; 0 = 16 bits
+    @field    const2      Constant 0B
+    @field    dpl         Descriptor Privilege Level
+    @field    p           Segment Present Flag
     @field    offset_h    Offset[bit 31:16]
 */
 struct idt_gate_d_t {
-
     uint16_t offset_l;
     uint16_t seg_sel;
-
     uint8_t rsvd:5;   // 00000B
     uint8_t const0:3; // 000B
-
-/*!
-    @defined TASK_GATE_CONST1
-    @discussion Task Gate Descriptor [byte 7:4][bit 10:8].
-*/
-#define TASK_GATE_CONST1 5U
-/*!
-    @defined INTR_GATE_CONST1
-    @discussion Interrupt Gate Descriptor [byte 7:4][bit 10:8].
-*/
-#define INTR_GATE_CONST1 6U
-/*!
-    @defined TRAP_GATE_CONST1
-    @discussion Trap Gate Descriptor [byte 7:4][bit 10:8].
-*/
-#define TRAP_GATE_CONST1 7U
     uint8_t const1:3; // Gate Descriptor [byte 7:4][bit 10:8].
     uint8_t d:1;
     uint8_t const2:1; // 0B
     uint8_t dpl:2;
     uint8_t p:1;
-
     uint16_t offset_h;
-
 } __attribute__((packed));
+
+/*!
+    @defined    SEG_PRESENT
+    @discussion Value of the P field in an IDT gate descriptor. Indicates the
+    segment is present in memory.
+*/
+#define SEG_PRESENT 1
+
+/*!
+    @defined    SEG_NOT_PRESENT
+    @discussion Value of the P field in an IDT gate descriptor. Indicates the
+    segment is **not** present in memory.
+*/
+#define SEG_NOT_PRESENT 0
+
+/*!
+    @defined    DPL_0
+    @discussion Value of the DPL field in a gate descriptor. Most privileged.
+*/
+#define DPL_0 (0)
+
+/*!
+    @defined    DPL_KERNEL
+    @discussion Alias for DPL_0.
+*/
+#define DPL_KERNEL DPL_0
+
+/*!
+    @defined    DPL_3
+    @discussion Value of the DPL field in a gate descriptor. Least privileged.
+*/
+#define DPL_3 (3)
+
+/*!
+    @defined    DPL_USER
+    @discussion Alias for DPL_3.
+*/
+#define DPL_USER DPL_3
+
+/*!
+    @defined    GATE_SIZE_32
+    @discussion Value of the D field in interrupt and trap gate descriptors.
+    Size of gate 32-bits.
+*/
+#define GATE_SIZE_32 (1)
+
+/*!
+    @defined    GATE_SIZE_16
+    @discussion Value of the D field in interrupt and trap gate descriptors.
+    Size of gate 16-bits.
+*/
+#define GATE_SIZE_16 (0)
+
+/*!
+    @defined TASK_GATE_CONST1
+    @discussion Value of Task Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define TASK_GATE_CONST1 (5U)
+
+/*!
+    @defined INTR_GATE_CONST1
+    @discussion Value of Interrupt Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define INTR_GATE_CONST1 (6U)
+
+/*!
+    @defined TRAP_GATE_CONST1
+    @discussion Value of Trap Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define TRAP_GATE_CONST1 (7U)
+
+/*! @TODO Import from gdt.asm.
+    @defined    CODE_SEG
+    @discussion Value of the segment selector field in an interrupt of trap gate
+    descriptor. Equal to the byte offset of the code segment in the GDT.
+*/
+#define CODE_SEG (0x0008)
 
 /*!
     @function    intr_gate_d
 
     @discussion Returns an interrupt gate descriptor.
 
-    @param    offset    Offset to procedure entry point
-
-    @param    p    Segment Present Flag
-
-    @param    dpl    Descriptor Privilege Level
-
+    @param    offset     Offset to procedure entry point
+    @param    p          Segment Present Flag
+    @param    dpl        Descriptor Privilege Level
     @param    seg_sel    Segment Selector for destination code segment
 */
-static inline uint64_t intr_gate_d (uint32_t offset, uint32_t p, uint32_t dpl,
-                                    uint32_t d, uint16_t seg_sel) {
+static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
+                                   uint32_t d, uint16_t seg_sel) {
     struct idt_gate_d_t dt;
 
     dt.offset_h = offset >> 16;
@@ -158,64 +210,11 @@ static inline uint64_t intr_gate_d (uint32_t offset, uint32_t p, uint32_t dpl,
     return *((uint64_t *) &dt);
 }
 
-
-// @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
-#define IDT_TASK_TYPE (0x00000500) // Type[bit 11:8] == 0101B ==  5 == Task gate.
-#define IDT_INTR_TYPE (0x00000600) // Type[bit 11:8] == 1110B == 14 == 32-bit interrupt gate.
-#define IDT_TRAP_TYPE (0x00000700) // Type[bit 11:8] == 1111B == 15 == 32-bit trap gate.
-/******************************************************************************/
-#define IDT_DESCRIPTOR_H(offset, p, dpl, d, type) \
-   ( (offset & 0xFFFF0000U) | (type) | ( (p & 0x00000001U) << 15 ) \
- | ( (dpl & 0x00000003U) << 13 ) | ( (d & 0x00000001U) << 11 ) )
-
-#define x_IDT_DESCRIPTOR_H(offset, p, dpl, d, bits_10_8) \
-((((uint32_t)offset) & 0xFFFF0000U) | \
-((((uint32_t)p) & 0x1U) << 15) | ((((uint32_t)dpl) & 0x3U) << 13) | \
-((((uint32_t)d) & 0x1U) << 11) | ( (((uint32_t)bits_10_8) & 0x7U) << 8))
-/******************************************************************************/
-#define IDT_DESCRIPTOR_L(segment_sel, offset) \
-( ((segment_sel & 0x0000FFFFU) << 16) | (offset & 0x0000FFFFU) )
-
-#define x_IDT_DESCRIPTOR_L(segment_sel, offset) \
-(((((uint32_t)segment_sel) & 0xFFFFU) << 16) | ((((uint32_t)offset) & 0xFFFFU)))
-/******************************************************************************/
-#define IDT_X_GATE_DESCRIPTOR(p, dpl, d, type, segment_sel, offset) \
-(((0x00000000FFFFFFFFULL & IDT_DESCRIPTOR_H(offset, p, dpl, d, type)) << 32) | \
-( 0x00000000FFFFFFFFULL & IDT_DESCRIPTOR_L(segment_sel, offset) ) )
-
-#define x_IDT_X_GATE_DESCRIPTOR(offset, p, dpl, d, bits_10_8, segment_sel) \
-(((uint64_t)x_IDT_DESCRIPTOR_H(offset, p, dpl, d, bits_10_8)) << 32) | \
-((uint64_t)x_IDT_DESCRIPTOR_L(segment_sel, offset))
-/******************************************************************************/
-#define IDT_TASK_GATE_DESCRIPTOR(p, dpl, segment_sel) \
-IDT_X_GATE_DESCRIPTOR(p, dpl, 0U, IDT_TASK_TYPE, segment_sel, 0x00000000U)
-
-
-#define IDT_INTR_GATE_DESCRIPTOR(p, dpl, d, segment_sel, offset)      IDT_X_GATE_DESCRIPTOR(p, dpl, d, IDT_INTR_TYPE, segment_sel, offset)
-
-#define IDT_TRAP_GATE_DESCRIPTOR(p, dpl, d, segment_sel, offset)      IDT_X_GATE_DESCRIPTOR(p, dpl, d, IDT_TRAP_TYPE, segment_sel, offset)
-/******************************************************************************/
-
 /*!
     @defined IDT_LEN
     @discussion The length of the IDT array.
 */
 #define IDT_LEN (34)
-
-#define GDT_CODE_SEG (0x0008) // @TODO Import from gdt.asm.
-
-#define GATE_SIZE_32_BITS 1
-#define GATE_SIZE_16_BITS 0
-
-#define DPL_0 0
-#define DPL_KERNEL 0
-
-#define DPL_3 3
-#define DPL_USER 3
-
-// @spec Intel SDM Vol.3.Chapter.3.4.5.
-#define SEGMENT_PRESENT 1
-#define SEGMENT_NOT_PRESENT 0
 
 uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
 
@@ -287,9 +286,9 @@ void init_idt(void) {
     // Fill IDT.
     for (int v = 0; v < IDT_LEN; v++) {
         if (!IDT_RSVD_VECT(v))
-            idt[v] = intr_gate_d ((uint32_t)idt_proc_entry_p[v],
-                                  SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS,
-                                  GDT_CODE_SEG);
+            idt[v] = intr_gate_d((uint32_t)idt_proc_entry_p[v],
+                                 SEG_PRESENT, DPL_0, GATE_SIZE_32,
+                                 CODE_SEG);
     }
 
     // Load IDT register
