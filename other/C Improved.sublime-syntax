@@ -1,7 +1,8 @@
 %YAML 1.2
 ---
 # http://www.sublimetext.com/docs/3/syntax.html
-name: C Improved
+# [To customizing sublime text syntax](https://ilkinulas.github.io/programming/2016/02/05/sublime-text-syntax-highlighting.html)
+name: C Improved 4 Me
 comment: |
   https://github.com/abusalimov/SublimeCImproved
 
@@ -108,7 +109,7 @@ contexts:
     - match: |-
         (?ix)
             (?= (?-i: @[a-zA-Z_]++ | \b [A-Z_]++) \b) @? \b (?:
-                (NOTE) | (NB) | (CHANGED) | (IDEA) | (IMPORTANT) | (HACK) | (BUG)
+                (NOTE) | (NB) | (CHANGED) | (IDEA) | (IMPORTANT) | (HACK) | (BUG) | (header) | (function) | (discussion) | (param) | (result) | (struct) | (union) | (field) | (enum) | (constant) | (typedef) | (callback) | (const) | (defined) | (doc) | (stack) | (remark)
             ) \b
       captures:
         0: keyword.other.task-tag.note.c
