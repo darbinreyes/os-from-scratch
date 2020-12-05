@@ -217,38 +217,10 @@ IDT_X_GATE_DESCRIPTOR(p, dpl, 0U, IDT_TASK_TYPE, segment_sel, 0x00000000U)
 #define SEGMENT_PRESENT 1
 #define SEGMENT_NOT_PRESENT 0
 
-struct idt_reg_t {
-    // @spec Intel SDM Vol.3.Chapter.6.10.
-    uint16_t idt_limit; // sizeof(idt) - 1
-    uint32_t idt_base_addr;
-} __attribute__((packed));
-
-
-#define V_N_HANDLER_FUNC(vn)          \
-void v_##vn##_handler(void) {         \
-    print(__func__);                  \
-    print(" in Dijkstra I trust.\n"); \
-}                                     \
-
-V_N_HANDLER_FUNC(0)
-V_N_HANDLER_FUNC(1)
-
-#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
-
-#define TOKEN_TO_STR(tkn) #tkn
-
-#define PRINT_BYTEH_STRUCT_MEMBER(sm) \
-  do {                                \
-    print(TOKEN_TO_STR(sm) " = ");    \
-    print_uint32h(sm);                \
-    print("\n");                      \
-  } while (0)                         \
-
-// void (*func_ptr)(unsigned char b, int pf);
-
 uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
 
 typedef void (*idt_proc_t)(void);
+
 idt_proc_t idt_proc_entry_p[IDT_LEN] = {
     INTR_V_N_HANDLER_FUNC_NAME(0),
     INTR_V_N_HANDLER_FUNC_NAME(1),
@@ -285,6 +257,19 @@ idt_proc_t idt_proc_entry_p[IDT_LEN] = {
     INTR_V_N_HANDLER_FUNC_NAME(32), // 32-255 - User Defined Interrupts
     INTR_V_N_HANDLER_FUNC_NAME(33)
 };
+
+/*!
+    @struct idt_reg_t
+
+    @discussion Struct representing value loaded into the IDT register (IDTR).
+
+    @doc [Figure 6-1. Relationship of the IDTR and IDT]
+         (Intel64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+*/
+struct idt_reg_t {
+    uint16_t idt_limit;
+    uint32_t idt_base_addr;
+} __attribute__((packed));
 
 struct idt_reg_t idtr;
 
