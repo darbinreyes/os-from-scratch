@@ -288,7 +288,88 @@ struct idt_reg_t {
 */
 #define IDT_RSVD_VECT(v) ((v) == 15 || ((v) >= 22 && (v) <= 31))
 
-void init_idt(void) {
+/*!
+    @struct    intr_err_code_t
+    @discussion When an exception condition is related to a specific segment
+    selector or IDT vector, the processor pushes an error code onto the stack of
+    the exception handler (whether it is a procedure or task).
+    @doc [Figure 6-7. Error Code](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
+
+    @field    ext            When set, indicates that the exception occurred
+                             during delivery of an event external to the
+                             program, such as an interrupt or an earlier
+                             exception.
+    @field    idt            When set, indicates that the index portion of the
+                             error code refers to a gate descriptor in the IDT;
+                             when clear, indicates that the index refers to a
+                             descriptor in the GDT or the current LDT.
+    @field    ti             Only used when the IDT flag is clear. When set, the
+                             TI flag indicates that the index portion of the
+                             error code refers to a segment or gate descriptor
+                             in the LDT; when clear, it indicates that the index
+                             refers to a descriptor in the current GDT.
+    @field    seg_sel_idx    The segment selector index field provides an index
+                             into the IDT, GDT, or current LDT to the segment or
+                             gate selector being referenced by the error code.
+    @field    rsvd           Reserved.
+*/
+struct intr_err_code_t {
+    uint16_t ext:1;
+    uint16_t idt:1;
+    uint16_t ti:1;
+    uint16_t seg_sel_idx:13; // @IMPORTANT Pretty sure this should be shifted left by 3-bits to produce a byte offset from a entry index into the IDT/GDT/LDT.
+    uint16_t rsvd;
+} __attribute__((packed));
+
+/*!
+    @function    intr_handler
+    @discussion Every interrupt handler procedure in the IDT calls this
+    function. The interrupt handler procedures are defined in the .s file. The
+    interrupt handler procedures all call this function with its vector number,
+    which identifies the source of the interrupt, and an error code if
+    applicable. Error codes provide additional information about the source of
+    the interrupt. Interrupt vectors that do not provide an error code set the
+    error code to 0.
+    @doc [Table 6-1. Protected-Mode Exceptions and Interrupts]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+    @param    vn          Interrupt vector number. Identifies the source of the
+                          interrupt.
+    @param    err_code    Error code value for the interrupt. If no error code
+                          applies, it is set to 0.
+*/
+void intr_handler(uint32_t vn, uint32_t err_code) {
+    struct intr_err_code_t *errc;
+
+    print("Vector Number = ");
+    print_d(vn);
+    print("\n");
+
+    errc = (struct intr_err_code_t *) &err_code;
+    print("errc.ext = ");
+    print_x32(errc->ext);
+    print("\n");
+
+    print("errc.idt = ");
+    print_x32(errc->idt);
+    print("\n");
+
+    print("errc.ti = ");
+    print_x32(errc->ti);
+    print("\n");
+
+    print("errc.seg_sel_idx = ");
+    print_d(errc->seg_sel_idx);
+    print("\n");
+
+    if(vn == 33)
+        print("THE KEYBOARD SAYS DIJKSTRA.\n");
+}
+
+/*!
+    @function    init_interrupts
+    @discussion Performs the work necessary to enable interrupts.
+*/
+void init_interrupts(void) {
     struct idt_reg_t idtr;
 
     // Fill IDT.
@@ -299,25 +380,16 @@ void init_idt(void) {
                                  CODE_SEG);
     }
 
-    // Load IDT register
+    // Init. IDT register
     idtr.idt_limit = sizeof(idt) - 1;
     idtr.idt_base_addr = (uint32_t)idt;
 
+    // Initialize programmable interrupt controllers (PIC).
     init_pics(); // @IMPORTANT This should be called before lidt_and_sti().
+
+    // Load the IDT register.
     lidt_and_sti((void *) &idtr);
 
     __asm__("int $0"); // Test IDT vector 0.
     __asm__("int $1");
-}
-
-void intr_handler(uint32_t vn, uint32_t err_code) {
-    print("Vector Number = ");
-    print_uint32h(vn);
-    print("\n");
-    print_uint32h(err_code);
-    print("\n");
-    print("Programming Notation. % Not programming language.\n");
-    if(vn == 33)
-        print("THE KEYBOARD SAYS DIJKSTRA.\n");
-
 }

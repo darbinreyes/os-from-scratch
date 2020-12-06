@@ -2,6 +2,6 @@
 #define __IDT_H__
 
 /*! See .c */
-void init_idt(void);
+void init_interrupts(void);
 
 #endif

@@ -383,28 +383,15 @@ void print(const char *s) {
 }
 
 /*!
-    @function print_byteh
-
-    @discussion Prints a given byte value in hexadecimal format.
-
-    @param    b    The byte value to print.
-*/
-void print_byteh (uint8_t b) {
-    char s[STDIO_STR_SIZE_MAX];
-    _xtoa(b, 8, s, 0);
-    print(s);
-}
-
-/*!
-    @function print_uint32h
+    @function print_x32
 
     @discussion Prints an unsigned 32-bit value in hexadecimal format.
 
-    @param    i    The 32-bit value to print.
+    @param    x    The 32-bit value to print.
 */
-void print_uint32h(uint32_t i) {
+void print_x32(uint32_t x) {
     char s[STDIO_STR_SIZE_MAX];
-    _xtoa(i, 32, s, 0);
+    _xtoa(x, 32, s, 0);
     print(s);
 }
 

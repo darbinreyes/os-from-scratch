@@ -76,10 +76,10 @@ lidt_and_sti:
 ; intr_v%1_handler. This function is not called explicitly, it is called by the
 ; CPU when the corresponding interrupt occurs.
 ;
-; @doc [Stack Usage on Transfers to Interrupt and Exception-Handling Routines]
-;      (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1 Figure 6-4)
+; @doc [Figure 6-4. Stack Usage on Transfers to Interrupt and Exception-Handling
+;       Routines](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1)
 ; @doc [NASM preprocessor multi-line macros](NASM manual ch.4.3)
-; @doc [Error Code](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13 Figure 6-7)
+; @doc [Figure 6-7. Error Code](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
 %macro intr_handler_no_err_code 1
 global intr_v%1_handler
 intr_v%1_handler:
