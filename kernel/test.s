@@ -221,9 +221,10 @@ SLAVE_PIC_PORT_A equ 0x00A0
 SLAVE_PIC_PORT_B equ 0x00A1
 
 ;!
+; @TODO
 ; @function    init_pics
 ;
-; @discussion Initialize the programmable interrupt controllers (PICs). @TODO
+; @discussion Initialize the programmable interrupt controllers (PICs).
 global init_pics
 init_pics:
     pusha

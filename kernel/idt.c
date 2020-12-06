@@ -158,19 +158,19 @@ struct idt_gate_d_t {
 #define GATE_SIZE_16 (0)
 
 /*!
-    @defined TASK_GATE_CONST1
+    @defined    TASK_GATE_CONST1
     @discussion Value of Task Gate Descriptor [byte 7:4][bit 10:8].
 */
 #define TASK_GATE_CONST1 (5U)
 
 /*!
-    @defined INTR_GATE_CONST1
+    @defined    INTR_GATE_CONST1
     @discussion Value of Interrupt Gate Descriptor [byte 7:4][bit 10:8].
 */
 #define INTR_GATE_CONST1 (6U)
 
 /*!
-    @defined TRAP_GATE_CONST1
+    @defined    TRAP_GATE_CONST1
     @discussion Value of Trap Gate Descriptor [byte 7:4][bit 10:8].
 */
 #define TRAP_GATE_CONST1 (7U)
@@ -211,16 +211,26 @@ static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
 }
 
 /*!
-    @defined IDT_LEN
+    @defined    IDT_LEN
     @discussion The length of the IDT array.
 */
 #define IDT_LEN (34)
 
 uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
 
+/*
+    @typedef    idt_proc_t
+    @discussion Pointer to interrupt handler function. Used for the offset field
+    in interrupt and trap gate descriptors.
+*/
 typedef void (*idt_proc_t)(void);
 
-idt_proc_t idt_proc_entry_p[IDT_LEN] = {
+/*!
+    @const    idt_proc_entry_p
+    @discussion Array of procedure entry points used as value for the offset
+    field in interrupt and trap gate descriptors.
+*/
+const idt_proc_t idt_proc_entry_p[IDT_LEN] = {
     INTR_V_N_HANDLER_FUNC_NAME(0),
     INTR_V_N_HANDLER_FUNC_NAME(1),
     INTR_V_N_HANDLER_FUNC_NAME(2),
@@ -270,8 +280,6 @@ struct idt_reg_t {
     uint32_t idt_base_addr;
 } __attribute__((packed));
 
-struct idt_reg_t idtr;
-
 /*!
     @defined IDT_RSVD_VECT(v)
     @discussion Returns true if v is an Intel reserved vector number.
@@ -281,7 +289,7 @@ struct idt_reg_t idtr;
 #define IDT_RSVD_VECT(v) ((v) == 15 || ((v) >= 22 && (v) <= 31))
 
 void init_idt(void) {
-
+    struct idt_reg_t idtr;
 
     // Fill IDT.
     for (int v = 0; v < IDT_LEN; v++) {
@@ -295,7 +303,7 @@ void init_idt(void) {
     idtr.idt_limit = sizeof(idt) - 1;
     idtr.idt_base_addr = (uint32_t)idt;
 
-    init_pics();
+    init_pics(); // @IMPORTANT This should be called before lidt_and_sti().
     lidt_and_sti((void *) &idtr);
 
     __asm__("int $0"); // Test IDT vector 0.
@@ -308,7 +316,7 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print("\n");
     print_uint32h(err_code);
     print("\n");
-    print("Programming Notation. Not programming language.\n");
+    print("Programming Notation. % Not programming language.\n");
     if(vn == 33)
         print("THE KEYBOARD SAYS DIJKSTRA.\n");
 
