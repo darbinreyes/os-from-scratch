@@ -22,6 +22,11 @@ void test_v13_intr(void) {
 
 void test_all_idt(void) {
     init_interrupts();
+
+    /* @remark These test cases remain commented because most interrupts push
+    a return address (EIP) value on the stack that points to the instruction
+    that generated the exception. Thus simply returning from the interrupt
+    handler effectively calls the interrupt handler forever.*/
     //test_v0_intr();
     //test_v13_intr();
 }
