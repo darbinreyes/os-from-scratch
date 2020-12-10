@@ -6,7 +6,7 @@
 #include "../drivers/screen.h"
 #include "../include/stdint.h"
 #include "../include/assert.h"
-#include "test.h"
+#include "idt_asm.h"
 
 /*******************************************************************************
 @doc [Figure 6-2. IDT Gate Descriptors]

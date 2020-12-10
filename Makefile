@@ -59,7 +59,7 @@ boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
 
 # @IMPORTANT kernel_entry.o must go first here. The -lgcc and -L options
 # workaround the `__udivdi3` undefined error.
-kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o test.o stdio.o \
+kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o idt_asm.o stdio.o \
 			assert.o $(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
 
@@ -79,7 +79,7 @@ endif
 idt.o: kernel/idt.c kernel/idt.h
 	$(CC)  $(CC_FLAGS) -c $< -o $@
 
-test.o: kernel/test.s kernel/test.h
+idt_asm.o: kernel/idt_asm.s kernel/idt_asm.h
 	nasm -O0 $< -f elf -o $@
 
 %.o: drivers/%.c drivers/%.h
