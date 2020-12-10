@@ -403,4 +403,8 @@ void init_interrupts(void) {
     // Test Divide Error Interrupt
     //__asm__("mov $0, %eax");
     //__asm__("div %eax");
+
+    /* This generates the #GP interrupt since the IDT currently has only 33
+       entries. */
+    //__asm__("int $34");
 }
