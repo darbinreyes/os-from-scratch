@@ -54,7 +54,7 @@ os-image: boot_sect.bin kernel.bin
 # Assemble the boot sector to raw machine code.
 # @remark nasm reports file not found errors with "fatal: unable to open include
 # file"
-boot_sect.bin:	boot/boot_sect.asm boot/print_string.asm boot/disk_load.asm
+boot_sect.bin:	boot/boot_sect.s boot/print_string.s boot/disk_load.s
 	nasm -O0 $< -I 'boot/' -f bin -o $@
 
 # @IMPORTANT kernel_entry.o must go first here. The -lgcc and -L options
@@ -64,7 +64,7 @@ kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o idt_asm.o stdio.o
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
 
 
-kernel_entry.o: kernel/kernel_entry.asm
+kernel_entry.o: kernel/kernel_entry.s
 	nasm -O0 $< -f elf -o $@
 
 # @IMPORTANT:The % operator does not match sub-directories, hence `kernel/%.c`.

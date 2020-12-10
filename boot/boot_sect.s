@@ -60,11 +60,11 @@ jmp $                 ; Infinite loop.
 ;
 ; Include any data and procedures we intend to use.
 ;
-%include "print_string.asm"
-%include "disk_load.asm"
-%include "gdt.asm"
-%include "print_string_pm.asm" ; FYI: Includes a [bits 32] directive.
-%include "switch_to_pm.asm"    ; FYI: Includes a [bits 32] directive.
+%include "print_string.s"
+%include "disk_load.s"
+%include "gdt.s"
+%include "print_string_pm.s" ; FYI: Includes a [bits 32] directive.
+%include "switch_to_pm.s"    ; FYI: Includes a [bits 32] directive.
 
 [bits 16] ; NASM assembler directive - generate code to be executed in 16-bit
           ; mode. This directive is necessary because some of the includes above
