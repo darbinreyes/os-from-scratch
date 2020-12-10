@@ -364,12 +364,12 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print_d(errc->seg_sel_idx);
     print("\n");
 
-    if(vn != 33) {
+    if (vn == 33)
+        print("THE KEYBOARD SAYS DIJKSTRA.\n");
+    else {
         print("This interrupt is not handled.\n");
-        assert(0);
+        //assert(0);
     }
-
-    print("THE KEYBOARD SAYS DIJKSTRA.\n");
 }
 
 /*!
@@ -396,15 +396,4 @@ void init_interrupts(void) {
 
     // Load the IDT register and enable interrupts.
     lidt_and_sti((void *) &idtr);
-
-    //__asm__("int $0"); // Test IDT vector 0.
-    //__asm__("int $1");
-
-    // Test Divide Error Interrupt
-    //__asm__("mov $0, %eax");
-    //__asm__("div %eax");
-
-    /* This generates the #GP interrupt since the IDT currently has only 33
-       entries. */
-    //__asm__("int $34");
 }

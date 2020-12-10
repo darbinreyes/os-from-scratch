@@ -25,7 +25,7 @@ LD := i386-elf-ld
 # Use `make TEST_MODE=1` for test mode.
 ifdef TEST_MODE
 TEST_OBJ_FILES := test_all.o test_assert.o test_stdlib.o test_stdio.o assert.o\
-stdlib.o stdio.o string.o
+test_idt.o stdlib.o stdio.o string.o
 else
 TEST_OBJ_FILES :=
 endif
