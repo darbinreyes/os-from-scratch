@@ -5,10 +5,12 @@
 
 #include "../drivers/screen.h"
 #include "../include/stdint.h"
+#include "../include/assert.h"
 #include "test.h"
 
 /*******************************************************************************
-@doc [Figure 6-2. IDT Gate Descriptors](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.11)
+@doc [Figure 6-2. IDT Gate Descriptors]
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.11)
 
  |------------------Task Gate--------------------------|
  | 31            16 | 15 | 14 13 | 12  8 | 7         0 | Bit
@@ -110,14 +112,14 @@ struct idt_gate_d_t {
     @discussion Value of the P field in an IDT gate descriptor. Indicates the
     segment is present in memory.
 */
-#define SEG_PRESENT 1
+#define SEG_PRESENT (1)
 
 /*!
     @defined    SEG_NOT_PRESENT
     @discussion Value of the P field in an IDT gate descriptor. Indicates the
     segment is **not** present in memory.
 */
-#define SEG_NOT_PRESENT 0
+#define SEG_NOT_PRESENT (0)
 
 /*!
     @defined    DPL_0
@@ -190,6 +192,7 @@ struct idt_gate_d_t {
     @param    offset     Offset to procedure entry point
     @param    p          Segment Present Flag
     @param    dpl        Descriptor Privilege Level
+    @param    d          Size of gate: 1 = 32 bits; 0 = 16 bits
     @param    seg_sel    Segment Selector for destination code segment
 */
 static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
@@ -361,8 +364,12 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print_d(errc->seg_sel_idx);
     print("\n");
 
-    if(vn == 33)
-        print("THE KEYBOARD SAYS DIJKSTRA.\n");
+    if(vn != 33) {
+        print("This interrupt is not handled.\n");
+        assert(0);
+    }
+
+    print("THE KEYBOARD SAYS DIJKSTRA.\n");
 }
 
 /*!
@@ -387,9 +394,13 @@ void init_interrupts(void) {
     // Initialize programmable interrupt controllers (PIC).
     init_pics(); // @IMPORTANT This should be called before lidt_and_sti().
 
-    // Load the IDT register.
+    // Load the IDT register and enable interrupts.
     lidt_and_sti((void *) &idtr);
 
-    __asm__("int $0"); // Test IDT vector 0.
-    __asm__("int $1");
+    //__asm__("int $0"); // Test IDT vector 0.
+    //__asm__("int $1");
+
+    // Test Divide Error Interrupt
+    //__asm__("mov $0, %eax");
+    //__asm__("div %eax");
 }

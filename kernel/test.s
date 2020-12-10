@@ -11,7 +11,7 @@
 ; @result Returns `idtr`.
 ;
 ; @discussion
-; Loads the IDTR register using the LIDTR instruction with the value pointed to
+; Loads the IDTR register using the LIDT instruction with the value pointed to
 ; by `idtr` and enables interrupts using the STI instruction.
 ;
 ; @stack  [esp + 4] Arg. #1
