@@ -368,7 +368,7 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
         print("THE KEYBOARD SAYS DIJKSTRA.\n");
     else {
         print("This interrupt is not handled.\n");
-        //assert(0);
+        assert(0);
     }
 }
 
