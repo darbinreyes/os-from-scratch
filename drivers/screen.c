@@ -119,10 +119,10 @@ static inline int get_cursor(void) {
     character cell offset is = `row * MAX_COLS + col` while the video memory
     offset is = `(row * MAX_COLS + col) * 2` since in video memory space
     each character cell gets 2 bytes: viz. <ASCII CODE> and <ATTRIBUTES>. */
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    vid_mem_offset = port_byte_in(REG_SCREEN_DATA_IO_PORT) << 8; // High byte.
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    vid_mem_offset += port_byte_in(REG_SCREEN_DATA_IO_PORT); // Low byte.
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    vid_mem_offset = inb(REG_SCREEN_DATA_IO_PORT) << 8; // High byte.
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    vid_mem_offset += inb(REG_SCREEN_DATA_IO_PORT); // Low byte.
 
     return vid_mem_offset * 2;
 }
@@ -143,10 +143,10 @@ static inline void set_cursor(int vid_mem_offset) {
     `(row * MAX_COLS + col)`. */
     vid_mem_offset /= 2;
 
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    outb(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    outb(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
 
 }
 

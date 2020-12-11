@@ -59,7 +59,7 @@ int get_ctlr_stat(ps_2_ctrl_stat_t *stat) {
     if (stat == NULL)
         return 1;
 
-    b = port_byte_in (IO_PS2_CTLR_STAT_REGISTER);
+    b = inb (IO_PS2_CTLR_STAT_REGISTER);
     pb = (unsigned char *) stat;
     *pb = b;
 
@@ -113,7 +113,7 @@ int send_byte (unsigned char b) {
         return 2;
     }
 
-    port_byte_out (IO_PS2_CTLR_DATA, b);
+    outb (IO_PS2_CTLR_DATA, b);
 
     return 0;
 }
@@ -159,7 +159,7 @@ int rcv_byte (unsigned char *b) {
         return 2;
     }
 
-    *b = port_byte_in (IO_PS2_CTLR_DATA);
+    *b = inb (IO_PS2_CTLR_DATA);
 
     return 0;
 }
@@ -173,5 +173,5 @@ int rcv_byte (unsigned char *b) {
     @param    b    The byte value to send.
 */
 void send_byte_ctlr (unsigned char b) {
-    port_byte_out (IO_PS2_CTLR_CMD_REGISTER, b);
+    outb (IO_PS2_CTLR_CMD_REGISTER, b);
 }

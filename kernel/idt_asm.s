@@ -1,6 +1,8 @@
 ;!
-; @header
-; @discussion
+; @header Interrupt related assembly.
+; This file contains code related to interrupts. It contains a function for
+; loading the IDTR and enabling interrupts. The interrupt handlers are also
+; defined here.
 ;
 
 ;!
@@ -14,7 +16,7 @@
 ; Loads the IDTR register using the LIDT instruction with the value pointed to
 ; by `idtr` and enables interrupts using the STI instruction.
 ;
-; @stack  [esp + 4] Arg. #1
+; @stack  [esp + 4] arg/param #1
 ;         [esp    ] EIP
 ;
 ; @doc [Figure 6-1. Relationship of the IDTR and IDT]
