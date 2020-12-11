@@ -1,10 +1,8 @@
 SHELL = /bin/sh
 ###########################
-# The first thing the compiler will do is preprocess the file. We can tell clang
-# to show us what it looks like if we stop after that step:
+# To see the C pre-processor output:
 # i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -E kernel/idt.c > idtpp.c
-# Next up: parsing and code generation. We can tell clang to output the
-# resulting assembly code like so:
+# To see the generated assembly:
 # i386-elf-gcc  -Wall -Wextra -Werror -O0 -ffreestanding -S kernel/idt.c
 ###########################
 # Build the kernel binary.
@@ -45,6 +43,9 @@ rundbg: all
 runq: all
 	qemu-system-i386 -drive file=os-image,if=floppy,format=raw
 
+clean:
+	rm -Rf *.bin *.o os-image
+
 # This is the actual disk image that the computer loads, which is the
 # combination of our compiled boot sector and kernel.
 os-image: boot_sect.bin kernel.bin
@@ -62,7 +63,6 @@ boot_sect.bin:	boot/boot_sect.s boot/print_string.s boot/disk_load.s
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o idt_asm.o stdio.o \
 			assert.o $(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
-
 
 kernel_entry.o: kernel/kernel_entry.s
 	nasm -O0 $< -f elf -o $@
@@ -85,23 +85,15 @@ idt_asm.o: kernel/idt_asm.s kernel/idt_asm.h
 %.o: drivers/%.c drivers/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
-# @remark The use of -masm=intel changes the syntax for the inline assembly from
-# GAS to NASM.
-low_level.o: kernel/low_level.c kernel/low_level.h
-	$(CC) $(CC_FLAGS) -c $< -o $@
+low_level.o: kernel/low_level.s kernel/low_level.h
+	nasm -O0 $< -f elf -o $@
 
 # Disassemble our kernel - might be useful for debugging.
 kernel.dis: kernel.bin
 	ndisasm -b 32 $< > $@
-
-clean:
-	rm -Rf *.bin *.o os-image
 
 %.o: tests/%.c tests/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
 
 %.o: include/%.c include/%.h
 	$(CC) $(CC_FLAGS) -c $< -o $@
-
-# %.o: include/%.h
-# 	$(CC) $(CC_FLAGS) -c $< -o $@

@@ -16,7 +16,7 @@
 ; Loads the IDTR register using the LIDT instruction with the value pointed to
 ; by `idtr` and enables interrupts using the STI instruction.
 ;
-; @stack  [esp + 4] arg/param #1
+; @stack  [esp + 4] @param idtr
 ;         [esp    ] EIP
 ;
 ; @doc [Figure 6-1. Relationship of the IDTR and IDT]
