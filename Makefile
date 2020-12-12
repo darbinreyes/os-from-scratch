@@ -61,7 +61,7 @@ boot_sect.bin:	boot/boot_sect.s boot/print_string.s boot/disk_load.s
 # @IMPORTANT kernel_entry.o must go first here. The -lgcc and -L options
 # workaround the `__udivdi3` undefined error.
 kernel.bin: kernel_entry.o kernel.o screen.o low_level.o idt.o idt_asm.o stdio.o \
-			assert.o $(TEST_OBJ_FILES)
+			assert.o i8259a_pic.o $(TEST_OBJ_FILES)
 	$(LD) -O0 -o $@ -Ttext 0x1000 $^ --oformat binary -e 0x1000 -static -lgcc -L /opt/local/lib/gcc/i386-elf/9.2.0/
 
 kernel_entry.o: kernel/kernel_entry.s
@@ -87,6 +87,9 @@ idt_asm.o: kernel/idt_asm.s kernel/idt_asm.h
 
 low_level.o: kernel/low_level.s kernel/low_level.h
 	nasm -O0 $< -f elf -o $@
+
+i8259a_pic.o: kernel/i8259a_pic.c kernel/i8259a_pic.h
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
 # Disassemble our kernel - might be useful for debugging.
 kernel.dis: kernel.bin

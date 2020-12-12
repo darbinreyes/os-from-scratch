@@ -28,7 +28,7 @@
 
 - - -
 
-# Evernote IDT Review - Intel SDM xxx
+# Evernotes - Intel SDM Vol.3 Ch.6 - INTERRUPT AND EXCEPTION HANDLING
 
 * Sources of interrupts - external (HW) - software-generated. - interruption of normal program execution.
 
@@ -67,3 +67,5 @@
 * 6.13 Error Code.
 
 - - -
+
+# Review - Intel SDM Vol.3 Ch.6 - INTERRUPT AND EXCEPTION HANDLING

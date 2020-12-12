@@ -15,7 +15,7 @@ inb:
     mov ebp, esp
     mov dx, word [esp + 8]
     xor eax, eax
-    in al, dx
+    in al, dx              ; reg. <- port#
     mov esp, ebp
     pop ebp
     ret
@@ -39,7 +39,7 @@ outb:
     xor eax, eax
     mov dx, word [esp + 8]
     mov al, byte [esp + 12]
-    out dx, al
+    out dx, al             ; port# -> reg.
     mov esp, ebp
     pop ebp
     ret

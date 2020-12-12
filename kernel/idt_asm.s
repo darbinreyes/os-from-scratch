@@ -212,75 +212,7 @@ intr_handler_with_err_code 21
 intr_handler_no_err_code   32
 ;-------------------------------------------------------------------------------
 
-
-; @doc [i386 Interrupt Handling w/ Programmable Interrupt Controller]
-;       (./docs/interrupts/sigops_i386_Interrupt_Handling.pdf)
-
-MASTER_PIC_PORT_A equ 0x0020
-MASTER_PIC_PORT_B equ 0x0021
-
-SLAVE_PIC_PORT_A equ 0x00A0
-SLAVE_PIC_PORT_B equ 0x00A1
-
-;!
-; @TODO
-; @function    init_pics
-;
-; @discussion Initialize the programmable interrupt controllers (PICs).
-global init_pics
-init_pics:
-    pusha
-    ; ICW1
-    mov dx, MASTER_PIC_PORT_A
-    mov al, 0x11
-    out dx, al
-    mov dx, SLAVE_PIC_PORT_A
-    out dx, al
-    ; ICW2
-    mov dx, MASTER_PIC_PORT_B
-    mov al, 0x20
-    out dx, al
-    mov dx, SLAVE_PIC_PORT_B
-    mov al, 0x28
-    out dx, al
-    ; ICW3
-    mov dx, MASTER_PIC_PORT_B
-    mov al, 0x04
-    out dx, al
-    mov dx, SLAVE_PIC_PORT_B
-    mov al, 0x02
-    out dx, al
-    ; ICW4
-    mov dx, MASTER_PIC_PORT_B
-    mov al, 0x05
-    out dx, al
-    mov dx, SLAVE_PIC_PORT_B
-    mov al, 0x01
-    out dx, al
-    ; Set interrupt mask - which IRQs to listen to and not listen to.
-    mov dx, MASTER_PIC_PORT_B
-    mov al, 0xfd
-    out dx, al ; d = 1101b
-    mov dx, SLAVE_PIC_PORT_B
-    mov al, 0xff
-    out dx, al
-
-    popa
-    ret
-
-;!
-; @function    send_pic_eoi
-;
-; @discussion Send pic end of interrupt (EOI) byte. @TODO
-send_pic_eoi:
-    pusha
-    mov al, 0x20
-    mov dx, MASTER_PIC_PORT_A
-    out dx, al
-    mov dx, SLAVE_PIC_PORT_A
-    out dx, al
-    popa
-    ret
+[extern m_pic_eoi]
 
 ;!
 ; @function    intr_v33_handler
@@ -295,7 +227,7 @@ intr_v33_handler:
     call intr_handler
     mov dx, 0x0060
     in al, dx      ; Read keyboard output buffer.
-    call send_pic_eoi
+    call m_pic_eoi
     ;popa
     add esp, 8
     iret
