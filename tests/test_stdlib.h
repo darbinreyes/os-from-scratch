@@ -4,7 +4,6 @@
 #ifndef __TEST_STDLIB_H__
 #define __TEST_STDLIB_H__
 
-// * [x] Tested.
-void test_atoi(void);
+void test_all_stdlib(void);
 
 #endif

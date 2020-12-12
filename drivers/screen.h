@@ -12,10 +12,7 @@ void print(const char *s);
 /*! See .c */
 void clear_screen(void);
 /*! See .c */
-void print_byteb(uint8_t b);
+void print_x32(uint32_t x);
 /*! See .c */
-void print_byteh(uint8_t b, int pf);
-/*! See .c */
-void print_uint32h(uint32_t i);
-
+void print_d(int d);
 #endif

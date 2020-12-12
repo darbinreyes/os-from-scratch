@@ -5,13 +5,6 @@
 #ifndef __TEST_ASSERT_H__
 #define __TEST_ASSERT_H__
 
-// * [x] Tested.
-void test_assert(void);
-
-// * [x] Tested.
-// NDEBUG
-
-// * [x] Tested.
-/* NDEADLOOP */
+void test_all_assert(void);
 
 #endif

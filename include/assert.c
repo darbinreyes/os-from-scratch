@@ -39,7 +39,7 @@ void dead_loop(void) {
 void print_assert(char *e, char *f, int l) {
     print(f);
     print(":");
-    print_uint32h(l); // @TODO Print in decimal.
+    print_d(l); // @TODO Print in decimal.
     print(": failed assertion `");
     print(e);
     print("'\n");

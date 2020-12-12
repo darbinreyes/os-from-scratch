@@ -24,3 +24,7 @@ void test_atoi(void) {
 
     assert(i != r);
 }
+
+void test_all_stdlib(void) {
+    test_atoi();
+}

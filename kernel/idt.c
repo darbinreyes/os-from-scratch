@@ -1,175 +1,399 @@
-/*
-
-    Defining the IDT in C.
-
-```
-@spec Intel SDM Vol.3. Chapter 1.3.4.
-@myconventions
-
-1.3.4 Hexadecimal and Binary Numbers
-
-    Base 16 (hexadecimal) numbers are represented by a string of hexadecimal digits followed by the character H (for example, F82EH). A hexadecimal digit is a character from the following set: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, and F.
-
-    Base 2 (binary) numbers are represented by a string of 1s and 0s, sometimes followed by the character B (for example, 1010B). The “B” designation is only used in situations where confusion as to the type of number might arise.
-```
-
+/*!
+    @header
+    @discussion
 */
 
 #include "../drivers/screen.h"
-#include "test.h"
+#include "../include/stdint.h"
+#include "../include/assert.h"
+#include "idt_asm.h"
 
-// @spec Intel SDM Vol.3.Chapter.6.11.
-// @doc [Intel 64 & IA-32 SDM, Vol.3, Table 3-2. System-Segment and Gate-Descriptor Types].
-#define IDT_TASK_TYPE (0x00000500) // Type[bit 11:8] == 0101B ==  5 == Task gate.
-#define IDT_INTR_TYPE (0x00000600) // Type[bit 11:8] == 1110B == 14 == 32-bit interrupt gate.
-#define IDT_TRAP_TYPE (0x00000700) // Type[bit 11:8] == 1111B == 15 == 32-bit trap gate.
-#define IDT_DESCRIPTOR_H(offset, p, dpl, d, type) ( (offset & 0xFFFF0000U) | (type) | ( (p & 0x00000001U) << 15 ) | ( (dpl & 0x00000003U) << 13 ) | ( (d & 0x00000001U) << 11 ) )
+/*******************************************************************************
+@doc [Figure 6-2. IDT Gate Descriptors]
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.11)
 
-#define IDT_DESCRIPTOR_L(segment_sel, offset)                         ( ((segment_sel & 0x0000FFFFU) << 16) | (offset & 0x0000FFFFU) )
+ |------------------Task Gate--------------------------|
+ | 31            16 | 15 | 14 13 | 12  8 | 7         0 | Bit
+ |------------------|----|-------|-------|-------------|
+ | Rsvd             | P  | DPL   | 00101 | Rsvd        | Byte 4
+ |-----------------------------------------------------|
+ |-----------------------------------------------------|
+ | 31           16  | 15                             0 | Bit
+ |------------------|----------------------------------|
+ | TSS Seg. Select. | Rsvd                             | Byte 0
+ |-----------------------------------------------------|
 
-#define IDT_X_GATE_DESCRIPTOR(p, dpl, d, type, segment_sel, offset)   ( ( ( 0x00000000FFFFFFFFULL & IDT_DESCRIPTOR_H(offset, p, dpl, d, type) ) << 32) | ( 0x00000000FFFFFFFFULL & IDT_DESCRIPTOR_L(segment_sel, offset) ) )
+ |------------------Interrupt Gate---------------------|
+ | 31            16 | 15 | 14 13 | 12  8 | 7 5 | 4   0 | Bit
+ |------------------|----|-------|-------|-----|-------|
+ | Offset 31..16    | P  | DPL   | 0D110 | 000 | Rsvd  | Byte 4
+ |-----------------------------------------------------|
+ |-----------------------------------------------------|
+ | 31            16 | 15                             0 | Bit
+ |------------------|----------------------------------|
+ | Seg. Select.     | Offset 15..0                     | Byte 0
+ |-----------------------------------------------------|
 
-#define IDT_TASK_GATE_DESCRIPTOR(p, dpl, segment_sel)                 IDT_X_GATE_DESCRIPTOR(p, dpl, 0U, IDT_TASK_TYPE, segment_sel, 0x00000000U)
+ |------------------Trap Gate--------------------------|
+ | 31            16 | 15 | 14 13 | 12  8 | 7 5 | 4   0 | Bit
+ |------------------|----|-------|-------|-----|-------|
+ | Offset 31..16    | P  | DPL   | 0D111 | 000 | Rsvd  | Byte 4
+ |-----------------------------------------------------|
+ |-----------------------------------------------------|
+ | 31            16 | 15                             0 | Bit
+ |------------------|----------------------------------|
+ | Seg. Select.     | Offset 15..0                     | Byte 0
+ |-----------------------------------------------------|
 
-#define IDT_INTR_GATE_DESCRIPTOR(p, dpl, d, segment_sel, offset)      IDT_X_GATE_DESCRIPTOR(p, dpl, d, IDT_INTR_TYPE, segment_sel, offset)
 
-#define IDT_TRAP_GATE_DESCRIPTOR(p, dpl, d, segment_sel, offset)      IDT_X_GATE_DESCRIPTOR(p, dpl, d, IDT_TRAP_TYPE, segment_sel, offset)
+ DPL          := Descriptor Privilege Level
+ Offset       := Offset to procedure entry point
+ P            := Segment Present Flag
+ Seg. Select. := Segment Selector for destination code segment.
+                 TSS := Task-State Segment.
+ D            := Size of gate: 1 = 32 bits; 0 = 16 bits
+ Rsvd         := Reserved
 
-#define IDT_ENTRY_COUNT 34
 
-#define INTR_VECTOR_RESERVED 0x00000000U
-#define GDT_CODE_SEGMENT 0x0008
+@IMPORTANT
+@doc [Flag Usage By Exception- or Interrupt-Handler Procedure]
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.12.1.3)
+The only difference between an interrupt gate and a trap gate is the way the
+processor handles the IF flag in the EFLAGS register. When accessing an
+exception- or interrupt-handling procedure through an interrupt gate, the
+processor clears the IF flag to prevent other interrupts from interfering with
+the current interrupt handler. A subsequent IRET instruction restores the IF
+flag to its value in the saved contents of the EFLAGS register on the stack.
+Accessing a handler procedure through a trap gate does not affect the IF flag.
 
-#define GATE_SIZE_32_BITS 1
-#define GATE_SIZE_16_BITS 0
+@remark
+For the relationship between GDT entries and IDT entries see
+@doc [Table 3-2. System-Segment and Gate-Descriptor Types]
+     (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.3.5)
+For more info. on the meaning of fields inside descriptors in general, e.g. DPL
+and P, see
+@doc [Segment Descriptors](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.3.4.5)
+*******************************************************************************/
 
-#define DPL_0 0
-#define DPL_KERNEL 0
+/*!
+    @struct    idt_gate_d_t
 
-#define DPL_3 3
-#define DPL_USER 3
+    @discussion A structure representing IDT gate descriptors. See Figure 6-2
+    above. By setting the fields appropriately, this structure can represent any
+    of the three gate descriptors. sizeof(struct idt_gate_d_t) == 8.
 
-// @spec Intel SDM Vol.3.Chapter.3.4.5.
-#define SEGMENT_PRESENT 1
-#define SEGMENT_NOT_PRESENT 0
-
-struct intr_gate_d_t { // interrupt gate descriptor.
-    // @spec Intel SDM Vol.3.Chapter.6.11.
+    @field    offset_l    Offset[bit 15:0]
+    @field    seg_sel     Segment Selector for destination code segment
+    @field    rsvd        Reserved
+    @field    const0      Constant 000B
+    @field    const1      Gate Descriptor [byte 7:4][bit 10:8].
+                          One of: Task = 101B; Interrupt = 110B; Trap = 111B;
+    @field    d           Size of gate: 1 = 32 bits; 0 = 16 bits
+    @field    const2      Constant 0B
+    @field    dpl         Descriptor Privilege Level
+    @field    p           Segment Present Flag
+    @field    offset_h    Offset[bit 31:16]
+*/
+struct idt_gate_d_t {
     uint16_t offset_l;
     uint16_t seg_sel;
-
-    uint8_t rsvd:5;
+    uint8_t rsvd:5;   // 00000B
     uint8_t const0:3; // 000B
-
-    uint8_t const1:3; // 110B
+    uint8_t const1:3; // Gate Descriptor [byte 7:4][bit 10:8].
     uint8_t d:1;
     uint8_t const2:1; // 0B
     uint8_t dpl:2;
     uint8_t p:1;
-
     uint16_t offset_h;
+} __attribute__((packed));
 
-} __attribute__((packed)); // sizeof(struct intr_gate_d_t) == 8.
+/*!
+    @defined    SEG_PRESENT
+    @discussion Value of the P field in an IDT gate descriptor. Indicates the
+    segment is present in memory.
+*/
+#define SEG_PRESENT (1)
 
+/*!
+    @defined    SEG_NOT_PRESENT
+    @discussion Value of the P field in an IDT gate descriptor. Indicates the
+    segment is **not** present in memory.
+*/
+#define SEG_NOT_PRESENT (0)
+
+/*!
+    @defined    DPL_0
+    @discussion Value of the DPL field in a gate descriptor. Most privileged.
+*/
+#define DPL_0 (0)
+
+/*!
+    @defined    DPL_KERNEL
+    @discussion Alias for DPL_0.
+*/
+#define DPL_KERNEL DPL_0
+
+/*!
+    @defined    DPL_3
+    @discussion Value of the DPL field in a gate descriptor. Least privileged.
+*/
+#define DPL_3 (3)
+
+/*!
+    @defined    DPL_USER
+    @discussion Alias for DPL_3.
+*/
+#define DPL_USER DPL_3
+
+/*!
+    @defined    GATE_SIZE_32
+    @discussion Value of the D field in interrupt and trap gate descriptors.
+    Size of gate 32-bits.
+*/
+#define GATE_SIZE_32 (1)
+
+/*!
+    @defined    GATE_SIZE_16
+    @discussion Value of the D field in interrupt and trap gate descriptors.
+    Size of gate 16-bits.
+*/
+#define GATE_SIZE_16 (0)
+
+/*!
+    @defined    TASK_GATE_CONST1
+    @discussion Value of Task Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define TASK_GATE_CONST1 (5U)
+
+/*!
+    @defined    INTR_GATE_CONST1
+    @discussion Value of Interrupt Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define INTR_GATE_CONST1 (6U)
+
+/*!
+    @defined    TRAP_GATE_CONST1
+    @discussion Value of Trap Gate Descriptor [byte 7:4][bit 10:8].
+*/
+#define TRAP_GATE_CONST1 (7U)
+
+/*! @TODO Import from gdt.asm.
+    @defined    CODE_SEG
+    @discussion Value of the segment selector field in an interrupt of trap gate
+    descriptor. Equal to the byte offset of the code segment in the GDT.
+*/
+#define CODE_SEG (0x0008)
+
+/*!
+    @function    intr_gate_d
+
+    @discussion Returns an interrupt gate descriptor.
+
+    @param    offset     Offset to procedure entry point
+    @param    p          Segment Present Flag
+    @param    dpl        Descriptor Privilege Level
+    @param    d          Size of gate: 1 = 32 bits; 0 = 16 bits
+    @param    seg_sel    Segment Selector for destination code segment
+*/
+static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
+                                   uint32_t d, uint16_t seg_sel) {
+    struct idt_gate_d_t dt;
+
+    dt.offset_h = offset >> 16;
+    dt.p = p & 1U;
+    dt.dpl = dpl & 3U;
+    dt.const2 = 0;
+    dt.d = d & 1U;
+    dt.const1 = INTR_GATE_CONST1;
+    dt.const0 = 0;
+    dt.rsvd = 0;
+    dt.seg_sel = seg_sel;
+    dt.offset_l = offset;
+
+    return *((uint64_t *) &dt);
+}
+
+/*!
+    @defined    IDT_LEN
+    @discussion The length of the IDT array.
+*/
+#define IDT_LEN (34)
+
+uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
+
+/*
+    @typedef    idt_proc_t
+    @discussion Pointer to interrupt handler function. Used for the offset field
+    in interrupt and trap gate descriptors.
+*/
+typedef void (*idt_proc_t)(void);
+
+/*!
+    @const    idt_proc_entry_p
+    @discussion Array of procedure entry points used as value for the offset
+    field in interrupt and trap gate descriptors.
+*/
+const idt_proc_t idt_proc_entry_p[IDT_LEN] = {
+    INTR_V_N_HANDLER_FUNC_NAME(0),
+    INTR_V_N_HANDLER_FUNC_NAME(1),
+    INTR_V_N_HANDLER_FUNC_NAME(2),
+    INTR_V_N_HANDLER_FUNC_NAME(3),
+    INTR_V_N_HANDLER_FUNC_NAME(4),
+    INTR_V_N_HANDLER_FUNC_NAME(5),
+    INTR_V_N_HANDLER_FUNC_NAME(6),
+    INTR_V_N_HANDLER_FUNC_NAME(7),
+    INTR_V_N_HANDLER_FUNC_NAME(8),
+    INTR_V_N_HANDLER_FUNC_NAME(9),
+    INTR_V_N_HANDLER_FUNC_NAME(10),
+    INTR_V_N_HANDLER_FUNC_NAME(11),
+    INTR_V_N_HANDLER_FUNC_NAME(12),
+    INTR_V_N_HANDLER_FUNC_NAME(13),
+    INTR_V_N_HANDLER_FUNC_NAME(14),
+    0, // 15 - Intel Reserved.
+    INTR_V_N_HANDLER_FUNC_NAME(16),
+    INTR_V_N_HANDLER_FUNC_NAME(17),
+    INTR_V_N_HANDLER_FUNC_NAME(18),
+    INTR_V_N_HANDLER_FUNC_NAME(19),
+    INTR_V_N_HANDLER_FUNC_NAME(20),
+    INTR_V_N_HANDLER_FUNC_NAME(21),
+    0, // 22 - Intel Reserved.
+    0, // 23
+    0, // 24
+    0, // 25
+    0, // 26
+    0, // 27
+    0, // 28
+    0, // 29
+    0, // 30
+    0, // 31
+    INTR_V_N_HANDLER_FUNC_NAME(32), // 32-255 - User Defined Interrupts
+    INTR_V_N_HANDLER_FUNC_NAME(33)
+};
+
+/*!
+    @struct idt_reg_t
+
+    @discussion Struct representing value loaded into the IDT register (IDTR).
+
+    @doc [Figure 6-1. Relationship of the IDTR and IDT]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+*/
 struct idt_reg_t {
-    // @spec Intel SDM Vol.3.Chapter.6.10.
-    uint16_t idt_limit; // sizeof(idt) - 1
+    uint16_t idt_limit;
     uint32_t idt_base_addr;
 } __attribute__((packed));
 
+/*!
+    @defined IDT_RSVD_VECT(v)
+    @discussion Returns true if v is an Intel reserved vector number.
+    @doc [Table 6-1. Protected-Mode Exceptions and Interrupts]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+*/
+#define IDT_RSVD_VECT(v) ((v) == 15 || ((v) >= 22 && (v) <= 31))
 
-#define V_N_HANDLER_FUNC(vn)          \
-void v_##vn##_handler(void) {         \
-    print(__func__);                  \
-    print(" in Dijkstra I trust.\n"); \
-}                                     \
+/*!
+    @struct    intr_err_code_t
+    @discussion When an exception condition is related to a specific segment
+    selector or IDT vector, the processor pushes an error code onto the stack of
+    the exception handler (whether it is a procedure or task).
+    @doc [Figure 6-7. Error Code](Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.13)
 
-V_N_HANDLER_FUNC(0)
-V_N_HANDLER_FUNC(1)
+    @field    ext            When set, indicates that the exception occurred
+                             during delivery of an event external to the
+                             program, such as an interrupt or an earlier
+                             exception.
+    @field    idt            When set, indicates that the index portion of the
+                             error code refers to a gate descriptor in the IDT;
+                             when clear, indicates that the index refers to a
+                             descriptor in the GDT or the current LDT.
+    @field    ti             Only used when the IDT flag is clear. When set, the
+                             TI flag indicates that the index portion of the
+                             error code refers to a segment or gate descriptor
+                             in the LDT; when clear, it indicates that the index
+                             refers to a descriptor in the current GDT.
+    @field    seg_sel_idx    The segment selector index field provides an index
+                             into the IDT, GDT, or current LDT to the segment or
+                             gate selector being referenced by the error code.
+    @field    rsvd           Reserved.
+*/
+struct intr_err_code_t {
+    uint16_t ext:1;
+    uint16_t idt:1;
+    uint16_t ti:1;
+    uint16_t seg_sel_idx:13; // @IMPORTANT Pretty sure this should be shifted left by 3-bits to produce a byte offset from a entry index into the IDT/GDT/LDT.
+    uint16_t rsvd;
+} __attribute__((packed));
 
-#define V_N_HANDLER_FUNC_NAME(vn) v_##vn##_handler
+/*!
+    @function    intr_handler
+    @discussion Every interrupt handler procedure in the IDT calls this
+    function. The interrupt handler procedures are defined in the .s file. The
+    interrupt handler procedures all call this function with its vector number,
+    which identifies the source of the interrupt, and an error code if
+    applicable. Error codes provide additional information about the source of
+    the interrupt. Interrupt vectors that do not provide an error code set the
+    error code to 0.
+    @doc [Table 6-1. Protected-Mode Exceptions and Interrupts]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.2)
+    @param    vn          Interrupt vector number. Identifies the source of the
+                          interrupt.
+    @param    err_code    Error code value for the interrupt. If no error code
+                          applies, it is set to 0.
+*/
+void intr_handler(uint32_t vn, uint32_t err_code) {
+    struct intr_err_code_t *errc;
 
-#define TOKEN_TO_STR(tkn) #tkn
+    print("Vector Number = ");
+    print_d(vn);
+    print("\n");
 
-#define PRINT_BYTEH_STRUCT_MEMBER(sm) \
-  do {                                \
-    print(TOKEN_TO_STR(sm) " = ");    \
-    print_uint32h(sm);                \
-    print("\n");                      \
-  } while (0)                         \
+    errc = (struct intr_err_code_t *) &err_code;
+    print("errc.ext = ");
+    print_x32(errc->ext);
+    print("\n");
 
-// void (*func_ptr)(unsigned char b, int pf);
+    print("errc.idt = ");
+    print_x32(errc->idt);
+    print("\n");
 
-uint64_t idt[IDT_ENTRY_COUNT];
+    print("errc.ti = ");
+    print_x32(errc->ti);
+    print("\n");
 
-struct idt_reg_t idtr;
+    print("errc.seg_sel_idx = ");
+    print_d(errc->seg_sel_idx);
+    print("\n");
 
-void init_idt(void) {
+    if (vn == 33)
+        print("THE KEYBOARD SAYS DIJKSTRA.\n");
+    else {
+        print("This interrupt is not handled.\n");
+        assert(0);
+    }
+}
 
+/*!
+    @function    init_interrupts
+    @discussion Performs the work necessary to enable interrupts.
+*/
+void init_interrupts(void) {
+    struct idt_reg_t idtr;
 
     // Fill IDT.
-    idt[0] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(0)) );
-    idt[1] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(1)) );
-    idt[2] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(2)) );
-    idt[3] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(3)) );
-    idt[4] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(4)) );
-    idt[5] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(5)) );
-    idt[6] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(6)) );
-    idt[7] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(7)) );
-    idt[8] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(8)) );
-    idt[9] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(9)) );
-    idt[10] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(10)) );
-    idt[11] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(11)) );
-    idt[12] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(12)) );
-    idt[13] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(13)) );
-    idt[14] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(14)) );
+    for (int v = 0; v < IDT_LEN; v++) {
+        if (!IDT_RSVD_VECT(v))
+            idt[v] = intr_gate_d((uint32_t)idt_proc_entry_p[v],
+                                 SEG_PRESENT, DPL_0, GATE_SIZE_32,
+                                 CODE_SEG);
+    }
 
-    // RESERVED
-    idt[15] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-
-    idt[16] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(16)) );
-    idt[17] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(17)) );
-    idt[18] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(18)) );
-    idt[19] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(19)) );
-    idt[20] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(20)) );
-    idt[21] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(21)) );
-
-    // RESERVED
-    idt[22] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[23] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[24] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[25] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[26] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[27] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[28] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[29] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[30] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-    idt[31] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_VECTOR_RESERVED) );
-
-    idt[32] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(32)) );
-    idt[33] = IDT_INTR_GATE_DESCRIPTOR(SEGMENT_PRESENT, DPL_0, GATE_SIZE_32_BITS, GDT_CODE_SEGMENT, ((uint32_t)INTR_V_N_HANDLER_FUNC_NAME(33)) );
-
-    // Load IDT register
+    // Init. IDT register
     idtr.idt_limit = sizeof(idt) - 1;
     idtr.idt_base_addr = (uint32_t)idt;
 
-    init_pics();
-    load_idt_reg((uint32_t)&idtr);
+    // Initialize programmable interrupt controllers (PIC).
+    init_pics(); // @IMPORTANT This should be called before lidt_and_sti().
 
-    __asm__("int $0"); // Test IDT vector 0.
-    __asm__("int $1");
+    // Load the IDT register and enable interrupts.
+    lidt_and_sti((void *) &idtr);
 }
-
-void intr_handler(uint32_t vn, uint32_t err_code) {
-    print("Vector Number = ");
-    print_uint32h(vn);
-    print("\n");
-    print_uint32h(err_code);
-    print("\n");
-    print("Programming Notation. Not programming language.\n");
-    if(vn == 33)
-        print("THE KEYBOARD SAYS DIJKSTRA.\n");
-
-}
-
-

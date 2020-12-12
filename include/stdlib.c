@@ -4,6 +4,7 @@
 
 #include "ctype.h" // digittoint() etc.
 #include "stdio.h" //  NULL
+
 /*!
     @function atoi
 

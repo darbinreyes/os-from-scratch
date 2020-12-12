@@ -3,10 +3,10 @@
 
 #include "../include/stdint.h"
 
-/*! See .c */
-uint8_t port_byte_in (uint16_t port);
+/*! See .s */
+uint8_t inb (uint16_t port);
 
-/*! See .c */
-void port_byte_out (uint16_t port, uint8_t data);
+/*! See .s */
+void outb (uint16_t port, uint8_t data);
 
 #endif

@@ -119,10 +119,10 @@ static inline int get_cursor(void) {
     character cell offset is = `row * MAX_COLS + col` while the video memory
     offset is = `(row * MAX_COLS + col) * 2` since in video memory space
     each character cell gets 2 bytes: viz. <ASCII CODE> and <ATTRIBUTES>. */
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    vid_mem_offset = port_byte_in(REG_SCREEN_DATA_IO_PORT) << 8; // High byte.
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    vid_mem_offset += port_byte_in(REG_SCREEN_DATA_IO_PORT); // Low byte.
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    vid_mem_offset = inb(REG_SCREEN_DATA_IO_PORT) << 8; // High byte.
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    vid_mem_offset += inb(REG_SCREEN_DATA_IO_PORT); // Low byte.
 
     return vid_mem_offset * 2;
 }
@@ -143,10 +143,10 @@ static inline void set_cursor(int vid_mem_offset) {
     `(row * MAX_COLS + col)`. */
     vid_mem_offset /= 2;
 
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
-    port_byte_out(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
-    port_byte_out(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_HIGH_BYTE);
+    outb(REG_SCREEN_DATA_IO_PORT, (uint8_t) (vid_mem_offset >> 8) );
+    outb(REG_SCREEN_CTRL_IO_PORT, CURSOR_LOCATION_LOW_BYTE);
+    outb(REG_SCREEN_DATA_IO_PORT, (vid_mem_offset & 0x00FF));
 
 }
 
@@ -383,77 +383,27 @@ void print(const char *s) {
 }
 
 /*!
-    @function print_byteb
-
-    @discussion Prints a byte in binary format.
-
-    @param    b    The byte value to print.
-*/
-void print_byteb (uint8_t b) {
-    print("0b");
-    for (int i = 7; i >= 0; i--)
-        if (b & BITN(i))
-            print_ch_at('1', 0, -1, -1);
-        else
-            print_ch_at('0', 0, -1, -1);
-}
-
-/*!
-    @function nibtoa
-
-    @discussion Converts a nibble to an ASCII hexadecimal digit. Upper nibble is
-    masked out, lower nibble is converted to an ASCII character in the set
-    [0-9|A-F].
-
-    @param    b    The nibble to convert to ASCII.
-
-    @result The ASCII encoded hexadecimal digit.
-*/
-static inline char nibtoa (uint8_t b) {
-    b = 0x0F & b; // Take the lower nibble.
-
-    if (b <= 9)
-        b += '0';
-    else if (b > 9)
-        b = b - 10 + 'A';
-    return b;
-}
-
-/*!
-    @function print_byteh
-
-    @discussion Prints a given byte value in hexadecimal format.
-
-    @param    b    The byte value to print.
-
-    @param    pf    Flag indicating whether or not to include a 0x prefix. 1 =
-                    include prefix.
-*/
-void print_byteh (uint8_t b, int pf) {
-    char c;
-
-    if (pf)
-        print("0x");
-
-    c = nibtoa (b >> 4); // upper nibble
-
-    print_ch_at(c, 0, -1, -1);
-
-    c = nibtoa (b); // lower nibble
-
-    print_ch_at(c, 0, -1, -1);
-}
-
-/*!
-    @function print_uint32h
+    @function print_x32
 
     @discussion Prints an unsigned 32-bit value in hexadecimal format.
 
-    @param    i    The 32-bit value to print.
+    @param    x    The 32-bit value to print.
 */
-void print_uint32h(uint32_t i) {
-    print_byteh ((i >> 24) & 0xFFU, 0);
-    print_byteh ((i >> 16) & 0xFFU, 0);
-    print_byteh ((i >> 8) & 0xFFU, 0);
-    print_byteh ((i >> 0) & 0xFFU, 0);
+void print_x32(uint32_t x) {
+    char s[STDIO_STR_SIZE_MAX];
+    _xtoa(x, 32, s, 0);
+    print(s);
+}
+
+/*!
+    @function print_d
+
+    @discussion Prints an int value in decimal format.
+
+    @param    d    The value to print.
+*/
+void print_d(int d) {
+    char s[STDIO_STR_SIZE_MAX];
+    _dtoa(d, s);
+    print(s);
 }

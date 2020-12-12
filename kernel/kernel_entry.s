@@ -20,7 +20,7 @@
 ;  binary`
 
 [bits 32]
-[extern main]
+[extern main] ; @doc [NASM extern assembler directive](NASM manual ch.7.5).
 
 call main
 jmp $

@@ -1,5 +1,5 @@
 ;!
-; @abstract The boot sector program.
+; @header The boot sector program.
 ; The BIOS transfers control to this program, this program transfers control to
 ; the kernel.
 ; The steps taken by this program are:
@@ -25,7 +25,7 @@
              ; @doc [BIOS Boot Spec.]
              ; @doc [NASM manual chapter 8.1.1]
 
-SECTOR_READ_COUNT equ 20 ; The number of sectors to read from the boot drive as
+SECTOR_READ_COUNT equ 32 ; The number of sectors to read from the boot drive as
                          ; part of loading the kernel into memory.
                          ; @IMPORTANT:
                          ; The size of kernel.bin <= SECTOR_READ_COUNT * 512.
@@ -60,16 +60,16 @@ jmp $                 ; Infinite loop.
 ;
 ; Include any data and procedures we intend to use.
 ;
-%include "print_string.asm"
-%include "disk_load.asm"
-%include "gdt.asm"
-%include "print_string_pm.asm" ; FYI: Includes a [bits 32] directive.
-%include "switch_to_pm.asm"    ; FYI: Includes a [bits 32] directive.
+%include "print_string.s"
+%include "disk_load.s"
+%include "gdt.s"
+%include "print_string_pm.s" ; FYI: Includes a [bits 32] directive.
+%include "switch_to_pm.s"    ; FYI: Includes a [bits 32] directive.
 
 [bits 16] ; NASM assembler directive - generate code to be executed in 16-bit
           ; mode. This directive is necessary because some of the includes above
           ; contain the [bits 32] assembler directive.
-          ; @doc [NASM manual, Chapter 7.1]
+          ; @doc [NASM bits assembler directive](NASM manual ch.7.1).
 
 ;!
 ; @procedure    load_kernel    Loads the kernel from BOOT_DRIVE into memory at
