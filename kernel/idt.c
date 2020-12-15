@@ -221,41 +221,34 @@ static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
 
 uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
 
-/*
-    @typedef    idt_proc_t
-    @discussion Pointer to interrupt handler function. Used for the offset field
-    in interrupt and trap gate descriptors.
-*/
-typedef void (*idt_proc_t)(void);
-
 /*!
     @const    idt_proc_entry_p
     @discussion Array of procedure entry points used as value for the offset
     field in interrupt and trap gate descriptors.
 */
 const idt_proc_t idt_proc_entry_p[IDT_LEN] = {
-    INTR_V_N_HANDLER_FUNC_NAME(0),
-    INTR_V_N_HANDLER_FUNC_NAME(1),
-    INTR_V_N_HANDLER_FUNC_NAME(2),
-    INTR_V_N_HANDLER_FUNC_NAME(3),
-    INTR_V_N_HANDLER_FUNC_NAME(4),
-    INTR_V_N_HANDLER_FUNC_NAME(5),
-    INTR_V_N_HANDLER_FUNC_NAME(6),
-    INTR_V_N_HANDLER_FUNC_NAME(7),
-    INTR_V_N_HANDLER_FUNC_NAME(8),
-    INTR_V_N_HANDLER_FUNC_NAME(9),
-    INTR_V_N_HANDLER_FUNC_NAME(10),
-    INTR_V_N_HANDLER_FUNC_NAME(11),
-    INTR_V_N_HANDLER_FUNC_NAME(12),
-    INTR_V_N_HANDLER_FUNC_NAME(13),
-    INTR_V_N_HANDLER_FUNC_NAME(14),
+    INTR_VN_HANDLER(0),
+    INTR_VN_HANDLER(1),
+    INTR_VN_HANDLER(2),
+    INTR_VN_HANDLER(3),
+    INTR_VN_HANDLER(4),
+    INTR_VN_HANDLER(5),
+    INTR_VN_HANDLER(6),
+    INTR_VN_HANDLER(7),
+    INTR_VN_HANDLER(8),
+    INTR_VN_HANDLER(9),
+    INTR_VN_HANDLER(10),
+    INTR_VN_HANDLER(11),
+    INTR_VN_HANDLER(12),
+    INTR_VN_HANDLER(13),
+    INTR_VN_HANDLER(14),
     0, // 15 - Intel Reserved.
-    INTR_V_N_HANDLER_FUNC_NAME(16),
-    INTR_V_N_HANDLER_FUNC_NAME(17),
-    INTR_V_N_HANDLER_FUNC_NAME(18),
-    INTR_V_N_HANDLER_FUNC_NAME(19),
-    INTR_V_N_HANDLER_FUNC_NAME(20),
-    INTR_V_N_HANDLER_FUNC_NAME(21),
+    INTR_VN_HANDLER(16),
+    INTR_VN_HANDLER(17),
+    INTR_VN_HANDLER(18),
+    INTR_VN_HANDLER(19),
+    INTR_VN_HANDLER(20),
+    INTR_VN_HANDLER(21),
     0, // 22 - Intel Reserved.
     0, // 23
     0, // 24
@@ -266,8 +259,8 @@ const idt_proc_t idt_proc_entry_p[IDT_LEN] = {
     0, // 29
     0, // 30
     0, // 31
-    INTR_V_N_HANDLER_FUNC_NAME(32), // 32-255 - User Defined Interrupts
-    INTR_V_N_HANDLER_FUNC_NAME(33)
+    INTR_VN_HANDLER(32), // 32-255 - User Defined Interrupts
+    INTR_VN_HANDLER(33)
 };
 
 /*!

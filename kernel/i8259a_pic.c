@@ -33,7 +33,7 @@ Table (IDT).
 * If multiple interrupts occur, they are sent to the CPU in FIFO order.
 * When cascaded, the 8259A must give up 1 of its input lines. Hence with 2 PICS,
   15, not 16, interrupts are supported.
-  * Using input 2 for cascading is an IBM AT convention.
+  * Using input pin 2 for cascading is an IBM AT convention.
 
 * @NEXT Programming with the 8259 PIC
 - - -
@@ -66,6 +66,7 @@ Table (IDT).
 * @TODO
 - - -
 */
+
 #include "low_level.h"
 #include "../include/mylibc.h"
 
