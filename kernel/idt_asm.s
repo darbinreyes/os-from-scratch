@@ -227,7 +227,10 @@ intr_v33_handler:
     call intr_handler
     mov dx, 0x0060
     in al, dx      ; Read keyboard output buffer.
-    call m_pic_eoi
+    call m_pic_eoi ; @IMPORTANT If the IRQ came from the Master PIC, it is
+                   ; sufficient to issue this command only to the Master PIC;
+                   ; however if the IRQ came from the Slave PIC, it is necessary
+                   ; to issue the command to both PIC chips.
     ;popa
     add esp, 8
     iret
