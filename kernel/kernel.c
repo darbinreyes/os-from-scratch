@@ -39,6 +39,10 @@ int main(void) {
     print_at("Edsger Dijkstra!\n", 0, 0);
     init_interrupts();
 
+    while(1)
+        ;
+
+
     return 0;
 }
 #endif /* TEST_MODE */

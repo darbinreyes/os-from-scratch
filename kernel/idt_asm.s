@@ -85,6 +85,9 @@ lidt_and_sti:
 %macro intr_handler_no_err_code 1
 global intr_v%1_handler
 intr_v%1_handler:
+    pushad                  ; Ensures the interrupted program's state is
+                            ; restored, it doesn't know it was interrupted,
+                            ; interrupts are asynchronous.
     push dword 0            ; push 0 as the error code.
     push dword %1           ; push vector number.
     jmp intr_common_handler ; jump to common handler.
@@ -107,6 +110,10 @@ intr_v%1_handler:
 %macro intr_handler_with_err_code 1
 global intr_v%1_handler
 intr_v%1_handler:
+    pushad                  ; Ensures the interrupted program's state is
+                            ; restored, it doesn't know it was interrupted,
+                            ; interrupts are asynchronous.
+    push dword [esp + 32]
     push dword %1           ; push vector number.
     jmp intr_common_handler ; jump to common handler.
 %endmacro
@@ -123,12 +130,10 @@ intr_v%1_handler:
 ; The function `intr_handler` is implemented in the .c file.
 [extern intr_handler]
 intr_common_handler:
-    ; Save registers? - this would change the order of arguments passed. Seems
-    ; like we can do it inside the macros with pusha.
     call intr_handler ; Call the C function. Error code and Vector number are on
                       ; the stack.
-    ; Restore registers?
     add esp, 8
+    popad
     iret ; @IMPORTANT: This is not the usual `ret`. Interrupt specific return.
 
 ;-------------------------------------------------------------------------------
@@ -221,16 +226,18 @@ intr_handler_no_err_code   32
 ; Bare-bone keyboard input interrupt handler. @TODO
 global intr_v33_handler
 intr_v33_handler:
-    ;pusha
+    pushad                  ; Ensures the interrupted program's state is
+                            ; restored, it doesn't know it was interrupted,
+                            ; interrupts are asynchronous.
     push dword 0
     push dword 33
     call intr_handler
-    mov dx, 0x0060
+    mov dx, 0x0060 ; @TODO Should be able to move this to .c file.
     in al, dx      ; Read keyboard output buffer.
     call m_pic_eoi ; @IMPORTANT If the IRQ came from the Master PIC, it is
                    ; sufficient to issue this command only to the Master PIC;
                    ; however if the IRQ came from the Slave PIC, it is necessary
                    ; to issue the command to both PIC chips.
-    ;popa
     add esp, 8
+    popad
     iret
