@@ -219,7 +219,14 @@ static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
 */
 #define IDT_LEN (34)
 
-uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
+/*
+    @IMPORTANT The base addresses of the IDT should be aligned on an 8-byte
+    boundary to maximize performance of cache line fills.
+
+    @doc [INTERRUPT DESCRIPTOR TABLE (IDT)]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
+*/
+uint64_t idt[IDT_LEN] __attribute__((aligned (8) ));
 
 /*!
     @const    idt_proc_entry_p
