@@ -3,10 +3,15 @@
     The Intel 8259A Programmable Interrupt Controller (PIC) is one of the chips
     that can be used for delivering interrupts to an Intel CPU.
 
+    @IMPORTANT
+    * There is no use of "io_wait()"" here.
+    * "Spurious IRQs" are not handled.
+    See @doc [PIC](https://wiki.osdev.org/PIC).
 */
 
 #include "low_level.h"
 #include "../include/mylibc.h"
+#include "../include/assert.h"
 
 /*!
     @defined IO_MASTER_PIC_PORT_A
@@ -218,15 +223,17 @@ void init_pics(void) {
     @discussion Write EOI byte to the PIC that raised the interrupt.
 
     @IMPORTANT If the IRQ came from the Master PIC, it is sufficient to issue
-    this command only to the Master PIC; however if the IRQ came from the Slave
-    PIC, it is necessary to issue the command to both PIC chips.
+    EOI only to the Master PIC; however if the IRQ came from the Slave PIC, it
+    is necessary to issue EOI to **both** PIC chips.
 */
 void pic_eoi(uint32_t vn) {
-    if (vn >= 32 && vn <= 39)
+    vn -= 32; // IRQ # from vector #.
+    if (vn < 8) {
         outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
-    else if (vn >= 40 && vn <= 47)
+    } else if (vn < 16) {
         outb(IO_SLAVE_PIC_PORT_A, PIC_EOI);
-    else {
-        ;
+        outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
+    } else {
+        assert(0);
     }
 }

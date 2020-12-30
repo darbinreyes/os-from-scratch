@@ -80,15 +80,8 @@ INTR_VN_HANDLER_DECL(19);
 INTR_VN_HANDLER_DECL(20);
 INTR_VN_HANDLER_DECL(21);
 // 22 - 31 - RESERVED
-INTR_VN_HANDLER_DECL(32);
-
-/******************************************************************************/
-
-/*!
-    @function    intr_v33_handler
-
-    @discussion See .s
-*/
+INTR_VN_HANDLER_DECL(32); // 32-255 - User Defined Interrupts
 INTR_VN_HANDLER_DECL(33);
+/******************************************************************************/
 
 #endif
