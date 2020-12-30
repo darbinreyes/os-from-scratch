@@ -1,6 +1,5 @@
 This repo. is a continuation of: [subparprogrammer/tree/master/c_projects
-/project1]
-(https://github.com/darbinreyes/subparprogrammer/tree/master/c_projects/project1).
+/project1](https://github.com/darbinreyes/subparprogrammer/tree/master/c_projects/project1).
 
 
 This project is my implementation of a simple operating system, originally
