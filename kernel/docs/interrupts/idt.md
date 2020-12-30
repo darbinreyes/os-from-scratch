@@ -28,6 +28,12 @@
 
 - - -
 
+# @doc [Intel 8259A chip datasheet - Details on control words](./docs/interrupts/intel-8259a-pic.pdf)
+
+* @TODO
+
+- - -
+
 # @doc [Brief recipe for configuring the 8259A PIC](./docs/interrupts/sigops_i386_Interrupt_Handling.pdf)
 
 * When properly configured the 8259A PIC can be used to generate hardware
@@ -47,7 +53,7 @@ Table (IDT).
     to an additional 8259A in a so called "master/slave" configuration. This
     is the setup we have in bochs. So we actually have 2x 8259A chips, the
     first called the master, the second the slave.
-    
+
 - - -
 # @doc [8259 PIC -  concise additional info.](https://wiki.osdev.org/PIC)
 * FYI: The "APIC" mechanism supersedes the 8252A PIC. It is designed for
@@ -92,7 +98,7 @@ Table (IDT).
       slave PIC.
 * It is useful to maintain a count of the number of spurious IRQs that occur to
   detect software or hardware problems.
-  
+
 - - -
 # @doc [Table mapping IRQs to devices](http://www.brokenthorn.com/Resources/OSDev16.html)
 
