@@ -3,14 +3,6 @@
     The Intel 8259A Programmable Interrupt Controller (PIC) is one of the chips
     that can be used for delivering interrupts to an Intel CPU.
 
-    @discussion
-
-- - -
-# @doc [Intel 8259A chip datasheet - Details on control words]
-       (./docs/interrupts/intel-8259a-pic.pdf)
-* @NEXT
-- - -
-
 */
 
 #include "low_level.h"
@@ -222,21 +214,19 @@ void init_pics(void) {
 #define PIC_EOI 0x20
 
 /*!
-    @function m_pic_eoi
-    @discussion Write EOI byte to the master PIC.
+    @function pic_eoi
+    @discussion Write EOI byte to the PIC that raised the interrupt.
 
     @IMPORTANT If the IRQ came from the Master PIC, it is sufficient to issue
     this command only to the Master PIC; however if the IRQ came from the Slave
     PIC, it is necessary to issue the command to both PIC chips.
 */
-void m_pic_eoi(void) {
-    outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
-}
-
-/*!
-    @function s_pic_eoi
-    @discussion Write EOI byte to the s PIC.
-*/
-void s_pic_eoi(void) {
-    outb(IO_SLAVE_PIC_PORT_A, PIC_EOI);
+void pic_eoi(uint32_t vn) {
+    if (vn >= 32 && vn <= 39)
+        outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
+    else if (vn >= 40 && vn <= 47)
+        outb(IO_SLAVE_PIC_PORT_A, PIC_EOI);
+    else {
+        ;
+    }
 }
