@@ -3,71 +3,15 @@
     The Intel 8259A Programmable Interrupt Controller (PIC) is one of the chips
     that can be used for delivering interrupts to an Intel CPU.
 
-@discussion
-- - -
-# @doc [Brief recipe for configuring the 8259A PIC]
-       (./docs/interrupts/sigops_i386_Interrupt_Handling.pdf)
-
-* When properly configured the 8259A PIC can be used to generate hardware
-interrupts that the invoke interrupt handlers in the Interrupt Descriptor
-Table (IDT).
-* Summary of 8259A functional behavior
-  * 8 input pins - a device will use one of these pins to request the CPU's
-    attention. These pins are sometimes called "IRQ 0-7" (IRQ = Interrupt
-    Request).
-  * 1 interrupt line - connected to the CPU, used by the 8259A to request
-    the CPU's attention.
-  * A mechanism for the CPU to query the 8259A for the IDT vector associated
-    with the interrupt that occurred.
-  * When the 8259A raises the interrupt line, the net effect is that the CPU
-    will invoke the appropriate interrupt handler in the IDT.
-  * To support more than 8 distinct interrupts, the 8259A can be connected
-    to an additional 8259A in a so called "master/slave" configuration. This
-    is the setup we have in bochs. So we actually have 2x 8259A chips, the
-    first called the master, the second the slave.
-- - -
-# @doc [osdev 8259A PIC wiki -  concise additional info.]
-       (https://wiki.osdev.org/PIC)
-* FYI: The "APIC" mechanism supersedes the 8252A PIC. It is designed for
-  multiprocessor systems.
-* If multiple interrupts occur, they are sent to the CPU in FIFO order.
-* When cascaded, the 8259A must give up 1 of its input lines. Hence with 2 PICS,
-  15, not 16, interrupts are supported.
-  * Using input 2 for cascading is an IBM AT convention.
-
-* @NEXT Programming with the 8259 PIC
-- - -
-# @doc [Table mapping IRQs to devices]
-       (http://www.brokenthorn.com/Resources/OSDev16.html)
-
----------------------------------------------------------------------------------
- IRQ # | 16-bit mode vector number | 32-bit mode vector number | Description
--------|---------------------------|---------------------------|-----------------
- 0     | 0x08                      | 0x20 = 32                 | Timer
- 1     | 0x09                      | 0x21 = 33                 | Keyboard
- 2     | 0x0A                      | 0x22 = 34                 | Cascade for slave PIC
- 3     | 0x0B                      | 0x23 = 35                 | Serial port 2
- 4     | 0x0C                      | 0x24 = 36                 | Serial port 1
- 5     | 0x0D                      | 0x25 = 37                 | AT systems: Parallel Port 2. PS/2 systems: reserved
- 6     | 0x0E                      | 0x26 = 38                 | Diskette drive
- 7     | 0x0F                      | 0x27 = 39                 | Parallel Port 1
- 8/0   | 0x70                      | 0x28 = 40                 | CMOS Real time clock
- 9/1   | 0x71                      | 0x29 = 41                 | CGA vertical retrace
- 10/2  | 0x72                      | 0x30 = 42                 | Reserved
- 11/3  | 0x73                      | 0x31 = 43                 | Reserved
- 12/4  | 0x74                      | 0x32 = 44                 | AT systems: reserved. PS/2: auxiliary device
- 13/5  | 0x75                      | 0x33 = 45                 | FPU
- 14/6  | 0x76                      | 0x34 = 46                 | Hard disk controller
- 15/7  | 0x77                      | 0x35 = 47                 | Reserved
---------------------------------------------------------------------------------
-- - -
-# @doc [Intel 8259A chip datasheet - Details on control words]
-       (./docs/interrupts/intel-8259a-pic.pdf)
-* @TODO
-- - -
+    @IMPORTANT
+    * There is no use of "io_wait()"" here.
+    * "Spurious IRQs" are not handled.
+    See @doc [PIC](https://wiki.osdev.org/PIC).
 */
+
 #include "low_level.h"
 #include "../include/mylibc.h"
+#include "../include/assert.h"
 
 /*!
     @defined IO_MASTER_PIC_PORT_A
@@ -235,6 +179,7 @@ void init_pics(void) {
 
     // ICW1 - General PIC behavior
     outb(IO_MASTER_PIC_PORT_A, icw1(1, 0, 0));
+    // @IMPORTANT io_wait() may be necessary on older machines.
     outb(IO_SLAVE_PIC_PORT_A, icw1(1, 0, 0));
     // ICW2 - User defined interrupt offset into IDT.
     icw2 = 32;
@@ -256,7 +201,8 @@ void init_pics(void) {
         it is in "normal operating mode". In this mode, we can tell the PIC to
         ignore specified IRQs, tell it to "mask off" specified interrupts. This
         is achieved by writing a single byte to port B of the corresponding PIC.
-        In this byte 0 = listen, 1 = ignore.
+        In this byte 0 = listen, 1 = ignore. Reading from port B returns the
+        current mask value.
     */
     outb(IO_MASTER_PIC_PORT_B, (uint8_t)(~(BIT1)));
     outb(IO_SLAVE_PIC_PORT_B, (uint8_t)(~(0U)));
@@ -273,17 +219,21 @@ void init_pics(void) {
 #define PIC_EOI 0x20
 
 /*!
-    @function m_pic_eoi
-    @discussion Write EOI byte to the master PIC.
-*/
-void m_pic_eoi(void) {
-    outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
-}
+    @function pic_eoi
+    @discussion Write EOI byte to the PIC that raised the interrupt.
 
-/*!
-    @function s_pic_eoi
-    @discussion Write EOI byte to the s PIC.
+    @IMPORTANT If the IRQ came from the Master PIC, it is sufficient to issue
+    EOI only to the Master PIC; however if the IRQ came from the Slave PIC, it
+    is necessary to issue EOI to **both** PIC chips.
 */
-void s_pic_eoi(void) {
-    outb(IO_SLAVE_PIC_PORT_A, PIC_EOI);
+void pic_eoi(uint32_t vn) {
+    vn -= 32; // IRQ # from vector #.
+    if (vn < 8) {
+        outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
+    } else if (vn < 16) {
+        outb(IO_SLAVE_PIC_PORT_A, PIC_EOI);
+        outb(IO_MASTER_PIC_PORT_A, PIC_EOI);
+    } else {
+        assert(0);
+    }
 }

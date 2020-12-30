@@ -5,9 +5,12 @@
 void init_pics(void);
 
 /*! See .c */
-void m_pic_eoi(void);
+//void m_pic_eoi(void);
 
 /*! See .c */
-void s_pic_eoi(void);
+//void s_pic_eoi(void);
+
+/*! See .c */
+void pic_eoi(uint32_t vn);
 
 #endif

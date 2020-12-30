@@ -24,7 +24,13 @@
 ; overlapping segments: a code segment and a data segment, after the required
 ; null descriptor. For both the code segment and data segment we have set the
 ; following: segment-limit = F_FFFFH; base-address  = 0000_0000H;
+; * @IMPORTANT The base address of the GDT should be 8-byte aligned.
+; * @IMPORTANT Segment bases addresses **should** aligned to 16-byte
+;   boundaries. This is equivalent to having the lowest order 4 bits of the
+;   base address == 0000B = 0H. Since our base addresses are both 00000000H this
+;   requirement is met.
 ;
+align 8
 gdt_start:
 
 ;
@@ -116,11 +122,5 @@ DATA_SEG equ gdt_data - gdt_start
 ; * [x] What happens if we try to read above the physical memory limit?
 ;   * ANS: Since we are using segment limit == 4GB, the CPU will not generate an
 ;     exception.
-; * [ ] How do I tell NASM to align things?
-;   * @doc [NASM manual Chapter.5.10 Alignment Control]
-;   * @IMPORTANT The base address of the GDT should be 8-byte aligned.
-;   * @IMPORTANT Segment bases addresses **should** aligned to 16-byte
-;     boundaries. This is equivalent to having the lowest order 4 bits of the
-;     base address == 0000B = 0H.
 ; * [ ] Define some simple changes to the GDT to verify expected Intel SDM
 ;       behavior. e.g. if access DS with null descriptor, generates #GP.

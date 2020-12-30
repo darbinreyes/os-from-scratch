@@ -7,6 +7,8 @@
 #include "../include/stdint.h"
 #include "../include/assert.h"
 #include "idt_asm.h"
+#include "i8259a_pic.h"
+#include "low_level.h"
 
 /*******************************************************************************
 @doc [Figure 6-2. IDT Gate Descriptors]
@@ -219,55 +221,79 @@ static inline uint64_t intr_gate_d(uint32_t offset, uint32_t p, uint32_t dpl,
 */
 #define IDT_LEN (34)
 
-uint64_t idt[IDT_LEN]; // @IMPORTANT @TODO [ ] ".align 8? iSDM.Vol.3.Ch.6.11."
-
 /*
-    @typedef    idt_proc_t
-    @discussion Pointer to interrupt handler function. Used for the offset field
-    in interrupt and trap gate descriptors.
+    @IMPORTANT The base addresses of the IDT should be aligned on an 8-byte
+    boundary to maximize performance of cache line fills.
+
+    @doc [INTERRUPT DESCRIPTOR TABLE (IDT)]
+         (Intel 64 & IA-32 Arch. SDM Vol.3 Ch.6.10)
 */
-typedef void (*idt_proc_t)(void);
+uint64_t idt[IDT_LEN] __attribute__((aligned (8) ));
+
+void vn_not_handled(uint32_t vn, uint32_t err_code) {
+    if (vn || err_code) { // Suppress warning.
+        ;
+    }
+    print("This interrupt is not handled.\n");
+    assert(0);
+}
+
+void v33_handler(uint32_t vn, uint32_t err_code) {
+    unsigned char c;
+
+    if (vn || err_code) { // Suppress warning.
+        ;
+    }
+
+    c = inb (0x0060); // Read keyboard output buffer.
+    pic_eoi(vn);
+    print_x32(c);
+    print("\n");
+    print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
+}
 
 /*!
-    @const    idt_proc_entry_p
-    @discussion Array of procedure entry points used as value for the offset
-    field in interrupt and trap gate descriptors.
+    @const    idt_handlers
+    @discussion Array of interrupt/exception procedure entry points and vector
+    specific handlers. The first member is used as value for the offset field in
+    interrupt and trap gate descriptors while the second member is the function
+    that is called by the common interrupt/exception handler.
 */
-const idt_proc_t idt_proc_entry_p[IDT_LEN] = {
-    INTR_V_N_HANDLER_FUNC_NAME(0),
-    INTR_V_N_HANDLER_FUNC_NAME(1),
-    INTR_V_N_HANDLER_FUNC_NAME(2),
-    INTR_V_N_HANDLER_FUNC_NAME(3),
-    INTR_V_N_HANDLER_FUNC_NAME(4),
-    INTR_V_N_HANDLER_FUNC_NAME(5),
-    INTR_V_N_HANDLER_FUNC_NAME(6),
-    INTR_V_N_HANDLER_FUNC_NAME(7),
-    INTR_V_N_HANDLER_FUNC_NAME(8),
-    INTR_V_N_HANDLER_FUNC_NAME(9),
-    INTR_V_N_HANDLER_FUNC_NAME(10),
-    INTR_V_N_HANDLER_FUNC_NAME(11),
-    INTR_V_N_HANDLER_FUNC_NAME(12),
-    INTR_V_N_HANDLER_FUNC_NAME(13),
-    INTR_V_N_HANDLER_FUNC_NAME(14),
-    0, // 15 - Intel Reserved.
-    INTR_V_N_HANDLER_FUNC_NAME(16),
-    INTR_V_N_HANDLER_FUNC_NAME(17),
-    INTR_V_N_HANDLER_FUNC_NAME(18),
-    INTR_V_N_HANDLER_FUNC_NAME(19),
-    INTR_V_N_HANDLER_FUNC_NAME(20),
-    INTR_V_N_HANDLER_FUNC_NAME(21),
-    0, // 22 - Intel Reserved.
-    0, // 23
-    0, // 24
-    0, // 25
-    0, // 26
-    0, // 27
-    0, // 28
-    0, // 29
-    0, // 30
-    0, // 31
-    INTR_V_N_HANDLER_FUNC_NAME(32), // 32-255 - User Defined Interrupts
-    INTR_V_N_HANDLER_FUNC_NAME(33)
+const idt_handler_t idt_handlers[IDT_LEN] = {
+    {INTR_VN_HANDLER(0), vn_not_handled},
+    {INTR_VN_HANDLER(1), vn_not_handled},
+    {INTR_VN_HANDLER(2), vn_not_handled},
+    {INTR_VN_HANDLER(3), vn_not_handled},
+    {INTR_VN_HANDLER(4), vn_not_handled},
+    {INTR_VN_HANDLER(5), vn_not_handled},
+    {INTR_VN_HANDLER(6), vn_not_handled},
+    {INTR_VN_HANDLER(7), vn_not_handled},
+    {INTR_VN_HANDLER(8), vn_not_handled},
+    {INTR_VN_HANDLER(9), vn_not_handled},
+    {INTR_VN_HANDLER(10), vn_not_handled},
+    {INTR_VN_HANDLER(11), vn_not_handled},
+    {INTR_VN_HANDLER(12), vn_not_handled},
+    {INTR_VN_HANDLER(13), vn_not_handled},
+    {INTR_VN_HANDLER(14), vn_not_handled},
+    {0, 0}, // 15 - Intel Reserved.
+    {INTR_VN_HANDLER(16), vn_not_handled},
+    {INTR_VN_HANDLER(17), vn_not_handled},
+    {INTR_VN_HANDLER(18), vn_not_handled},
+    {INTR_VN_HANDLER(19), vn_not_handled},
+    {INTR_VN_HANDLER(20), vn_not_handled},
+    {INTR_VN_HANDLER(21), vn_not_handled},
+    {0, 0}, // 22 - Intel Reserved.
+    {0, 0}, // 23
+    {0, 0}, // 24
+    {0, 0}, // 25
+    {0, 0}, // 26
+    {0, 0}, // 27
+    {0, 0}, // 28
+    {0, 0}, // 29
+    {0, 0}, // 30
+    {0, 0}, // 31
+    {INTR_VN_HANDLER(32), vn_not_handled}, // 32-255 - User Defined Interrupts
+    {INTR_VN_HANDLER(33), v33_handler}
 };
 
 /*!
@@ -364,12 +390,8 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print_d(errc->seg_sel_idx);
     print("\n");
 
-    if (vn == 33)
-        print("THE KEYBOARD SAYS DIJKSTRA.\n");
-    else {
-        print("This interrupt is not handled.\n");
-        assert(0);
-    }
+    // Call the specific interrupt/exception handler.
+    idt_handlers[vn].vn_handler(vn, err_code);
 }
 
 /*!
@@ -382,7 +404,7 @@ void init_interrupts(void) {
     // Fill IDT.
     for (int v = 0; v < IDT_LEN; v++) {
         if (!IDT_RSVD_VECT(v))
-            idt[v] = intr_gate_d((uint32_t)idt_proc_entry_p[v],
+            idt[v] = intr_gate_d((uint32_t) idt_handlers[v].idt_proc,
                                  SEG_PRESENT, DPL_0, GATE_SIZE_32,
                                  CODE_SEG);
     }
