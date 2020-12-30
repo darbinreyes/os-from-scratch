@@ -214,30 +214,7 @@ intr_handler_no_err_code   19
 intr_handler_no_err_code   20
 intr_handler_with_err_code 21
 ; 22 - 31 RESERVED
-intr_handler_no_err_code   32
+intr_handler_no_err_code   32 ; 32-255 - User Defined Interrupts
+intr_handler_no_err_code   33
 ;-------------------------------------------------------------------------------
 
-[extern m_pic_eoi]
-
-;!
-; @function    intr_v33_handler
-;
-; @discussion External interrupt handler tied to keyboard input.
-; Bare-bone keyboard input interrupt handler. @TODO
-global intr_v33_handler
-intr_v33_handler:
-    pushad                  ; Ensures the interrupted program's state is
-                            ; restored, it doesn't know it was interrupted,
-                            ; interrupts are asynchronous.
-    push dword 0
-    push dword 33
-    call intr_handler
-    mov dx, 0x0060 ; @TODO Should be able to move this to .c file.
-    in al, dx      ; Read keyboard output buffer.
-    call m_pic_eoi ; @IMPORTANT If the IRQ came from the Master PIC, it is
-                   ; sufficient to issue this command only to the Master PIC;
-                   ; however if the IRQ came from the Slave PIC, it is necessary
-                   ; to issue the command to both PIC chips.
-    add esp, 8
-    popad
-    iret

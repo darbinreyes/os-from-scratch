@@ -23,11 +23,31 @@ void *lidt_and_sti(void *idtr);
 */
 #define INTR_VN_HANDLER_DECL(vn) void INTR_VN_HANDLER(vn)(void)
 
-/*
+/*!
     @typedef    idt_proc_t
-    @discussion Pointer to interrupt handler function.
+    @discussion Pointer to function/procedure entry point of an
+                interrupt/exception handler. Used to fill IDT entries.
 */
 typedef void (*idt_proc_t)(void);
+
+/*!
+    @typedef vn_handler
+    @discussion Pointer to function that handles a specific interrupt/exception
+                taking into account the vector number, i.e. taking into account
+                the source of the interrupt.
+
+*/
+typedef void (*vn_handler_t)(uint32_t vn, uint32_t err_code);
+
+/*!
+    @typedef idt_handler_t
+    @discussion Typedef for organizing IDT procedure entry points and their
+    vector specific handlers into a single table.
+*/
+typedef struct _idt_handler_t {
+    idt_proc_t   idt_proc;
+    vn_handler_t vn_handler;
+} idt_handler_t;
 
 /*!
     @function intr_v0_handler . . . intr_v32_handler
@@ -63,9 +83,6 @@ INTR_VN_HANDLER_DECL(21);
 INTR_VN_HANDLER_DECL(32);
 
 /******************************************************************************/
-
-/*! See .s */
-void init_pics(void);
 
 /*!
     @function    intr_v33_handler
