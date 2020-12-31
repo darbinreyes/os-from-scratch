@@ -2,6 +2,24 @@
     @header PS/2 keyboard driver.
     Provides basic functions for getting input from a PS/2 keyboard.
 
+    @discussion
+    * FYI:
+    * Notational conventions.
+      * Some of the scan codes in "scan code set 1" correspond to keys that do
+        not exist on my Apple keyboard, however, in some cases is possible to
+        generate the scan code by pressing a key or combination of keys that is
+        not entirely obvious. For example, the "print screen pressed" key
+        has the 4 byte scan code "0xE0, 0x2A, 0xE0, 0x37". To generate this
+        scan code on my Apple keyboard, press and hold the key labeled "fn",
+        and then the press the key labeled "F13". This is indicated in comments
+        adjacent to the corresponding scan code as "Apple Keyboard=<fn>+<F13>".
+     * Some keys on my physical Apple keyboard do not generate any scan code at
+       all. This should not be surprising since my physical keyboard is not
+       a PS/2 keyboard.
+     * FYI: "Apple Keyboard=<fn>+<F14>" does not generate a scan code but puts
+       BOCHS into a full screen mode which does not seem to be accessible via
+       the GUI.
+
     * @TODO
       * [] Test all scan codes.
       * [] short get_scn_code(void);
@@ -359,8 +377,8 @@ const uint8_t sc_to_kc_tbl2[] = {
     NOT_A_SCAN_CODE, /*0x58 Not a scan code .*/
     NOT_A_SCAN_CODE, /*0x59 Not a scan code .*/
     NOT_A_SCAN_CODE, /*0x5A Not a scan code .*/
-    SCAN_CODE_TODO,/*0x5B <"left-GUI"> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x5C <"right-GUI"> p.|r,c=,*/
+    SCAN_CODE_TODO,/*0x5B <"left-GUI"> p.|r,c=,. Apple Keyboard=<fn>+<L-CMD>.*/
+    SCAN_CODE_TODO,/*0x5C <"right-GUI"> p.|r,c=,. Apple Keyboard=<fn>+<R-CMD>.*/
     SCAN_CODE_TODO,/*0x5D <"apps"> p.|r,c=,*/
     SCAN_CODE_TODO,/*0x5E <"(ACPI)Power"> p.|r,c=,*/
     SCAN_CODE_TODO,/*0x5F <"(ACPI)Sleep"> p.|r,c=,*/
@@ -384,11 +402,17 @@ const uint8_t sc_to_kc_tbl2[] = {
 The only remaining scan codes are the following 4-byte and 6-byte scan codes
 are not handled by this driver.
 
-Scan code                          | Meaning
------------------------------------|--------
-0xE0, 0x2A, 0xE0, 0x37             | print screen pressed | 0xE0_0x2A is not a valid 2 byte scan code.
+Scan code                          | Meaning               | Remarks
+-----------------------------------|-----------------------|--------------------
+0xE0, 0x2A, 0xE0, 0x37             | print screen pressed  | 0xE0_0x2A is not a valid 2 byte scan code. Apple Keyboard=<fn>+<F13>.
 0xE0, 0xB7, 0xE0, 0xAA             | print screen released | 0xE0_0xB7 is not a valid 2 byte scan code.
-0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed
+0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed         | Only scan code starting with 0xE1. Apple Keyboard=<fn>+<F15>.
+
+@remark The "print screen" pressed vs. released scan codes don't follow a simple
+1-bit flip pattern. There does seem to be a pattern, which I worked out in
+Evernote. But since this is the only 4 byte scan code, and the first pair
+of bytes does not correspond to a valid 2 byte scan code, there is no downside
+to special casing this scan code.
 
 @remark There is no scan code for "pause key released" (it behaves as
 if it is released as soon as it's pressed)

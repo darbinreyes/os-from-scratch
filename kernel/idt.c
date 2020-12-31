@@ -244,17 +244,17 @@ void v33_handler(uint32_t vn, uint32_t err_code) {
     uint8_t sc;
     char c;
 
-    if (vn || err_code) { // Suppress warning.
+    if (vn || err_code || c) { // Suppress warning.
         ;
     }
 
     sc = inb (0x0060); // Read keyboard output buffer.
     pic_eoi(vn);
-    //print_x32(sc);
-    //print("\n");
+    print_x32(sc);
+    print("\n");
     if((sc & 0x80) == 0) { // if its not a released scan code.
-        c = scan_code_to_ascii (sc);
-        print_ch_at(c, 0, -1, -1);
+        //c = scan_code_to_ascii (sc);
+        //print_ch_at(c, 0, -1, -1);
     }
     //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
 }
