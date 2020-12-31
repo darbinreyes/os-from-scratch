@@ -14,8 +14,6 @@
         (https://wiki.osdev.org/Keyboard#Driver_Model). Also see @doc
         [My keyboard driver notes](./docs/keyboard/keyboard.md)
 */
-
-#include "../mylibc/mylibc.h"
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
 
@@ -388,8 +386,8 @@ are not handled by this driver.
 
 Scan code                          | Meaning
 -----------------------------------|--------
-0xE0, 0x2A, 0xE0, 0x37             | print screen pressed
-0xE0, 0xB7, 0xE0, 0xAA             | print screen released
+0xE0, 0x2A, 0xE0, 0x37             | print screen pressed | 0xE0_0x2A is not a valid 2 byte scan code.
+0xE0, 0xB7, 0xE0, 0xAA             | print screen released | 0xE0_0xB7 is not a valid 2 byte scan code.
 0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed
 
 @remark There is no scan code for "pause key released" (it behaves as

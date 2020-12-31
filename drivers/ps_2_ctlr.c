@@ -6,7 +6,7 @@
     @TODO Status register bit 3 definition is ambiguous. Is there a test I can
     perform to determine its meaning?
 */
-#include "../mylibc/mylibc.h"
+#include "../include/stddef.h"
 #include "../kernel/low_level.h"
 #include "ps_2_ctlr.h"
 

@@ -4,11 +4,13 @@
 */
 
 #include "../drivers/screen.h"
+#include "../drivers/keyboard.h"
 #include "../include/stdint.h"
 #include "../include/assert.h"
 #include "idt_asm.h"
 #include "i8259a_pic.h"
 #include "low_level.h"
+
 
 /*******************************************************************************
 @doc [Figure 6-2. IDT Gate Descriptors]
@@ -239,17 +241,22 @@ void vn_not_handled(uint32_t vn, uint32_t err_code) {
 }
 
 void v33_handler(uint32_t vn, uint32_t err_code) {
-    unsigned char c;
+    uint8_t sc;
+    char c;
 
     if (vn || err_code) { // Suppress warning.
         ;
     }
 
-    c = inb (0x0060); // Read keyboard output buffer.
+    sc = inb (0x0060); // Read keyboard output buffer.
     pic_eoi(vn);
-    print_x32(c);
-    print("\n");
-    print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
+    //print_x32(sc);
+    //print("\n");
+    if((sc & 0x80) == 0) { // if its not a released scan code.
+        c = scan_code_to_ascii (sc);
+        print_ch_at(c, 0, -1, -1);
+    }
+    //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
 }
 
 /*!
@@ -367,6 +374,7 @@ struct intr_err_code_t {
                           applies, it is set to 0.
 */
 void intr_handler(uint32_t vn, uint32_t err_code) {
+#if 0
     struct intr_err_code_t *errc;
 
     print("Vector Number = ");
@@ -389,6 +397,7 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print("errc.seg_sel_idx = ");
     print_d(errc->seg_sel_idx);
     print("\n");
+#endif
 
     // Call the specific interrupt/exception handler.
     idt_handlers[vn].vn_handler(vn, err_code);
