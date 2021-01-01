@@ -101,8 +101,8 @@ and P, see
 struct idt_gate_d_t {
     uint16_t offset_l;
     uint16_t seg_sel;
-    uint8_t rsvd:5;   // 00000B
-    uint8_t const0:3; // 000B
+    uint8_t rsvd:5,   // 00000B
+            const0:3; // 000B
     uint8_t const1:3; // Gate Descriptor [byte 7:4][bit 10:8].
     uint8_t d:1;
     uint8_t const2:1; // 0B
