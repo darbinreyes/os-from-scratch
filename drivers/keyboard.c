@@ -569,3 +569,83 @@ int get_scan_code2(uint8_t *sc) {
 
     return 0;
 }
+
+/*!
+    @typedef sc_state_t
+
+    @discussion States of the state machine used to detect the receipt of a
+    complete scan code.
+
+    @constant SSCS    State, Scan Code, Start.
+    @constant S1B0P_F    State, 1-Byte scan code, byte # 0, Pressed scan code, Final state.
+    @constant S1B0R_F    State, 1-Byte scan code, byte # 0, Released scan code, Final state.
+    @constant S2B0_S4B0  State, 2-Byte scan code, byte # 0, OR, State, 4-Byte scan code, byte # 0.
+
+    ...
+    @TODO
+    ...
+    @TODO Draw the state machine.
+*/
+typedef enum _sc_state_t {
+    SSCS = 0,
+    S1B0P_F,
+    S1B0R_F,
+    S2B0_S4B0,
+    S2B1P_F,
+    S2B1R_F,
+    S4B1P,
+    S4B2P,
+    S4B3P_F,
+    S4B1R,
+    S4B2R,
+    S4B3R_F,
+    S6B0,
+    S6B1,
+    S6B2,
+    S6B3,
+    S6B4,
+    S6B5P_F,
+    SSC_ERR
+} sc_state_t;
+
+/*!
+    @typedef sc_transition_tbl_t
+
+    @discussion Scan code transition table entry. Used define the state machine
+    that detects the receipt of a complete scan code.
+
+    @field cs    Current state.
+    @field il    Input lower bound.
+    @field ih    Input higher bound.
+    @field ns    Next state.
+*/
+typedef struct _sc_transition_tbl_t {
+    uint8_t cs;
+    uint8_t il;
+    uint8_t ih;
+    uint8_t ns;
+} sc_transition_tbl_t;
+
+sc_transition_tbl_t sc_t_tbl[] = {
+    {SSCS, 0x00, 0x58, S1B0P_F},
+    {SSCS, 0x80, 0xD8, S1B0R_F},
+
+    {SSCS, 0xE0, 0xE0, S2B0_S4B0},
+    {S2B0_S4B0, 0x10, 0x6D, S2B1P_F},
+    {S2B0_S4B0, 0x90, 0xED, S2B1R_F},
+
+    {S2B0_S4B0, 0x2A, 0x2A, S4B1P},
+    {S4B1P, 0xE0, 0xE0, S4B2P},
+    {S4B2P, 0x37, 0x37, S4B3P_F},
+
+    {S2B0_S4B0, 0xB7, 0xB7, S4B1R},
+    {S4B1R, 0xE0, 0xE0, S4B2R},
+    {S4B2R, 0xAA, 0xAA, S4B3R_F},
+
+    {SSCS, 0xE1, 0xE1, S6B0},
+    {S6B0, 0x1D, 0x1D, S6B1},
+    {S6B1, 0x45, 0x45, S6B2},
+    {S6B2, 0xE1, 0xE1, S6B3},
+    {S6B3, 0x9D, 0x9D, S6B4},
+    {S6B4, 0xC5, 0xC5, S6B5P_F} // @IMPORTANT 6-Byte scan code does not have a released state.
+};
