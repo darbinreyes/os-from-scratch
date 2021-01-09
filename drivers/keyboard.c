@@ -632,9 +632,9 @@ static sc_state_t sc_sm_next_state(sc_state_t cs, uint8_t in) {
         {SSCS, 0x80, 0xD8, S1B0R_F},
 
         {SSCS, 0xE0, 0xE0, S2B0_S4B0},
-        {S2B0_S4B0, 0x2A, 0x2A, S4B1P}, // Is this a hacky fix? 0x2A falls inside [0x10, 0x6D]. The transition table now depends on the order of the entries. But isn't an NFA always reducible to a DFA?
+        {S2B0_S4B0, 0x2A, 0x2A, S4B1P}, // @TODO Is this a hacky fix? 0x2A falls inside [0x10, 0x6D]. The transition table now depends on the order of the entries. But isn't an NFA always reducible to a DFA?
         {S2B0_S4B0, 0x10, 0x6D, S2B1P_F},
-        {S2B0_S4B0, 0xB7, 0xB7, S4B1R}, // Is this a hacky fix? 0xB7 falls inside [0x10, 0x6D].
+        {S2B0_S4B0, 0xB7, 0xB7, S4B1R}, // @TODO Is this a hacky fix? 0xB7 falls inside [0x10, 0x6D].
         {S2B0_S4B0, 0x90, 0xED, S2B1R_F},
 
         //{S2B0_S4B0, 0x2A, 0x2A, S4B1P},
