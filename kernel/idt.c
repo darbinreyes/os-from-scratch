@@ -252,10 +252,12 @@ void v33_handler(uint32_t vn, uint32_t err_code) {
     pic_eoi(vn);
     print_x32(sc);
     print("\n");
-    if((sc & 0x80) == 0) { // if its not a released scan code.
+
+    sc_sm_update(sc);
+    //if((sc & 0x80) == 0) { // if its not a released scan code.
         //c = scan_code_to_ascii (sc);
         //print_ch_at(c, 0, -1, -1);
-    }
+    //}
     //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
 }
 

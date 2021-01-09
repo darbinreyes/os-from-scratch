@@ -34,6 +34,7 @@
 */
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
+#include "screen.h"
 
 /*!
     @defined    KEY_CODE_TO_ASCII_ROWS
@@ -605,47 +606,112 @@ typedef enum _sc_state_t {
     S6B3,
     S6B4,
     S6B5P_F,
-    SSC_ERR
+    SSC_ERR // Error state
 } sc_state_t;
 
-/*!
-    @typedef sc_transition_tbl_t
+static sc_state_t sc_sm_next_state(sc_state_t cs, uint8_t in) {
+    /*!
+        @typedef sc_transition_tbl_t
 
-    @discussion Scan code transition table entry. Used define the state machine
-    that detects the receipt of a complete scan code.
+        @discussion Scan code transition table entry. Used define the state machine
+        that detects the receipt of a complete scan code.
 
-    @field cs    Current state.
-    @field il    Input lower bound.
-    @field ih    Input higher bound.
-    @field ns    Next state.
-*/
-typedef struct _sc_transition_tbl_t {
-    uint8_t cs;
-    uint8_t il;
-    uint8_t ih;
-    uint8_t ns;
-} sc_transition_tbl_t;
+        @field cs    Current state.
+        @field il    Input lower bound.
+        @field ih    Input higher bound.
+        @field ns    Next state.
+    */
+    typedef struct _sc_transition_tbl_t {
+        sc_state_t cs;
+        uint8_t il;
+        uint8_t ih;
+        sc_state_t ns;
+    } sc_transition_tbl_t;
+    static const sc_transition_tbl_t sc_t_tbl[] = { // Scan code transition table. Used to implement the state machine transition function.
+        {SSCS, 0x00, 0x58, S1B0P_F},
+        {SSCS, 0x80, 0xD8, S1B0R_F},
 
-sc_transition_tbl_t sc_t_tbl[] = {
-    {SSCS, 0x00, 0x58, S1B0P_F},
-    {SSCS, 0x80, 0xD8, S1B0R_F},
+        {SSCS, 0xE0, 0xE0, S2B0_S4B0},
+        {S2B0_S4B0, 0x2A, 0x2A, S4B1P}, // Is this a hacky fix? 0x2A falls inside [0x10, 0x6D]. The transition table now depends on the order of the entries. But isn't an NFA always reducible to a DFA?
+        {S2B0_S4B0, 0x10, 0x6D, S2B1P_F},
+        {S2B0_S4B0, 0xB7, 0xB7, S4B1R}, // Is this a hacky fix? 0xB7 falls inside [0x10, 0x6D].
+        {S2B0_S4B0, 0x90, 0xED, S2B1R_F},
 
-    {SSCS, 0xE0, 0xE0, S2B0_S4B0},
-    {S2B0_S4B0, 0x10, 0x6D, S2B1P_F},
-    {S2B0_S4B0, 0x90, 0xED, S2B1R_F},
+        //{S2B0_S4B0, 0x2A, 0x2A, S4B1P},
+        {S4B1P, 0xE0, 0xE0, S4B2P},
+        {S4B2P, 0x37, 0x37, S4B3P_F},
 
-    {S2B0_S4B0, 0x2A, 0x2A, S4B1P},
-    {S4B1P, 0xE0, 0xE0, S4B2P},
-    {S4B2P, 0x37, 0x37, S4B3P_F},
+        //{S2B0_S4B0, 0xB7, 0xB7, S4B1R},
+        {S4B1R, 0xE0, 0xE0, S4B2R},
+        {S4B2R, 0xAA, 0xAA, S4B3R_F},
 
-    {S2B0_S4B0, 0xB7, 0xB7, S4B1R},
-    {S4B1R, 0xE0, 0xE0, S4B2R},
-    {S4B2R, 0xAA, 0xAA, S4B3R_F},
+        {SSCS, 0xE1, 0xE1, S6B0},
+        {S6B0, 0x1D, 0x1D, S6B1},
+        {S6B1, 0x45, 0x45, S6B2},
+        {S6B2, 0xE1, 0xE1, S6B3},
+        {S6B3, 0x9D, 0x9D, S6B4},
+        {S6B4, 0xC5, 0xC5, S6B5P_F} // @IMPORTANT 6-Byte scan code does not have a released state.
+    };
 
-    {SSCS, 0xE1, 0xE1, S6B0},
-    {S6B0, 0x1D, 0x1D, S6B1},
-    {S6B1, 0x45, 0x45, S6B2},
-    {S6B2, 0xE1, 0xE1, S6B3},
-    {S6B3, 0x9D, 0x9D, S6B4},
-    {S6B4, 0xC5, 0xC5, S6B5P_F} // @IMPORTANT 6-Byte scan code does not have a released state.
-};
+    static const int sc_t_tbl_len = sizeof(sc_t_tbl)/sizeof(sc_t_tbl[0]);
+
+    int i;
+
+    for (i = 0; i < sc_t_tbl_len; i++) {
+        if(sc_t_tbl[i].cs == cs && in >= sc_t_tbl[i].il && in <= sc_t_tbl[i].ih) {
+            return sc_t_tbl[i].ns;
+        }
+    }
+
+    return SSC_ERR;
+}
+
+static int sc_sm_is_final_state(sc_state_t s) {
+    switch(s) {
+    case S1B0P_F:
+        print("1-Byte Scan Code Pressed\n");
+        return 1;
+        break;
+    case S1B0R_F:
+        print("1-Byte Scan Code Released\n");
+        return 1;
+        break;
+    case S2B1P_F:
+        print("2-Byte Scan Code Pressed\n");
+        return 1;
+        break;
+    case S2B1R_F:
+        print("2-Byte Scan Code Released\n");
+        return 1;
+        break;
+    case S4B3P_F:
+        print("4-Byte Scan Code Pressed\n");
+        return 1;
+        break;
+    case S4B3R_F:
+        print("4-Byte Scan Code Released\n");
+        return 1;
+        break;
+    case S6B5P_F:
+        print("6-Byte Scan Code Pressed\n");
+        return 1;
+        break;
+    case SSC_ERR:
+        print("Scan Code Error State!\n");
+        return 1;
+        break;
+    default:
+        break;
+    }
+
+    return 0; // Not final state.
+}
+
+void sc_sm_update(uint8_t in) {
+    static sc_state_t sc_sm_cs = SSCS; // cs = Current State
+
+    sc_sm_cs = sc_sm_next_state(sc_sm_cs, in);
+
+    if(sc_sm_is_final_state(sc_sm_cs))
+        sc_sm_cs = SSCS; // Scan code state machine reset to start state.
+}
