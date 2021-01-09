@@ -240,27 +240,6 @@ void vn_not_handled(uint32_t vn, uint32_t err_code) {
     assert(0);
 }
 
-void v33_handler(uint32_t vn, uint32_t err_code) {
-    uint8_t sc;
-    char c;
-
-    if (vn || err_code || c) { // Suppress warning.
-        ;
-    }
-
-    sc = inb (0x0060); // Read keyboard output buffer.
-    pic_eoi(vn);
-    print_x32(sc);
-    print("\n");
-
-    sc_sm_update(sc);
-    //if((sc & 0x80) == 0) { // if its not a released scan code.
-        //c = scan_code_to_ascii (sc);
-        //print_ch_at(c, 0, -1, -1);
-    //}
-    //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
-}
-
 /*!
     @const    idt_handlers
     @discussion Array of interrupt/exception procedure entry points and vector

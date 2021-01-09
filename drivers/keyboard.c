@@ -35,6 +35,8 @@
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
 #include "screen.h"
+#include "../kernel/i8259a_pic.h"
+#include "../kernel/low_level.h"
 
 /*!
     @defined    KEY_CODE_TO_ASCII_ROWS
@@ -714,4 +716,25 @@ void sc_sm_update(uint8_t in) {
 
     if(sc_sm_is_final_state(sc_sm_cs))
         sc_sm_cs = SSCS; // Scan code state machine reset to start state.
+}
+
+void v33_handler(uint32_t vn, uint32_t err_code) {
+    uint8_t sc;
+    char c;
+
+    if (vn || err_code || c) { // Suppress warning.
+        ;
+    }
+
+    sc = inb (0x0060); // Read keyboard output buffer.
+    pic_eoi(vn);
+    print_x32(sc);
+    print("\n");
+
+    sc_sm_update(sc);
+    //if((sc & 0x80) == 0) { // if its not a released scan code.
+        //c = scan_code_to_ascii (sc);
+        //print_ch_at(c, 0, -1, -1);
+    //}
+    //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
 }
