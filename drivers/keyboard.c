@@ -738,3 +738,13 @@ void v33_handler(uint32_t vn, uint32_t err_code) {
     //}
     //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
 }
+
+#if 0
+// TODO: Thoughts on how to implement <stdarg.h>
+void foo(int v, ...) {
+    // &v + 4 // call stack
+    if(v) {
+        ;
+    }
+}
+#endif
