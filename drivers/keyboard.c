@@ -22,15 +22,13 @@
 
     * @TODO
       * [] Test all scan codes.
-      * [] short get_scn_code(void);
       * [] char getch(void);
       * [] char *prompt_user_for_str(char *prompt);
-      * [] With interrupts.
-      * [] Implement key state table so shift key works. 0 = released 1 =
-        pressed.
       * [] @doc [See "driver model"]
         (https://wiki.osdev.org/Keyboard#Driver_Model). Also see @doc
         [My keyboard driver notes](./docs/keyboard/keyboard.md)
+      * [] sc_to_kc_tbl, finish comments.
+      * [] handle non-visible characters.
 */
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
@@ -137,8 +135,8 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
     scan code set (1, 2, or 3).
 */
 #define SCAN_CODE_TODO  0xFE
-#define SCAN_CODE_ERR 0xFD // // col = 1D = 1 1101 = 16 + 8 + 4 + 1 = 29
-#define SCAN_CODE_IGNORE 0xFC // // col = 28
+#define SCAN_CODE_ERR 0xFD // row = 7 // col = 29
+#define SCAN_CODE_IGNORE 0xFC // row = 7 // col = 28
 
 /*!
     @defined    KEY_CODE_TO_ROW(kc)
@@ -170,12 +168,25 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
                  and 1 for pressed.
 */
 typedef struct _sc_to_kc_entry {
-    uint8_t kc; //  make const?
+    const uint8_t kc;
     uint8_t ks;
 } sc_to_kc_entry;
 
 /*!
-    @const  sc_to_kc_tbl_1byte
+    @enum key_state
+
+    @discussion A keyboard key is either pressed or released.
+
+    @constant KEY_STATE_PRESSED Indicates the key is currently pressed.
+    @constant KEY_STATE_RELEASED Indicates the key is currently released.
+*/
+enum key_state {
+    KEY_STATE_PRESSED = 1,
+    KEY_STATE_RELEASED = 0
+};
+
+/*!
+    sc_to_kc_tbl_1byte
 
     @discussion Table used for converting a **single** byte scan code (scan code
     set 1) into a key code. A scan code is used as an index into the table and
@@ -309,7 +320,7 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
 };
 
 /*!
-    @const  sc_to_kc_tbl_2byte
+    sc_to_kc_tbl_2byte
 
     @discussion Table used for converting a **two** byte scan code (scan code
     set 1) into a key code. This table is used similarly to the table for
@@ -442,16 +453,24 @@ to special casing this scan code.
 
 @remark There is no scan code for "pause key released" (it behaves as
 if it is released as soon as it's pressed)
-
-@IMPORTANT @TODO Make sure the function that gets scan codes works correctly
-in case more than 2 byte scan codes are received. Note the prefix bytes.
 *******************************************************************************/
+
+/*!
+    sc_to_kc_tbl_4byte
+
+    @discussion There is only one 4-byte scan code.
+*/
 static sc_to_kc_entry sc_to_kc_tbl_4byte[] = {
-    {KEY_CODE_FROM_ROW_COL(0, 14), 0}, /*<fn>+<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
+    {KEY_CODE_FROM_ROW_COL(0, 14), 0} /*<fn>+<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
 };
 
+/*!
+    sc_to_kc_tbl_6byte
+
+    @discussion There is only one 6-byte scan code.
+*/
 static sc_to_kc_entry sc_to_kc_tbl_6byte[] = {
-    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /*<fn>+<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0} /*<fn>+<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
 };
 
 /*!
@@ -524,6 +543,7 @@ char kc_to_ascii (uint8_t kc) {
     return '!';
 }
 
+#if 0 // Keeping for future reference.
 /*!
     @function   get_scan_code
 
@@ -563,6 +583,7 @@ int get_scan_code(uint8_t *sc) { // @TODO
 
     return 0;
 }
+#endif
 
 /*!
     @typedef sc_state_t
@@ -578,7 +599,7 @@ int get_scan_code(uint8_t *sc) { // @TODO
     ...
     @TODO
     ...
-    @TODO Draw the state machine.
+    @TODO Draw the state machine. Notes on paper.
 */
 typedef enum _sc_state_t {
     SSCS = 0,
@@ -605,7 +626,8 @@ typedef enum _sc_state_t {
 /*!
     @function sc_sm_next_state
 
-    @discussion Returns the next state of the scan code state machine.
+    @discussion Returns the next state of the scan code state machine a.k.a. the
+    transition function. I have designed and drawn this state machine on paper.
 
     @param cs Current state of the state machine.
 
@@ -672,19 +694,6 @@ static sc_state_t sc_sm_next_state(sc_state_t cs, uint8_t in) {
 }
 
 /*!
-    @enum key_state
-
-    @discussion A keyboard key is either pressed or released.
-
-    @constant KEY_STATE_PRESSED Indicates the key is currently pressed.
-    @constant KEY_STATE_RELEASED Indicates the key is currently released.
-*/
-enum key_state {
-    KEY_STATE_PRESSED = 1,
-    KEY_STATE_RELEASED = 0
-};
-
-/*!
     @function sc_sm_is_final_state
 
     @discussion Returns 1 if the scan code state machine has reached a final
@@ -698,7 +707,7 @@ enum key_state {
 
     @param sc Scan code.
 
-    @param kc Key code.
+    @param kc Output: key code.
 
     @result 1 if the state machine has reached a final state, 0 if not a final
     state.
@@ -822,11 +831,20 @@ uint8_t sc_sm_update(uint8_t sc) {
     return kc;
 }
 
+/*!
+    @function v33_handler
+
+    @discussion Keyboard interrupt handler.
+
+    @param vn Vector number
+
+    @param err_code Error code
+*/
 void v33_handler(uint32_t vn, uint32_t err_code) {
     uint8_t sc , kc;
     char c;
 
-    if (vn || err_code || c || kc) { // Suppress warning.
+    if (vn || err_code) { // Suppress warning.
         ;
     }
 
@@ -836,7 +854,8 @@ void v33_handler(uint32_t vn, uint32_t err_code) {
     //print("\n");
 
     kc = sc_sm_update(sc);
-    if(kc != SCAN_CODE_ERR && kc != SCAN_CODE_IGNORE) { // if its not a released scan code.
+    if(kc != SCAN_CODE_ERR && kc != SCAN_CODE_IGNORE) {
+        // Print something
         c = kc_to_ascii(kc);
         print_ch_at(c, 0, -1, -1);
     }
