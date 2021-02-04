@@ -37,6 +37,7 @@
 #include "screen.h"
 #include "../kernel/i8259a_pic.h"
 #include "../kernel/low_level.h"
+#include "../include/assert.h"
 
 /*!
     @defined    KEY_CODE_TO_ASCII_ROWS
@@ -136,6 +137,8 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
     scan code set (1, 2, or 3).
 */
 #define SCAN_CODE_TODO  0xFE
+#define SCAN_CODE_ERR 0xFD // // col = 1D = 1 1101 = 16 + 8 + 4 + 1 = 29
+#define SCAN_CODE_IGNORE 0xFC // // col = 28
 
 /*!
     @defined    KEY_CODE_TO_ROW(kc)
@@ -447,9 +450,9 @@ static sc_to_kc_entry sc_to_kc_tbl_4byte[] = {
     {KEY_CODE_FROM_ROW_COL(0, 14), 0}, /*<fn>+<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
 };
 
-// static sc_to_kc_entry sc_to_kc_tbl_6byte[] = {
-//     {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /*<fn>+<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
-// };
+static sc_to_kc_entry sc_to_kc_tbl_6byte[] = {
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /*<fn>+<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
+};
 
 /*!
     @function sc_to_kc_index
@@ -469,18 +472,19 @@ uint8_t sc_to_kc_index(uint8_t sc, uint8_t n) {
         return sc;
     }
 
-    // if (n == 1 && sc >= 0x80 && sc <= 0xD8) {
-    //     return sc & 0x7F;
-    // }
+    if (n == 1 && sc >= 0x80 && sc <= 0xD8) {
+        sc &= 0x7F;
+        return sc;
+    }
 
     if (n == 2 && sc >= 0x10 && sc <= 0x6D) {
         return sc - 0x10;
     }
 
-    // if (n == 2 && sc >= 0x90 && sc <= 0xED) {
-    //     sc &= 0x7F;
-    //     return sc - 0x10;
-    // }
+    if (n == 2 && sc >= 0x90 && sc <= 0xED) {
+        sc &= 0x7F;
+        return sc - 0x10;
+    }
 
     if (n == 4 && (sc == 0x37 || sc == 0xAA)) {
         return 0;
@@ -493,58 +497,32 @@ uint8_t sc_to_kc_index(uint8_t sc, uint8_t n) {
     return 0xFF;
 }
 
-#if 0
 /*!
-    @function   get_key_code
+    @function   kc_to_ascii
 
-    @discussion Converts a scan code into a key code.
+    @discussion Converts a key code to an ASCII code.
 
-    @param  sc  The scan code.
-
-    @result The key code.
-*/
-uint8_t get_key_code(uint8_t sc, uint8_t n) {
-
-    if (n == 1 && sc >= 0x00 && sc <= 0x58) {
-        return sc_to_kc_tbl_1byte[sc];
-    }
-
-    if (n == 2 && sc >= 0x10 && sc <= 0x6D) {
-        return sc_to_kc_tbl_1byte[sc-0x10];
-    }
-
-    return 0xFF;
-}
-
-
-
-/*!
-    @function   scan_code_to_ascii
-
-    @discussion Converts a scan code to an ASCII code.
-
-    @param  sc  The scan code.
+    @param  kc  Key code.
 
     @result An ASCII character.
 */
-char scan_code_to_ascii (uint8_t sc, uint8_t n) { // @TODO
-    uint8_t kc, r, c;
+char kc_to_ascii (uint8_t kc) {
+    uint8_t r, c;
 
-    kc = get_key_code(sc, n);
+    r = KEY_CODE_TO_ROW(kc);
+    c = KEY_CODE_TO_COL(kc);
 
-    if(kc != 0xFF) {
-        r = KEY_CODE_TO_ROW(kc);
-        c = KEY_CODE_TO_COL(kc);
-        // [] Improve this. e.g. use assert.
-        if (r >= KEY_CODE_TO_ASCII_ROWS || c >= KEY_CODE_TO_ASCII_COLS)
-            return '!';
-
-        return kc_rc_to_ascii[r][c];
+    if (r < KEY_CODE_TO_ASCII_ROWS && c < KEY_CODE_TO_ASCII_COLS) {
+        // 0x2A = left shift scan code.
+        // 0x36 = right shift scan code.
+        if(sc_to_kc_tbl_1byte[0x2A].ks || sc_to_kc_tbl_1byte[0x36].ks)
+            return shift_kc_rc_to_ascii[r][c];
+        else
+            return kc_rc_to_ascii[r][c];
     }
 
-    return '^';
+    return '!';
 }
-#endif
 
 /*!
     @function   get_scan_code
@@ -582,66 +560,6 @@ int get_scan_code(uint8_t *sc) { // @TODO
         return 2;
 
     *sc = b;
-
-    return 0;
-}
-
-/*!
-    @function get_scan_code2
-
-    @discussion Returns a 2 byte scan code from the keyboard. Caller must ensure
-    that `sc` is 2 bytes in size.
-
-    @param  sc  Pointer in which to return the 2-byte scan code.
-
-    @result 0 on success. Non-0 on error.
-*/
-int get_scan_code2(uint8_t *sc) {
-    ps_2_ctrl_stat_t stat;
-    int r;
-    uint8_t b;
-
-    r = get_ctlr_stat(&stat);
-
-    if (r != 0)
-        return 1;
-
-    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
-                                                 received. */
-        r = get_ctlr_stat(&stat);
-
-        if (r != 0)
-            return 2;
-    }
-
-    r = rcv_byte (&b);
-
-    if (r != 0)
-        return 3;
-
-    *sc = b;
-
-    if (b != 0xE0) {
-        // This is a single byte scan code.
-        *(sc+1) = 0x00;
-        return 0;
-    }
-
-    /* Get the second scan code byte. */
-    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
-                                                 received. */
-        r = get_ctlr_stat(&stat);
-
-        if (r != 0)
-            return 4;
-    }
-
-    r = rcv_byte (&b);
-
-    if (r != 0)
-        return 5;
-
-    *(sc+1) = b;
 
     return 0;
 }
@@ -780,101 +698,93 @@ enum key_state {
 
     @param sc Scan code.
 
-    @param n Pointer to uint8_t indicating if something should be printed.
+    @param kc Key code.
 
     @result 1 if the state machine has reached a final state, 0 if not a final
     state.
 */
-static int sc_sm_is_final_state(sc_state_t s, uint8_t sc, uint8_t *n) {
-    uint8_t kc = 0xFF, i = 0xFF;
+static int sc_sm_is_final_state(sc_state_t s, uint8_t sc, uint8_t *kc) {
+    uint8_t i = 0xFF;
 
-    *n = 0;
+    *kc = SCAN_CODE_ERR;
 
     switch(s) {
     case S1B0P_F:
-        print("1-Byte Scan Code Pressed\n");
-        *n = 1;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        //print("1-Byte Scan Code Pressed\n");
+        i = sc_to_kc_index(sc, 1);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
-
-        kc = sc_to_kc_tbl_1byte[i].kc;
-
-        if (kc != NOT_A_SCAN_CODE && kc != SCAN_CODE_TODO) // valid scan code.
-            return 1;
-
+        }
         sc_to_kc_tbl_1byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_1byte[i].kc;
         return 1;
         break;
     case S1B0R_F:
-        print("1-Byte Scan Code Released\n");
-        sc &= 0x7F; // Clear high order bit on release!
-        *n = 1;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        //print("1-Byte Scan Code Released\n");
+        i = sc_to_kc_index(sc, 1);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
-
-        kc = sc_to_kc_tbl_1byte[i].kc;
-
-        if (kc != NOT_A_SCAN_CODE && kc != SCAN_CODE_TODO) // valid scan code.
-            return 1;
-
+        }
         sc_to_kc_tbl_1byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_1byte[i].kc;
         return 1;
         break;
     case S2B1P_F:
         print("2-Byte Scan Code Pressed\n");
-        *n = 2;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        i = sc_to_kc_index(sc, 2);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
-
-        kc = sc_to_kc_tbl_2byte[i].kc;
-
-        if (kc != NOT_A_SCAN_CODE && kc != SCAN_CODE_TODO) // valid scan code.
-            return 1;
-
-        sc_to_kc_tbl_1byte[i].ks = KEY_STATE_PRESSED;
-
+        }
+        sc_to_kc_tbl_2byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_2byte[i].kc;
         return 1;
         break;
     case S2B1R_F:
         print("2-Byte Scan Code Released\n");
-        sc &= 0x7F; // Clear high order bit on release!
-        *n = 2;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        i = sc_to_kc_index(sc, 2);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
-
-        kc = sc_to_kc_tbl_2byte[i].kc;
-
-        if (kc != NOT_A_SCAN_CODE && kc != SCAN_CODE_TODO) // valid scan code.
-            return 1;
-
-        sc_to_kc_tbl_1byte[i].ks = KEY_STATE_RELEASED;
+        }
+        sc_to_kc_tbl_2byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_2byte[i].kc;
         return 1;
         break;
     case S4B3P_F:
         print("4-Byte Scan Code Pressed\n");
-        *n = 4;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        i = sc_to_kc_index(sc, 4);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
+        }
         sc_to_kc_tbl_4byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_4byte[i].kc;
         return 1;
         break;
     case S4B3R_F:
         print("4-Byte Scan Code Released\n");
-        *n = 4;
-        i = sc_to_kc_index(sc, *n);
-        if (i == 0xFF)
+        i = sc_to_kc_index(sc, 4);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
             return 1;
+        }
         sc_to_kc_tbl_4byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_4byte[i].kc;
         return 1;
         break;
     case S6B5P_F:
         print("6-Byte Scan Code Pressed\n");
-        *n = 6;
+        i = sc_to_kc_index(sc, 6);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        /* Special case: behaves as if it is released as soon as it's pressed */
+        /* sc_to_kc_tbl_1byte[i].ks = KEY_STATE_PRESSED; */
+        *kc = sc_to_kc_tbl_6byte[i].kc;
         return 1;
         break;
     case SSC_ERR:
@@ -897,40 +807,39 @@ static int sc_sm_is_final_state(sc_state_t s, uint8_t sc, uint8_t *n) {
 
     @param sc Scan code.
 
-    @result 0 = don't print anything, 1 = print a 1-byte scan code, 2 = print
-    a 2-byte scan code.
+    @result Key code.
+
 */
-int sc_sm_update(uint8_t sc) {
+uint8_t sc_sm_update(uint8_t sc) {
     static sc_state_t sc_sm_cs = SSCS; // cs = Current State, initialize to state state.
-    uint8_t n = 0;
+    uint8_t kc;
 
     sc_sm_cs = sc_sm_next_state(sc_sm_cs, sc);
 
-    if(sc_sm_is_final_state(sc_sm_cs, sc, &n))
+    if(sc_sm_is_final_state(sc_sm_cs, sc, &kc))
         sc_sm_cs = SSCS; // Scan code state machine reset to start state.
 
-    return n;
+    return kc;
 }
 
 void v33_handler(uint32_t vn, uint32_t err_code) {
-    uint8_t sc , n;
+    uint8_t sc , kc;
     char c;
 
-    if (vn || err_code || c || n) { // Suppress warning.
+    if (vn || err_code || c || kc) { // Suppress warning.
         ;
     }
 
     sc = inb (0x0060); // Read keyboard output buffer.
     pic_eoi(vn);
-    print_x32(sc);
-    print("\n");
+    //print_x32(sc);
+    //print("\n");
 
-    n = sc_sm_update(sc);
-    //if((sc & 0x80) == 0) { // if its not a released scan code.
-        //c = scan_code_to_ascii (sc);
-        //print_ch_at(c, 0, -1, -1);
-    //}
-    //print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
+    kc = sc_sm_update(sc);
+    if(kc != SCAN_CODE_ERR && kc != SCAN_CODE_IGNORE) { // if its not a released scan code.
+        c = kc_to_ascii(kc);
+        print_ch_at(c, 0, -1, -1);
+    }
 }
 
 #if 0
