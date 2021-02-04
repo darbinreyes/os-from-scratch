@@ -123,8 +123,6 @@ char scan_code_to_ascii (uint8_t sc);
 /*! See .c */
 int get_scan_code2(uint8_t *sc);
 
-void sc_sm_update(uint8_t in);
-
 void v33_handler(uint32_t vn, uint32_t err_code);
 
 #endif
