@@ -628,6 +628,7 @@ typedef enum _sc_state_t {
 
     @discussion Returns the next state of the scan code state machine a.k.a. the
     transition function. I have designed and drawn this state machine on paper.
+    See `os-from-scratch/drivers/docs/keyboard/scan_code_received_FSM.png`.
 
     @param cs Current state of the state machine.
 
