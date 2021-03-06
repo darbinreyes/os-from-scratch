@@ -203,120 +203,97 @@ enum key_state {
     code for the ESCAPE key is 0x01, while the "released" scan code is 0x81.
 */
 static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
-                                 /* Scan Code | Key        | Tested           */
-                                 /* ----------|------------|------------------*/
-    {NOT_A_SCAN_CODE, 0},            /* 0x00      |            | Not a scan code. */
-    {KEY_CODE_FROM_ROW_COL(0, 0), 0},/* 0x01      | <ESC>      |                  */
-    {KEY_CODE_FROM_ROW_COL(1, 1), 0},/* 0x02      | 1          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 2), 0},/* 0x03      | 2          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 3), 0},/* 0x04      | 3          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 4), 0},/* 0x05      | 4          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 5), 0},/* 0x06      | 5          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 6), 0},/* 0x07      | 6          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 7), 0},/* 0x08      | 7          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 8), 0},/* 0x09      | 8          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 9), 0},/* 0x0A      | 9          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 10), 0},/* 0x0B      | 0          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 11), 0},/* 0x0C      | -          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 12), 0},/* 0x0D      | =          |*/
-    {KEY_CODE_FROM_ROW_COL(1, 13), 0},/* 0x0E      | <BACKSPACE>|*/
-
-    {KEY_CODE_FROM_ROW_COL(2, 0), 0},/*0x0F <TAB> p.|r,c=2,0*/
-    {KEY_CODE_FROM_ROW_COL(2, 1), 0},/*0x10 q p.|r,c=2,1*/
-    {KEY_CODE_FROM_ROW_COL(2, 2), 0},/*0x11 w p.|r,c=2,2*/
-    {KEY_CODE_FROM_ROW_COL(2, 3), 0},/*0x12 e p.|r,c=2,3*/
-    {KEY_CODE_FROM_ROW_COL(2, 4), 0},/*0x13 r p.|r,c=2,4*/
-    {KEY_CODE_FROM_ROW_COL(2, 5), 0},/*0x14 t p.|r,c=2,5*/
-    {KEY_CODE_FROM_ROW_COL(2, 6), 0},/*0x15 y p.|r,c=2,6*/
-    {KEY_CODE_FROM_ROW_COL(2, 7), 0},/*0x16 u p.|r,c=2,7*/
-    {KEY_CODE_FROM_ROW_COL(2, 8), 0},/*0x17 i p.|r,c=2,8*/
-    {KEY_CODE_FROM_ROW_COL(2, 9), 0},/*0x18 o p.|r,c=2,9*/
-    {KEY_CODE_FROM_ROW_COL(2, 10), 0},/*0x19 p p.|r,c=2,10*/
-    {KEY_CODE_FROM_ROW_COL(2, 11), 0},/*0x1A [ p.|r,c=2,11*/
-    {KEY_CODE_FROM_ROW_COL(2, 12), 0},/*0x1B ] p.|r,c=2,12*/
-    {KEY_CODE_FROM_ROW_COL(2, 13), 0},/*0x1C <ENTER> p.|r,c=2,13*/
-
-    {KEY_CODE_FROM_ROW_COL(5, 0), 0},/*0x1D <L-CTLR> p.|r,c=5,0*/
-
-    {KEY_CODE_FROM_ROW_COL(3, 1), 0},/*0x1E a p.|r,c=3,1*/
-    {KEY_CODE_FROM_ROW_COL(3, 2), 0},/*0x1F s p.|r,c=3,2*/
-    {KEY_CODE_FROM_ROW_COL(3, 3), 0},/*0x20 d p.|r,c=3,3*/
-    {KEY_CODE_FROM_ROW_COL(3, 4), 0},/*0x21 f p.|r,c=3,4*/
-    {KEY_CODE_FROM_ROW_COL(3, 5), 0},/*0x22 g p.|r,c=3,5*/
-    {KEY_CODE_FROM_ROW_COL(3, 6), 0},/*0x23 h p.|r,c=3,6*/
-    {KEY_CODE_FROM_ROW_COL(3, 7), 0},/*0x24 j p.|r,c=3,7*/
-    {KEY_CODE_FROM_ROW_COL(3, 8), 0},/*0x25 k p.|r,c=3,8*/
-    {KEY_CODE_FROM_ROW_COL(3, 9), 0},/*0x26 l p.|r,c=3,9*/
-    {KEY_CODE_FROM_ROW_COL(3, 10), 0},/*0x27 ; p.|r,c=3,10*/
-    {KEY_CODE_FROM_ROW_COL(3, 11), 0},/*0x28 ' p.|r,c=3,11*/
-
-    {KEY_CODE_FROM_ROW_COL(1, 0), 0},/*0x29 ` p.|r,c=1,0*/
-
-
-    {KEY_CODE_FROM_ROW_COL(4, 0), 0},/*0x2A <L-SHIFT> p.|r,c=4,0*/
-
-    {KEY_CODE_FROM_ROW_COL(2, 13), 0},/*0x2B \ p.|r,c=2,13*/
-
-    {KEY_CODE_FROM_ROW_COL(4, 1), 0},/*0x2C z p.|r,c=4,1*/
-    {KEY_CODE_FROM_ROW_COL(4, 2), 0},/*0x2D x p.|r,c=4,2*/
-    {KEY_CODE_FROM_ROW_COL(4, 3), 0},/*0x2E c p.|r,c=4,3*/
-    {KEY_CODE_FROM_ROW_COL(4, 4), 0},/*0x2F v p.|r,c=4,4*/
-    {KEY_CODE_FROM_ROW_COL(4, 5), 0},/*0x30 b p.|r,c=4,5*/
-    {KEY_CODE_FROM_ROW_COL(4, 6), 0},/*0x31 n p.|r,c=4,6*/
-    {KEY_CODE_FROM_ROW_COL(4, 7), 0},/*0x32 m p.|r,c=4,7*/
-    {KEY_CODE_FROM_ROW_COL(4, 8), 0},/*0x33 , p.|r,c=4,8*/
-    {KEY_CODE_FROM_ROW_COL(4, 9), 0},/*0x34 . p.|r,c=4,9*/
-    {KEY_CODE_FROM_ROW_COL(4, 10), 0},/*0x35 / p.|r,c=4,10*/
-    {KEY_CODE_FROM_ROW_COL(4, 11), 0},/*0x36 <R-SHIFT> p.|r,c=4,11*/
-
-    {KEY_CODE_FROM_ROW_COL(1, 20), 0},/*0x37 NUMPAD-* p.|r,c=1,20*/
-
-    {KEY_CODE_FROM_ROW_COL(5, 1), 0},/*0x38 <L-ALT> p.|r,c=5,1*/
-
-    {KEY_CODE_FROM_ROW_COL(5, 3), 0},/*0x39 <SPACE> p.|r,c=5,3*/
-
-    {KEY_CODE_FROM_ROW_COL(3, 0), 0},/*0x3A <CAPSLOCK> p.|r,c=3,0*/
-
-    {KEY_CODE_FROM_ROW_COL(0, 1), 0},/*0x3B <F1> p.|r,c=0,1*/
-    {KEY_CODE_FROM_ROW_COL(0, 2), 0},/*0x3C <F2> p.|r,c=0,2*/
-    {KEY_CODE_FROM_ROW_COL(0, 3), 0},/*0x3D <F3> p.|r,c=0,3*/
-    {KEY_CODE_FROM_ROW_COL(0, 4), 0},/*0x3E <F4> p.|r,c=0,4*/
-    {KEY_CODE_FROM_ROW_COL(0, 5), 0},/*0x3F <F5> p.|r,c=0,5*/
-    {KEY_CODE_FROM_ROW_COL(0, 6), 0},/*0x40 <F6> p.|r,c=0,6*/
-    {KEY_CODE_FROM_ROW_COL(0, 7), 0},/*0x41 <F7> p.|r,c=0,7*/
-    {KEY_CODE_FROM_ROW_COL(0, 8), 0},/*0x42 <F8> p.|r,c=0,8*/
-    {KEY_CODE_FROM_ROW_COL(0, 9), 0},/*0x43 <F9> p.|r,c=0,9*/
-    {KEY_CODE_FROM_ROW_COL(0, 10), 0},/*0x44 <F10> p.|r,c=0,10*/
-
-    {KEY_CODE_FROM_ROW_COL(1, 17), 0},/*0x45 <NUMLOCK> p.|r,c=1,17|Not a key on my
-                                   keyboard.|Try <CLEAR>*/
-
-    {KEY_CODE_FROM_ROW_COL(0, 15), 0},/*0x46 <SCROLL-LOCK> p.|r,c=0,15|Not a key on
-                                   my keyboard.|Try <F14>*/
-
-    {KEY_CODE_FROM_ROW_COL(2, 17), 0},/*0x47 NUMPAD-7 p.|r,c=2,17*/
-    {KEY_CODE_FROM_ROW_COL(2, 18), 0},/*0x48 NUMPAD-8 p.|r,c=2,18*/
-    {KEY_CODE_FROM_ROW_COL(2, 19), 0},/*0x49 NUMPAD-9 p.|r,c=2,19*/
-    {KEY_CODE_FROM_ROW_COL(2, 20), 0},/*0x4A NUMPAD-"-" p.|r,c=2,20*/
-
-    {KEY_CODE_FROM_ROW_COL(3, 14), 0},/*0x4B NUMPAD-4 p.|r,c=3,14*/
-    {KEY_CODE_FROM_ROW_COL(3, 15), 0},/*0x4C NUMPAD-5 p.|r,c=3,15*/
-    {KEY_CODE_FROM_ROW_COL(3, 16), 0},/*0x4D NUMPAD-6 p.|r,c=3,16*/
-    {KEY_CODE_FROM_ROW_COL(3, 17), 0},/*0x4E NUMPAD-+ p.|r,c=3,17*/
-
-    {KEY_CODE_FROM_ROW_COL(4, 13), 0},/*0x4F NUMPAD-1 p.|r,c=4,13*/
-    {KEY_CODE_FROM_ROW_COL(4, 14), 0},/*0x50 NUMPAD-2 p.|r,c=4,14*/
-    {KEY_CODE_FROM_ROW_COL(4, 15), 0},/*0x51 NUMPAD-3 p.|r,c=4,15*/
-
-    {KEY_CODE_FROM_ROW_COL(5, 10), 0},/*0x52 NUMPAD-0 p.|r,c=5,10*/
-    {KEY_CODE_FROM_ROW_COL(5, 11), 0},/*0x53 NUMPAD-"." p.|r,c=5,11*/
-
-    {NOT_A_SCAN_CODE, 0},/*0x54 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0},/*0x55 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0},/*0x56 Not a scan code .*/
-
-    {KEY_CODE_FROM_ROW_COL(0, 11), 0},/*0x57 <F11> p.|r,c=0,11*/
-    {KEY_CODE_FROM_ROW_COL(0, 12), 0}/*0x58 <F12> p.|r,c=0,12*/
+                                       /* Scan Code | Physical Key | Comment                            */
+                                       /* ----------|--------------|------------------------------------*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x00      |              | Not a scan code.                   */
+    {KEY_CODE_FROM_ROW_COL(0, 0), 0},  /* 0x01      | <esc>        | <> indicates non-visible character */
+    {KEY_CODE_FROM_ROW_COL(1, 1), 0},  /* 0x02      | 1 / !        | / indicates key with two labels    */
+    {KEY_CODE_FROM_ROW_COL(1, 2), 0},  /* 0x03      | 2 / @        |*/ // @TODO VERIFY with actual key press.
+    {KEY_CODE_FROM_ROW_COL(1, 3), 0},  /* 0x04      | 3 / #        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 4), 0},  /* 0x05      | 4 / $        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 5), 0},  /* 0x06      | 5 / %        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 6), 0},  /* 0x07      | 6 / ^        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 7), 0},  /* 0x08      | 7 / &        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 8), 0},  /* 0x09      | 8 / *        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 9), 0},  /* 0x0A      | 9 / (        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 10), 0}, /* 0x0B      | 0 / )        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 11), 0}, /* 0x0C      | - / _        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 12), 0}, /* 0x0D      | = / +        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 13), 0}, /* 0x0E      | <delete>     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 0), 0},  /* 0x0F      | <tab>        |*/
+    {KEY_CODE_FROM_ROW_COL(2, 1), 0},  /* 0x10      | q            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 2), 0},  /* 0x11      | w            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 3), 0},  /* 0x12      | e            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 4), 0},  /* 0x13      | r            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 5), 0},  /* 0x14      | t            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 6), 0},  /* 0x15      | y            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 7), 0},  /* 0x16      | u            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 8), 0},  /* 0x17      | i            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 9), 0},  /* 0x18      | o            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 10), 0}, /* 0x19      | p            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 11), 0}, /* 0x1A      | [ /          |*/
+    {KEY_CODE_FROM_ROW_COL(2, 12), 0}, /* 0x1B      | ] /          |*/
+    {KEY_CODE_FROM_ROW_COL(2, 13), 0}, /* 0x1C      | <return>     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 0), 0},  /* 0x1D      | L-<control>  | L- means left */
+    {KEY_CODE_FROM_ROW_COL(3, 1), 0},  /* 0x1E      | a            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 2), 0},  /* 0x1F      | s            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 3), 0},  /* 0x20      | d            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 4), 0},  /* 0x21      | f            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 5), 0},  /* 0x22      | g            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 6), 0},  /* 0x23      | h            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 7), 0},  /* 0x24      | j            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 8), 0},  /* 0x25      | k            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 9), 0},  /* 0x26      | l            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 10), 0}, /* 0x27      | ; /          |*/
+    {KEY_CODE_FROM_ROW_COL(3, 11), 0}, /* 0x28      | ' /          |*/
+    {KEY_CODE_FROM_ROW_COL(1, 0), 0},  /* 0x29      | ` /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 0), 0},  /* 0x2A      | L-<shift>    |*/
+    {KEY_CODE_FROM_ROW_COL(2, 13), 0}, /* 0x2B      | \ /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 1), 0},  /* 0x2C      | z            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 2), 0},  /* 0x2D      | x            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 3), 0},  /* 0x2E      | c            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 4), 0},  /* 0x2F      | v            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 5), 0},  /* 0x30      | b            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 6), 0},  /* 0x31      | n            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 7), 0},  /* 0x32      | m            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 8), 0},  /* 0x33      | , /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 9), 0},  /* 0x34      | . /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 10), 0}, /* 0x35      | "/" /        |*/
+    {KEY_CODE_FROM_ROW_COL(4, 11), 0}, /* 0x36      | R-<shift>    | R- means right */
+    {KEY_CODE_FROM_ROW_COL(1, 20), 0}, /* 0x37      | NUMPAD-*     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 1), 0},  /* 0x38      | L-<alt>      |*/
+    {KEY_CODE_FROM_ROW_COL(5, 3), 0},  /* 0x39      | <SPACE>      |*/
+    {KEY_CODE_FROM_ROW_COL(3, 0), 0},  /* 0x3A      | <caps lock>   |*/ // @TODO DETERMINE Apple key.
+    {KEY_CODE_FROM_ROW_COL(0, 1), 0},  /* 0x3B      | <F1>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 2), 0},  /* 0x3C      | <F2>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 3), 0},  /* 0x3D      | <F3>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 4), 0},  /* 0x3E      | <F4>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 5), 0},  /* 0x3F      | <F5>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 6), 0},  /* 0x40      | <F6>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 7), 0},  /* 0x41      | <F7>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 8), 0},  /* 0x42      | <F8>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 9), 0},  /* 0x43      | <F9>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 10), 0}, /* 0x44      | <F10>        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 17), 0}, /* 0x45      | <NUMLOCK>    |*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|Try <CLEAR>*/
+    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>|*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|Try <F14>*/
+    {KEY_CODE_FROM_ROW_COL(2, 17), 0}, /* 0x47      | NUMPAD-7     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 18), 0}, /* 0x48      | NUMPAD-8     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 19), 0}, /* 0x49      | NUMPAD-9     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 20), 0}, /* 0x4A      | NUMPAD-"-"   |*/
+    {KEY_CODE_FROM_ROW_COL(3, 14), 0}, /* 0x4B      | NUMPAD-4     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 15), 0}, /* 0x4C      | NUMPAD-5     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 16), 0}, /* 0x4D      | NUMPAD-6     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 17), 0}, /* 0x4E      | NUMPAD-+     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 13), 0}, /* 0x4F      | NUMPAD-1     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 14), 0}, /* 0x50      | NUMPAD-2     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 15), 0}, /* 0x51      | NUMPAD-3     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 10), 0}, /* 0x52      | NUMPAD-0     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 11), 0}, /* 0x53      | NUMPAD-"."   |*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code */
+    {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code */
+    {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code */
+    {KEY_CODE_FROM_ROW_COL(0, 11), 0}, /* 0x57      | <F11>        |*/
+    {KEY_CODE_FROM_ROW_COL(0, 12), 0}  /* 0x58      | <F12>        |*/
 };
 
 /*!
@@ -851,8 +828,8 @@ void v33_handler(uint32_t vn, uint32_t err_code) {
 
     sc = inb (0x0060); // Read keyboard output buffer.
     pic_eoi(vn);
-    //print_x32(sc);
-    //print("\n");
+    print_x32(sc);
+    print("\n");
 
     kc = sc_sm_update(sc);
     if(kc != SCAN_CODE_ERR && kc != SCAN_CODE_IGNORE) {
