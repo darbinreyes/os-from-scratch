@@ -205,7 +205,7 @@ enum key_state {
 static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
                                        /* Scan Code | Physical Key | Comment                            */
                                        /* ----------|--------------|------------------------------------*/
-    {NOT_A_SCAN_CODE, 0},              /* 0x00      |              | Not a scan code.                   */
+    {NOT_A_SCAN_CODE, 0},              /* 0x00      | Not a scan code */
     {KEY_CODE_FROM_ROW_COL(0, 0), 0},  /* 0x01      | <esc>        | <> indicates non-visible character */
     {KEY_CODE_FROM_ROW_COL(1, 1), 0},  /* 0x02      | 1 / !        | / indicates key with two labels    */
     {KEY_CODE_FROM_ROW_COL(1, 2), 0},  /* 0x03      | 2 / @        |*/ // @TODO VERIFY with actual key press.
@@ -314,102 +314,102 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
     entries in this table do not contain valid key codes.
 */
 static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
-                                 /* Scan Code | Key        | Tested           */
-                                 /* ----------|------------|------------------*/
-    {SCAN_CODE_TODO, 0},/*0x10 <(Media)PREV-TRACK> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x11 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x12 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x13 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x14 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x15 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x16 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x17 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x18 Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x19 <(Media)NEXT-TRACK> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x1A Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x1B Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 12), 0},/*0x1C <NUMPAD-ENTER> p.|r,c=5,12*/
-    {KEY_CODE_FROM_ROW_COL(5, 6), 0},/*0x1D <R-CTLR> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x1E Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x1F Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x20 <(Media)MUTE> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x21 <(Media)Calculator> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x22 <(Media)PLAY> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x23 Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x24 <(Media)STOP> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x25 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x26 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x27 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x28 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x29 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x2A Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x2B Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x2C Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x2D Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x2E <(Media)VOL-DOWN> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x2F Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x30 <(Media)VOL-UP> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x31 Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x32 <(Media)WWW-HOME> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x33 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x34 Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(1, 19), 0},/*0x35 <NUMPAD-"/"> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x36 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x37 Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 5), 0},/*0x38 <R-ALT> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x39 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3A Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3B Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3C Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3D Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3E Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x3F Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x40 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x41 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x42 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x43 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x44 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x45 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x46 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x47 Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(4, 12), 0},/*0x48 <CUR-UP> p.|r,c=,*/
-    {KEY_CODE_FROM_ROW_COL(1, 16), 0},/*0x49 <PG-UP> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x4A Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 7), 0},/*0x4B <CUR-LEFT> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x4C Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 9), 0},/*0x4D <CUR-RIGHT> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x4E Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(2, 15), 0},/*0x4F <END> p.|r,c=,*/
-    {KEY_CODE_FROM_ROW_COL(5, 8), 0},/*0x50 <CUR-DOWN> p.|r,c=,*/
-    {KEY_CODE_FROM_ROW_COL(2, 16), 0},/*0x51 <PG-DOWN> p.|r,c=,*/
-    {KEY_CODE_FROM_ROW_COL(0, 16), 0},/*0x52 <INSERT> p.|r,c=,| Try <F15>*/
-    {KEY_CODE_FROM_ROW_COL(2, 14), 0},/*0x53 <DEL(Not backspace)> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x54 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x55 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x56 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x57 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x58 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x59 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x5A Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x5B <"left-GUI"> p.|r,c=,. Apple Keyboard=<fn>+<L-CMD>.*/
-    {SCAN_CODE_TODO, 0},/*0x5C <"right-GUI"> p.|r,c=,. Apple Keyboard=<fn>+<R-CMD>.*/
-    {SCAN_CODE_TODO, 0},/*0x5D <"apps"> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x5E <"(ACPI)Power"> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x5F <"(ACPI)Sleep"> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x60 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x61 Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0}, /*0x62 Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x63 <"(ACPI)Wake"> p.|r,c=,*/
-    {NOT_A_SCAN_CODE, 0}, /*0x64 Not a scan code .*/
-    {SCAN_CODE_TODO, 0},/*0x65 <(Media)WWW-SEARCH> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x66 <(Media)WWW-FAVS> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x67 <(Media)WWW-REFRESH> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x68 <(Media)WWW-STOP> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x69 <(Media)WWW-FORWARD> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x6A <(Media)WWW-BACK> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x6B <(Media)WWW-My-Computer> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0},/*0x6C <(Media)WWW-Email> p.|r,c=,*/
-    {SCAN_CODE_TODO, 0}/*0x6D <(Media)WWW-Media-Select> p.|r,c=,*/
+                                       /* Scan Code | Physical Key | Comment                            */
+                                       /* ----------|--------------|------------------------------------*/
+    {SCAN_CODE_TODO, 0},               /* 0x10      | <(Media)PREV-TRACK> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x11      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x12      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x13      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x14      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x15      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x16      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x17      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x18      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x19      | <(Media)NEXT-TRACK> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x1A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x1B      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 12), 0}, /* 0x1C      | <NUMPAD-ENTER> p.|r,c=5,12*/
+    {KEY_CODE_FROM_ROW_COL(5, 6), 0},  /* 0x1D      | <R-CTLR> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x1E      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x1F      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x20      | <(Media)MUTE> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x21      | <(Media)Calculator> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x22      | <(Media)PLAY> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x23      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x24      | <(Media)STOP> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x25      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x26      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x27      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x28      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x29      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2B      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2C      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2D      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x2E      | <(Media)VOL-DOWN> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x2F      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x30      | <(Media)VOL-UP> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x31      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x32      | <(Media)WWW-HOME> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x33      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x34      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(1, 19), 0}, /* 0x35      | <NUMPAD-"/"> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x36      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x37      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 5), 0},  /* 0x38      | <R-ALT> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x39      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3B      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3C      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3D      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3E      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3F      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x40      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x41      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x42      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x43      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x44      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x45      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x46      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x47      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(4, 12), 0}, /* 0x48      | <CUR-UP> |       */
+    {KEY_CODE_FROM_ROW_COL(1, 16), 0}, /* 0x49      | <PG-UP> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4A      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 7), 0},  /* 0x4B      | <CUR-LEFT> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4C      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 9), 0},  /* 0x4D      | <CUR-RIGHT> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4E      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(2, 15), 0}, /* 0x4F      | <END> |       */
+    {KEY_CODE_FROM_ROW_COL(5, 8), 0},  /* 0x50      | <CUR-DOWN> |       */
+    {KEY_CODE_FROM_ROW_COL(2, 16), 0}, /* 0x51      | <PG-DOWN> |       */
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /* 0x52      | <INSERT> |       | Try <F15>*/
+    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <DEL(Not backspace)> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x57      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x58      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x59      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x5A      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x5B      | <"left-GUI"> |       . Apple Keyboard=<fn>+<L-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5C      | <"right-GUI"> |       . Apple Keyboard=<fn>+<R-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5D      | <"apps"> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x5E      | <"(ACPI)Power"> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x5F      | <"(ACPI)Sleep"> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x60      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x61      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x62      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x63      | <"(ACPI)Wake"> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x64      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x65      | <(Media)WWW-SEARCH> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x66      | <(Media)WWW-FAVS> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x67      | <(Media)WWW-REFRESH> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x68      | <(Media)WWW-STOP> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x69      | <(Media)WWW-FORWARD> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x6A      | <(Media)WWW-BACK> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x6B      | <(Media)WWW-My-Computer> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x6C      | <(Media)WWW-Email> |       */
+    {SCAN_CODE_TODO, 0}                /* 0x6D      | <(Media)WWW-Media-Select> |       */
 };
 
 /*******************************************************************************
