@@ -263,7 +263,7 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
     {KEY_CODE_FROM_ROW_COL(1, 20), 0}, /* 0x37      | NUMPAD-*     |*/
     {KEY_CODE_FROM_ROW_COL(5, 1), 0},  /* 0x38      | L-<alt>      |*/
     {KEY_CODE_FROM_ROW_COL(5, 3), 0},  /* 0x39      | <SPACE>      |*/
-    {KEY_CODE_FROM_ROW_COL(3, 0), 0},  /* 0x3A      | <caps lock>   |*/ // @TODO DETERMINE Apple key.
+    {KEY_CODE_FROM_ROW_COL(3, 0), 0},  /* 0x3A      | <caps lock>  |*/
     {KEY_CODE_FROM_ROW_COL(0, 1), 0},  /* 0x3B      | <F1>         |*/
     {KEY_CODE_FROM_ROW_COL(0, 2), 0},  /* 0x3C      | <F2>         |*/
     {KEY_CODE_FROM_ROW_COL(0, 3), 0},  /* 0x3D      | <F3>         |*/
@@ -274,8 +274,8 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
     {KEY_CODE_FROM_ROW_COL(0, 8), 0},  /* 0x42      | <F8>         |*/
     {KEY_CODE_FROM_ROW_COL(0, 9), 0},  /* 0x43      | <F9>         |*/
     {KEY_CODE_FROM_ROW_COL(0, 10), 0}, /* 0x44      | <F10>        |*/
-    {KEY_CODE_FROM_ROW_COL(1, 17), 0}, /* 0x45      | <NUMLOCK>    |*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|Try <CLEAR>*/
-    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>|*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|Try <F14>*/
+    {KEY_CODE_FROM_ROW_COL(1, 17), 0}, /* 0x45      | <NUMLOCK>    | Apple Keyboard=<CLEAR> */
+    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>|*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|It is NOT <F14>*/
     {KEY_CODE_FROM_ROW_COL(2, 17), 0}, /* 0x47      | NUMPAD-7     |*/
     {KEY_CODE_FROM_ROW_COL(2, 18), 0}, /* 0x48      | NUMPAD-8     |*/
     {KEY_CODE_FROM_ROW_COL(2, 19), 0}, /* 0x49      | NUMPAD-9     |*/
@@ -371,7 +371,7 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x44      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x45      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x46      | Not a scan code .*/
-    {NOT_A_SCAN_CODE, 0},              /* 0x47      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(1, 15), 0}, /* 0x47      | <home> |      */
     {KEY_CODE_FROM_ROW_COL(4, 12), 0}, /* 0x48      | <CUR-UP> |       */
     {KEY_CODE_FROM_ROW_COL(1, 16), 0}, /* 0x49      | <PG-UP> |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x4A      | Not a scan code .*/
@@ -382,8 +382,8 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {KEY_CODE_FROM_ROW_COL(2, 15), 0}, /* 0x4F      | <END> |       */
     {KEY_CODE_FROM_ROW_COL(5, 8), 0},  /* 0x50      | <CUR-DOWN> |       */
     {KEY_CODE_FROM_ROW_COL(2, 16), 0}, /* 0x51      | <PG-DOWN> |       */
-    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /* 0x52      | <INSERT> |       | Try <F15>*/
-    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <DEL(Not backspace)> |       */
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /* 0x52      | <INSERT> |       | It is not <F15>*/
+    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <delete(Not backspace)> |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code .*/
@@ -391,8 +391,8 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x58      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x59      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x5A      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x5B      | <"left-GUI"> |       . Apple Keyboard=<fn>+<L-CMD>.*/
-    {SCAN_CODE_TODO, 0},               /* 0x5C      | <"right-GUI"> |       . Apple Keyboard=<fn>+<R-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5B      | <"left-GUI">  | Apple Keyboard=<fn>+<L-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5C      | <"right-GUI"> | Apple Keyboard=<fn>+<R-CMD>.*/
     {SCAN_CODE_TODO, 0},               /* 0x5D      | <"apps"> |       */
     {SCAN_CODE_TODO, 0},               /* 0x5E      | <"(ACPI)Power"> |       */
     {SCAN_CODE_TODO, 0},               /* 0x5F      | <"(ACPI)Sleep"> |       */
@@ -418,9 +418,9 @@ are not handled by this driver.
 
 Scan code                          | Meaning               | Remarks
 -----------------------------------|-----------------------|--------------------
-0xE0, 0x2A, 0xE0, 0x37             | print screen pressed  | 0xE0_0x2A is not a valid 2 byte scan code. Apple Keyboard=<fn>+<F13>.
+0xE0, 0x2A, 0xE0, 0x37             | print screen pressed  | 0xE0_0x2A is not a valid 2 byte scan code. Apple Keyboard=<F13>.
 0xE0, 0xB7, 0xE0, 0xAA             | print screen released | 0xE0_0xB7 is not a valid 2 byte scan code.
-0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed         | Only scan code starting with 0xE1. Apple Keyboard=<fn>+<F15>.
+0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed         | Only scan code starting with 0xE1. Apple Keyboard=<F15>.
 
 @remark The "print screen" pressed vs. released scan codes don't follow a simple
 1-bit flip pattern. There does seem to be a pattern, which I worked out in
