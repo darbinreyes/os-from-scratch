@@ -316,7 +316,7 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
 static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
                                        /* Scan Code | Physical Key | Comment                            */
                                        /* ----------|--------------|------------------------------------*/
-    {SCAN_CODE_TODO, 0},               /* 0x10      | <(Media)PREV-TRACK> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x10      | <(Media)PREV-TRACK> | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x11      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x12      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x13      | Not a scan code .*/
@@ -328,7 +328,7 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {SCAN_CODE_TODO, 0},               /* 0x19      | <(Media)NEXT-TRACK> |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x1A      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x1B      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 12), 0}, /* 0x1C      | <NUMPAD-ENTER> p.|r,c=5,12*/
+    {KEY_CODE_FROM_ROW_COL(5, 12), 0}, /* 0x1C      | <NUMPAD-ENTER> */
     {KEY_CODE_FROM_ROW_COL(5, 6), 0},  /* 0x1D      | <R-CTLR> |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x1E      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x1F      | Not a scan code .*/
