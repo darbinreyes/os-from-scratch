@@ -275,7 +275,7 @@ static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
     {KEY_CODE_FROM_ROW_COL(0, 9), 0},  /* 0x43      | <F9>         |*/
     {KEY_CODE_FROM_ROW_COL(0, 10), 0}, /* 0x44      | <F10>        |*/
     {KEY_CODE_FROM_ROW_COL(1, 17), 0}, /* 0x45      | <NUMLOCK>    | Apple Keyboard=<CLEAR> */
-    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>|*/ // @TODO DETERMINE Apple key. Not a key on my keyboard.|It is NOT <F14>*/
+    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>| Apple Keyboard=Unknown */
     {KEY_CODE_FROM_ROW_COL(2, 17), 0}, /* 0x47      | NUMPAD-7     |*/
     {KEY_CODE_FROM_ROW_COL(2, 18), 0}, /* 0x48      | NUMPAD-8     |*/
     {KEY_CODE_FROM_ROW_COL(2, 19), 0}, /* 0x49      | NUMPAD-9     |*/
@@ -325,18 +325,18 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x16      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x17      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x18      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x19      | <(Media)NEXT-TRACK> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x19      | <(Media)NEXT-TRACK> | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x1A      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x1B      | Not a scan code .*/
     {KEY_CODE_FROM_ROW_COL(5, 12), 0}, /* 0x1C      | <NUMPAD-ENTER> */
     {KEY_CODE_FROM_ROW_COL(5, 6), 0},  /* 0x1D      | <R-CTLR> |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x1E      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x1F      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x20      | <(Media)MUTE> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x21      | <(Media)Calculator> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x22      | <(Media)PLAY> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x20      | <(Media)MUTE>       | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x21      | <(Media)Calculator> | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x22      | <(Media)PLAY>       | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x23      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x24      | <(Media)STOP> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x24      | <(Media)STOP>       | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x25      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x26      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x27      | Not a scan code .*/
@@ -346,14 +346,14 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x2B      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x2C      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x2D      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x2E      | <(Media)VOL-DOWN> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x2E      | <(Media)VOL-DOWN> | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x2F      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x30      | <(Media)VOL-UP> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x30      | <(Media)VOL-UP>   | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x31      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x32      | <(Media)WWW-HOME> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x32      | <(Media)WWW-HOME> | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x33      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x34      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(1, 19), 0}, /* 0x35      | <NUMPAD-"/"> |       */
+    {KEY_CODE_FROM_ROW_COL(1, 19), 0}, /* 0x35      | <NUMPAD-"/"> |   */
     {NOT_A_SCAN_CODE, 0},              /* 0x36      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x37      | Not a scan code .*/
     {KEY_CODE_FROM_ROW_COL(5, 5), 0},  /* 0x38      | <R-ALT> |       */
@@ -371,19 +371,19 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x44      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x45      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x46      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(1, 15), 0}, /* 0x47      | <home> |      */
+    {KEY_CODE_FROM_ROW_COL(1, 15), 0}, /* 0x47      | <home>   |       */
     {KEY_CODE_FROM_ROW_COL(4, 12), 0}, /* 0x48      | <CUR-UP> |       */
-    {KEY_CODE_FROM_ROW_COL(1, 16), 0}, /* 0x49      | <PG-UP> |       */
+    {KEY_CODE_FROM_ROW_COL(1, 16), 0}, /* 0x49      | <PG-UP>  |       */
     {NOT_A_SCAN_CODE, 0},              /* 0x4A      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 7), 0},  /* 0x4B      | <CUR-LEFT> |       */
+    {KEY_CODE_FROM_ROW_COL(5, 7), 0},  /* 0x4B      | <CUR-LEFT>  |    */
     {NOT_A_SCAN_CODE, 0},              /* 0x4C      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(5, 9), 0},  /* 0x4D      | <CUR-RIGHT> |       */
+    {KEY_CODE_FROM_ROW_COL(5, 9), 0},  /* 0x4D      | <CUR-RIGHT> |    */
     {NOT_A_SCAN_CODE, 0},              /* 0x4E      | Not a scan code .*/
-    {KEY_CODE_FROM_ROW_COL(2, 15), 0}, /* 0x4F      | <END> |       */
-    {KEY_CODE_FROM_ROW_COL(5, 8), 0},  /* 0x50      | <CUR-DOWN> |       */
-    {KEY_CODE_FROM_ROW_COL(2, 16), 0}, /* 0x51      | <PG-DOWN> |       */
-    {KEY_CODE_FROM_ROW_COL(0, 16), 0}, /* 0x52      | <INSERT> |       | It is not <F15>*/
-    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <delete(Not backspace)> |       */
+    {KEY_CODE_FROM_ROW_COL(2, 15), 0}, /* 0x4F      | <END>      |     */
+    {KEY_CODE_FROM_ROW_COL(5, 8), 0},  /* 0x50      | <CUR-DOWN> |     */
+    {KEY_CODE_FROM_ROW_COL(2, 16), 0}, /* 0x51      | <PG-DOWN>  |     */
+    {SCAN_CODE_TODO, 0},               /* 0x52      | <INSERT>   | Apple Keyboard=Unknown */
+    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <delete(Not backspace)> | */
     {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code .*/
@@ -391,25 +391,25 @@ static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
     {NOT_A_SCAN_CODE, 0},              /* 0x58      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x59      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x5A      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x5B      | <"left-GUI">  | Apple Keyboard=<fn>+<L-CMD>.*/
-    {SCAN_CODE_TODO, 0},               /* 0x5C      | <"right-GUI"> | Apple Keyboard=<fn>+<R-CMD>.*/
-    {SCAN_CODE_TODO, 0},               /* 0x5D      | <"apps"> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x5E      | <"(ACPI)Power"> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x5F      | <"(ACPI)Sleep"> |       */
+    {KEY_CODE_FROM_ROW_COL(5, 2), 0},  /* 0x5B      | <"left-GUI">    | Apple Keyboard=<L-CMD>.*/
+    {KEY_CODE_FROM_ROW_COL(5, 4), 0},  /* 0x5C      | <"right-GUI">   | Apple Keyboard=<R-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5D      | <"apps">        | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x5E      | <"(ACPI)Power"> | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x5F      | <"(ACPI)Sleep"> | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x60      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x61      | Not a scan code .*/
     {NOT_A_SCAN_CODE, 0},              /* 0x62      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x63      | <"(ACPI)Wake"> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x63      | <"(ACPI)Wake">            | Apple Keyboard=Unknown */
     {NOT_A_SCAN_CODE, 0},              /* 0x64      | Not a scan code .*/
-    {SCAN_CODE_TODO, 0},               /* 0x65      | <(Media)WWW-SEARCH> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x66      | <(Media)WWW-FAVS> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x67      | <(Media)WWW-REFRESH> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x68      | <(Media)WWW-STOP> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x69      | <(Media)WWW-FORWARD> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x6A      | <(Media)WWW-BACK> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x6B      | <(Media)WWW-My-Computer> |       */
-    {SCAN_CODE_TODO, 0},               /* 0x6C      | <(Media)WWW-Email> |       */
-    {SCAN_CODE_TODO, 0}                /* 0x6D      | <(Media)WWW-Media-Select> |       */
+    {SCAN_CODE_TODO, 0},               /* 0x65      | <(Media)WWW-SEARCH>       | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x66      | <(Media)WWW-FAVS>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x67      | <(Media)WWW-REFRESH>      | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x68      | <(Media)WWW-STOP>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x69      | <(Media)WWW-FORWARD>      | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6A      | <(Media)WWW-BACK>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6B      | <(Media)WWW-My-Computer>  | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6C      | <(Media)WWW-Email>        | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0}                /* 0x6D      | <(Media)WWW-Media-Select> | Apple Keyboard=Unknown */
 };
 
 /*******************************************************************************
@@ -438,7 +438,7 @@ if it is released as soon as it's pressed)
     @discussion There is only one 4-byte scan code.
 */
 static sc_to_kc_entry sc_to_kc_tbl_4byte[] = {
-    {KEY_CODE_FROM_ROW_COL(0, 14), 0} /*<fn>+<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
+    {KEY_CODE_FROM_ROW_COL(0, 14), 0} /*<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
 };
 
 /*!
@@ -447,7 +447,7 @@ static sc_to_kc_entry sc_to_kc_tbl_4byte[] = {
     @discussion There is only one 6-byte scan code.
 */
 static sc_to_kc_entry sc_to_kc_tbl_6byte[] = {
-    {KEY_CODE_FROM_ROW_COL(0, 16), 0} /*<fn>+<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0} /*<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
 };
 
 /*!
