@@ -4,11 +4,13 @@
 */
 
 #include "../drivers/screen.h"
+#include "../drivers/keyboard.h"
 #include "../include/stdint.h"
 #include "../include/assert.h"
 #include "idt_asm.h"
 #include "i8259a_pic.h"
 #include "low_level.h"
+
 
 /*******************************************************************************
 @doc [Figure 6-2. IDT Gate Descriptors]
@@ -99,8 +101,8 @@ and P, see
 struct idt_gate_d_t {
     uint16_t offset_l;
     uint16_t seg_sel;
-    uint8_t rsvd:5;   // 00000B
-    uint8_t const0:3; // 000B
+    uint8_t rsvd:5,   // 00000B
+            const0:3; // 000B
     uint8_t const1:3; // Gate Descriptor [byte 7:4][bit 10:8].
     uint8_t d:1;
     uint8_t const2:1; // 0B
@@ -238,20 +240,6 @@ void vn_not_handled(uint32_t vn, uint32_t err_code) {
     assert(0);
 }
 
-void v33_handler(uint32_t vn, uint32_t err_code) {
-    unsigned char c;
-
-    if (vn || err_code) { // Suppress warning.
-        ;
-    }
-
-    c = inb (0x0060); // Read keyboard output buffer.
-    pic_eoi(vn);
-    print_x32(c);
-    print("\n");
-    print("again, THE KEYBOARD SAYS DIJKSTRA.\n");
-}
-
 /*!
     @const    idt_handlers
     @discussion Array of interrupt/exception procedure entry points and vector
@@ -367,6 +355,7 @@ struct intr_err_code_t {
                           applies, it is set to 0.
 */
 void intr_handler(uint32_t vn, uint32_t err_code) {
+#if 0
     struct intr_err_code_t *errc;
 
     print("Vector Number = ");
@@ -389,6 +378,7 @@ void intr_handler(uint32_t vn, uint32_t err_code) {
     print("errc.seg_sel_idx = ");
     print_d(errc->seg_sel_idx);
     print("\n");
+#endif
 
     // Call the specific interrupt/exception handler.
     idt_handlers[vn].vn_handler(vn, err_code);

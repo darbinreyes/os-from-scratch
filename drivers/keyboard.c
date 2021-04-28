@@ -2,22 +2,40 @@
     @header PS/2 keyboard driver.
     Provides basic functions for getting input from a PS/2 keyboard.
 
+    @discussion
+    * FYI:
+    * Notational conventions.
+      * Some of the scan codes in "scan code set 1" correspond to keys that do
+        not exist on my Apple keyboard, however, in some cases is possible to
+        generate the scan code by pressing a key or combination of keys that is
+        not entirely obvious. For example, the "print screen pressed" key
+        has the 4 byte scan code "0xE0, 0x2A, 0xE0, 0x37". To generate this
+        scan code on my Apple keyboard, press and hold the key labeled "fn",
+        and then the press the key labeled "F13". This is indicated in comments
+        adjacent to the corresponding scan code as "Apple Keyboard=<fn>+<F13>".
+     * Some keys on my physical Apple keyboard do not generate any scan code at
+       all. This should not be surprising since my physical keyboard is not
+       a PS/2 keyboard.
+     * FYI: "Apple Keyboard=<fn>+<F14>" does not generate a scan code but puts
+       BOCHS into a full screen mode which does not seem to be accessible via
+       the GUI.
+
     * @TODO
       * [] Test all scan codes.
-      * [] short get_scn_code(void);
       * [] char getch(void);
       * [] char *prompt_user_for_str(char *prompt);
-      * [] With interrupts.
-      * [] Implement key state table so shift key works. 0 = released 1 =
-        pressed.
       * [] @doc [See "driver model"]
         (https://wiki.osdev.org/Keyboard#Driver_Model). Also see @doc
         [My keyboard driver notes](./docs/keyboard/keyboard.md)
+      * [] sc_to_kc_tbl, finish comments.
+      * [] handle non-visible characters.
 */
-
-#include "../mylibc/mylibc.h"
 #include "ps_2_ctlr.h"
 #include "keyboard.h"
+#include "screen.h"
+#include "../kernel/i8259a_pic.h"
+#include "../kernel/low_level.h"
+#include "../include/assert.h"
 
 /*!
     @defined    KEY_CODE_TO_ASCII_ROWS
@@ -117,6 +135,8 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
     scan code set (1, 2, or 3).
 */
 #define SCAN_CODE_TODO  0xFE
+#define SCAN_CODE_ERR 0xFD // row = 7 // col = 29
+#define SCAN_CODE_IGNORE 0xFC // row = 7 // col = 28
 
 /*!
     @defined    KEY_CODE_TO_ROW(kc)
@@ -133,7 +153,40 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
 #define KEY_CODE_TO_COL(kc) ( (kc) & 0x1F )
 
 /*!
-    @const  sc_to_kc_tbl1
+    @typedef sc_to_kc_entry
+
+    @discussion Structure for entries in the scan code to key code tables. Each
+    entry consists of a key code and a key state. A key state is 0 for released
+    and 1 for pressed.
+
+    @field kc    The key code corresponding to a scan code. The scan code is
+                 equal to the index into the table to obtain the key code. A
+                 key code consists of the row and column number of a key on a
+                 the physical key board, packed into a single byte.
+
+    @field ks    The state of the key, a key state is 0 for released
+                 and 1 for pressed.
+*/
+typedef struct _sc_to_kc_entry {
+    const uint8_t kc;
+    uint8_t ks;
+} sc_to_kc_entry;
+
+/*!
+    @enum key_state
+
+    @discussion A keyboard key is either pressed or released.
+
+    @constant KEY_STATE_PRESSED Indicates the key is currently pressed.
+    @constant KEY_STATE_RELEASED Indicates the key is currently released.
+*/
+enum key_state {
+    KEY_STATE_PRESSED = 1,
+    KEY_STATE_RELEASED = 0
+};
+
+/*!
+    sc_to_kc_tbl_1byte
 
     @discussion Table used for converting a **single** byte scan code (scan code
     set 1) into a key code. A scan code is used as an index into the table and
@@ -149,125 +202,102 @@ const char shift_kc_rc_to_ascii[KEY_CODE_TO_ASCII_ROWS][KEY_CODE_TO_ASCII_COLS] 
     order bit is set for a "released" scan code. For example, the "pressed" scan
     code for the ESCAPE key is 0x01, while the "released" scan code is 0x81.
 */
-const uint8_t sc_to_kc_tbl1[] = {
-                                 /* Scan Code | Key        | Tested           */
-                                 /* ----------|------------|------------------*/
-    NOT_A_SCAN_CODE,             /* 0x00      |            | Not a scan code. */
-    KEY_CODE_FROM_ROW_COL(0, 0), /* 0x01      | <ESC>      |                  */
-    KEY_CODE_FROM_ROW_COL(1, 1), /* 0x02      | 1          |*/
-    KEY_CODE_FROM_ROW_COL(1, 2), /* 0x03      | 2          |*/
-    KEY_CODE_FROM_ROW_COL(1, 3), /* 0x04      | 3          |*/
-    KEY_CODE_FROM_ROW_COL(1, 4), /* 0x05      | 4          |*/
-    KEY_CODE_FROM_ROW_COL(1, 5), /* 0x06      | 5          |*/
-    KEY_CODE_FROM_ROW_COL(1, 6), /* 0x07      | 6          |*/
-    KEY_CODE_FROM_ROW_COL(1, 7), /* 0x08      | 7          |*/
-    KEY_CODE_FROM_ROW_COL(1, 8), /* 0x09      | 8          |*/
-    KEY_CODE_FROM_ROW_COL(1, 9), /* 0x0A      | 9          |*/
-    KEY_CODE_FROM_ROW_COL(1, 10),/* 0x0B      | 0          |*/
-    KEY_CODE_FROM_ROW_COL(1, 11),/* 0x0C      | -          |*/
-    KEY_CODE_FROM_ROW_COL(1, 12),/* 0x0D      | =          |*/
-    KEY_CODE_FROM_ROW_COL(1, 13),/* 0x0E      | <BACKSPACE>|*/
-
-    KEY_CODE_FROM_ROW_COL(2, 0),/*0x0F <TAB> p.|r,c=2,0*/
-    KEY_CODE_FROM_ROW_COL(2, 1),/*0x10 q p.|r,c=2,1*/
-    KEY_CODE_FROM_ROW_COL(2, 2),/*0x11 w p.|r,c=2,2*/
-    KEY_CODE_FROM_ROW_COL(2, 3),/*0x12 e p.|r,c=2,3*/
-    KEY_CODE_FROM_ROW_COL(2, 4),/*0x13 r p.|r,c=2,4*/
-    KEY_CODE_FROM_ROW_COL(2, 5),/*0x14 t p.|r,c=2,5*/
-    KEY_CODE_FROM_ROW_COL(2, 6),/*0x15 y p.|r,c=2,6*/
-    KEY_CODE_FROM_ROW_COL(2, 7),/*0x16 u p.|r,c=2,7*/
-    KEY_CODE_FROM_ROW_COL(2, 8),/*0x17 i p.|r,c=2,8*/
-    KEY_CODE_FROM_ROW_COL(2, 9),/*0x18 o p.|r,c=2,9*/
-    KEY_CODE_FROM_ROW_COL(2, 10),/*0x19 p p.|r,c=2,10*/
-    KEY_CODE_FROM_ROW_COL(2, 11),/*0x1A [ p.|r,c=2,11*/
-    KEY_CODE_FROM_ROW_COL(2, 12),/*0x1B ] p.|r,c=2,12*/
-    KEY_CODE_FROM_ROW_COL(2, 13),/*0x1C <ENTER> p.|r,c=2,13*/
-
-    KEY_CODE_FROM_ROW_COL(5, 0),/*0x1D <L-CTLR> p.|r,c=5,0*/
-
-    KEY_CODE_FROM_ROW_COL(3, 1),/*0x1E a p.|r,c=3,1*/
-    KEY_CODE_FROM_ROW_COL(3, 2),/*0x1F s p.|r,c=3,2*/
-    KEY_CODE_FROM_ROW_COL(3, 3),/*0x20 d p.|r,c=3,3*/
-    KEY_CODE_FROM_ROW_COL(3, 4),/*0x21 f p.|r,c=3,4*/
-    KEY_CODE_FROM_ROW_COL(3, 5),/*0x22 g p.|r,c=3,5*/
-    KEY_CODE_FROM_ROW_COL(3, 6),/*0x23 h p.|r,c=3,6*/
-    KEY_CODE_FROM_ROW_COL(3, 7),/*0x24 j p.|r,c=3,7*/
-    KEY_CODE_FROM_ROW_COL(3, 8),/*0x25 k p.|r,c=3,8*/
-    KEY_CODE_FROM_ROW_COL(3, 9),/*0x26 l p.|r,c=3,9*/
-    KEY_CODE_FROM_ROW_COL(3, 10),/*0x27 ; p.|r,c=3,10*/
-    KEY_CODE_FROM_ROW_COL(3, 11),/*0x28 ' p.|r,c=3,11*/
-
-    KEY_CODE_FROM_ROW_COL(1, 0),/*0x29 ` p.|r,c=1,0*/
-
-
-    KEY_CODE_FROM_ROW_COL(4, 0),/*0x2A <L-SHIFT> p.|r,c=4,0*/
-
-    KEY_CODE_FROM_ROW_COL(2, 13),/*0x2B \ p.|r,c=2,13*/
-
-    KEY_CODE_FROM_ROW_COL(4, 1),/*0x2C z p.|r,c=4,1*/
-    KEY_CODE_FROM_ROW_COL(4, 2),/*0x2D x p.|r,c=4,2*/
-    KEY_CODE_FROM_ROW_COL(4, 3),/*0x2E c p.|r,c=4,3*/
-    KEY_CODE_FROM_ROW_COL(4, 4),/*0x2F v p.|r,c=4,4*/
-    KEY_CODE_FROM_ROW_COL(4, 5),/*0x30 b p.|r,c=4,5*/
-    KEY_CODE_FROM_ROW_COL(4, 6),/*0x31 n p.|r,c=4,6*/
-    KEY_CODE_FROM_ROW_COL(4, 7),/*0x32 m p.|r,c=4,7*/
-    KEY_CODE_FROM_ROW_COL(4, 8),/*0x33 , p.|r,c=4,8*/
-    KEY_CODE_FROM_ROW_COL(4, 9),/*0x34 . p.|r,c=4,9*/
-    KEY_CODE_FROM_ROW_COL(4, 10),/*0x35 / p.|r,c=4,10*/
-    KEY_CODE_FROM_ROW_COL(4, 11),/*0x36 <R-SHIFT> p.|r,c=4,11*/
-
-    KEY_CODE_FROM_ROW_COL(1, 20),/*0x37 NUMPAD-* p.|r,c=1,20*/
-
-    KEY_CODE_FROM_ROW_COL(5, 1),/*0x38 <L-ALT> p.|r,c=5,1*/
-
-    KEY_CODE_FROM_ROW_COL(5, 3),/*0x39 <SPACE> p.|r,c=5,3*/
-
-    KEY_CODE_FROM_ROW_COL(3, 0),/*0x3A <CAPSLOCK> p.|r,c=3,0*/
-
-    KEY_CODE_FROM_ROW_COL(0, 1),/*0x3B <F1> p.|r,c=0,1*/
-    KEY_CODE_FROM_ROW_COL(0, 2),/*0x3C <F2> p.|r,c=0,2*/
-    KEY_CODE_FROM_ROW_COL(0, 3),/*0x3D <F3> p.|r,c=0,3*/
-    KEY_CODE_FROM_ROW_COL(0, 4),/*0x3E <F4> p.|r,c=0,4*/
-    KEY_CODE_FROM_ROW_COL(0, 5),/*0x3F <F5> p.|r,c=0,5*/
-    KEY_CODE_FROM_ROW_COL(0, 6),/*0x40 <F6> p.|r,c=0,6*/
-    KEY_CODE_FROM_ROW_COL(0, 7),/*0x41 <F7> p.|r,c=0,7*/
-    KEY_CODE_FROM_ROW_COL(0, 8),/*0x42 <F8> p.|r,c=0,8*/
-    KEY_CODE_FROM_ROW_COL(0, 9),/*0x43 <F9> p.|r,c=0,9*/
-    KEY_CODE_FROM_ROW_COL(0, 10),/*0x44 <F10> p.|r,c=0,10*/
-
-    KEY_CODE_FROM_ROW_COL(1, 17),/*0x45 <NUMLOCK> p.|r,c=1,17|Not a key on my
-                                   keyboard.|Try <CLEAR>*/
-
-    KEY_CODE_FROM_ROW_COL(0, 15),/*0x46 <SCROLL-LOCK> p.|r,c=0,15|Not a key on
-                                   my keyboard.|Try <F14>*/
-
-    KEY_CODE_FROM_ROW_COL(2, 17),/*0x47 NUMPAD-7 p.|r,c=2,17*/
-    KEY_CODE_FROM_ROW_COL(2, 18),/*0x48 NUMPAD-8 p.|r,c=2,18*/
-    KEY_CODE_FROM_ROW_COL(2, 19),/*0x49 NUMPAD-9 p.|r,c=2,19*/
-    KEY_CODE_FROM_ROW_COL(2, 20),/*0x4A NUMPAD-"-" p.|r,c=2,20*/
-
-    KEY_CODE_FROM_ROW_COL(3, 14),/*0x4B NUMPAD-4 p.|r,c=3,14*/
-    KEY_CODE_FROM_ROW_COL(3, 15),/*0x4C NUMPAD-5 p.|r,c=3,15*/
-    KEY_CODE_FROM_ROW_COL(3, 16),/*0x4D NUMPAD-6 p.|r,c=3,16*/
-    KEY_CODE_FROM_ROW_COL(3, 17),/*0x4E NUMPAD-+ p.|r,c=3,17*/
-
-    KEY_CODE_FROM_ROW_COL(4, 13),/*0x4F NUMPAD-1 p.|r,c=4,13*/
-    KEY_CODE_FROM_ROW_COL(4, 14),/*0x50 NUMPAD-2 p.|r,c=4,14*/
-    KEY_CODE_FROM_ROW_COL(4, 15),/*0x51 NUMPAD-3 p.|r,c=4,15*/
-
-    KEY_CODE_FROM_ROW_COL(5, 10),/*0x52 NUMPAD-0 p.|r,c=5,10*/
-    KEY_CODE_FROM_ROW_COL(5, 11),/*0x53 NUMPAD-"." p.|r,c=5,11*/
-
-    NOT_A_SCAN_CODE, /*0x54 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x55 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x56 Not a scan code .*/
-
-    KEY_CODE_FROM_ROW_COL(0, 11),/*0x57 <F11> p.|r,c=0,11*/
-    KEY_CODE_FROM_ROW_COL(0, 12)/*0x58 <F12> p.|r,c=0,12*/
+static sc_to_kc_entry sc_to_kc_tbl_1byte[] = {
+                                       /* Scan Code | Physical Key | Comment                            */
+                                       /* ----------|--------------|------------------------------------*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x00      | Not a scan code */
+    {KEY_CODE_FROM_ROW_COL(0, 0), 0},  /* 0x01      | <esc>        | <> indicates non-visible character */
+    {KEY_CODE_FROM_ROW_COL(1, 1), 0},  /* 0x02      | 1 / !        | / indicates key with two labels    */
+    {KEY_CODE_FROM_ROW_COL(1, 2), 0},  /* 0x03      | 2 / @        |*/ // @TODO VERIFY with actual key press.
+    {KEY_CODE_FROM_ROW_COL(1, 3), 0},  /* 0x04      | 3 / #        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 4), 0},  /* 0x05      | 4 / $        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 5), 0},  /* 0x06      | 5 / %        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 6), 0},  /* 0x07      | 6 / ^        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 7), 0},  /* 0x08      | 7 / &        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 8), 0},  /* 0x09      | 8 / *        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 9), 0},  /* 0x0A      | 9 / (        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 10), 0}, /* 0x0B      | 0 / )        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 11), 0}, /* 0x0C      | - / _        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 12), 0}, /* 0x0D      | = / +        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 13), 0}, /* 0x0E      | <delete>     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 0), 0},  /* 0x0F      | <tab>        |*/
+    {KEY_CODE_FROM_ROW_COL(2, 1), 0},  /* 0x10      | q            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 2), 0},  /* 0x11      | w            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 3), 0},  /* 0x12      | e            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 4), 0},  /* 0x13      | r            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 5), 0},  /* 0x14      | t            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 6), 0},  /* 0x15      | y            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 7), 0},  /* 0x16      | u            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 8), 0},  /* 0x17      | i            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 9), 0},  /* 0x18      | o            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 10), 0}, /* 0x19      | p            |*/
+    {KEY_CODE_FROM_ROW_COL(2, 11), 0}, /* 0x1A      | [ /          |*/
+    {KEY_CODE_FROM_ROW_COL(2, 12), 0}, /* 0x1B      | ] /          |*/
+    {KEY_CODE_FROM_ROW_COL(2, 13), 0}, /* 0x1C      | <return>     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 0), 0},  /* 0x1D      | L-<control>  | L- means left */
+    {KEY_CODE_FROM_ROW_COL(3, 1), 0},  /* 0x1E      | a            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 2), 0},  /* 0x1F      | s            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 3), 0},  /* 0x20      | d            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 4), 0},  /* 0x21      | f            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 5), 0},  /* 0x22      | g            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 6), 0},  /* 0x23      | h            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 7), 0},  /* 0x24      | j            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 8), 0},  /* 0x25      | k            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 9), 0},  /* 0x26      | l            |*/
+    {KEY_CODE_FROM_ROW_COL(3, 10), 0}, /* 0x27      | ; /          |*/
+    {KEY_CODE_FROM_ROW_COL(3, 11), 0}, /* 0x28      | ' /          |*/
+    {KEY_CODE_FROM_ROW_COL(1, 0), 0},  /* 0x29      | ` /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 0), 0},  /* 0x2A      | L-<shift>    |*/
+    {KEY_CODE_FROM_ROW_COL(2, 13), 0}, /* 0x2B      | \ /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 1), 0},  /* 0x2C      | z            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 2), 0},  /* 0x2D      | x            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 3), 0},  /* 0x2E      | c            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 4), 0},  /* 0x2F      | v            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 5), 0},  /* 0x30      | b            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 6), 0},  /* 0x31      | n            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 7), 0},  /* 0x32      | m            |*/
+    {KEY_CODE_FROM_ROW_COL(4, 8), 0},  /* 0x33      | , /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 9), 0},  /* 0x34      | . /          |*/
+    {KEY_CODE_FROM_ROW_COL(4, 10), 0}, /* 0x35      | "/" /        |*/
+    {KEY_CODE_FROM_ROW_COL(4, 11), 0}, /* 0x36      | R-<shift>    | R- means right */
+    {KEY_CODE_FROM_ROW_COL(1, 20), 0}, /* 0x37      | NUMPAD-*     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 1), 0},  /* 0x38      | L-<alt>      |*/
+    {KEY_CODE_FROM_ROW_COL(5, 3), 0},  /* 0x39      | <SPACE>      |*/
+    {KEY_CODE_FROM_ROW_COL(3, 0), 0},  /* 0x3A      | <caps lock>  |*/
+    {KEY_CODE_FROM_ROW_COL(0, 1), 0},  /* 0x3B      | <F1>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 2), 0},  /* 0x3C      | <F2>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 3), 0},  /* 0x3D      | <F3>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 4), 0},  /* 0x3E      | <F4>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 5), 0},  /* 0x3F      | <F5>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 6), 0},  /* 0x40      | <F6>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 7), 0},  /* 0x41      | <F7>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 8), 0},  /* 0x42      | <F8>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 9), 0},  /* 0x43      | <F9>         |*/
+    {KEY_CODE_FROM_ROW_COL(0, 10), 0}, /* 0x44      | <F10>        |*/
+    {KEY_CODE_FROM_ROW_COL(1, 17), 0}, /* 0x45      | <NUMLOCK>    | Apple Keyboard=<CLEAR> */
+    {KEY_CODE_FROM_ROW_COL(0, 15), 0}, /* 0x46      | <SCROLL-LOCK>| Apple Keyboard=Unknown */
+    {KEY_CODE_FROM_ROW_COL(2, 17), 0}, /* 0x47      | NUMPAD-7     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 18), 0}, /* 0x48      | NUMPAD-8     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 19), 0}, /* 0x49      | NUMPAD-9     |*/
+    {KEY_CODE_FROM_ROW_COL(2, 20), 0}, /* 0x4A      | NUMPAD-"-"   |*/
+    {KEY_CODE_FROM_ROW_COL(3, 14), 0}, /* 0x4B      | NUMPAD-4     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 15), 0}, /* 0x4C      | NUMPAD-5     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 16), 0}, /* 0x4D      | NUMPAD-6     |*/
+    {KEY_CODE_FROM_ROW_COL(3, 17), 0}, /* 0x4E      | NUMPAD-+     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 13), 0}, /* 0x4F      | NUMPAD-1     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 14), 0}, /* 0x50      | NUMPAD-2     |*/
+    {KEY_CODE_FROM_ROW_COL(4, 15), 0}, /* 0x51      | NUMPAD-3     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 10), 0}, /* 0x52      | NUMPAD-0     |*/
+    {KEY_CODE_FROM_ROW_COL(5, 11), 0}, /* 0x53      | NUMPAD-"."   |*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code */
+    {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code */
+    {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code */
+    {KEY_CODE_FROM_ROW_COL(0, 11), 0}, /* 0x57      | <F11>        |*/
+    {KEY_CODE_FROM_ROW_COL(0, 12), 0}  /* 0x58      | <F12>        |*/
 };
 
 /*!
-    @const  sc_to_kc_tbl2
+    sc_to_kc_tbl_2byte
 
     @discussion Table used for converting a **two** byte scan code (scan code
     set 1) into a key code. This table is used similarly to the table for
@@ -283,171 +313,214 @@ const uint8_t sc_to_kc_tbl1[] = {
     code are set to either SCAN_CODE_TODO or NOT_A_SCAN_CODE. Note that most
     entries in this table do not contain valid key codes.
 */
-const uint8_t sc_to_kc_tbl2[] = {
-                                 /* Scan Code | Key        | Tested           */
-                                 /* ----------|------------|------------------*/
-    SCAN_CODE_TODO,/*0x10 <(Media)PREV-TRACK> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x11 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x12 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x13 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x14 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x15 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x16 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x17 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x18 Not a scan code .*/
-    SCAN_CODE_TODO,/*0x19 <(Media)NEXT-TRACK> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x1A Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x1B Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(5, 12),/*0x1C <NUMPAD-ENTER> p.|r,c=5,12*/
-    KEY_CODE_FROM_ROW_COL(5, 6),/*0x1D <R-CTLR> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x1E Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x1F Not a scan code .*/
-    SCAN_CODE_TODO,/*0x20 <(Media)MUTE> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x21 <(Media)Calculator> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x22 <(Media)PLAY> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x23 Not a scan code .*/
-    SCAN_CODE_TODO,/*0x24 <(Media)STOP> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x25 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x26 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x27 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x28 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x29 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x2A Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x2B Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x2C Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x2D Not a scan code .*/
-    SCAN_CODE_TODO,/*0x2E <(Media)VOL-DOWN> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x2F Not a scan code .*/
-    SCAN_CODE_TODO,/*0x30 <(Media)VOL-UP> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x31 Not a scan code .*/
-    SCAN_CODE_TODO,/*0x32 <(Media)WWW-HOME> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x33 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x34 Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(1, 19),/*0x35 <NUMPAD-"/"> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x36 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x37 Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(5, 5),/*0x38 <R-ALT> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x39 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3A Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3B Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3C Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3D Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3E Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x3F Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x40 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x41 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x42 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x43 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x44 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x45 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x46 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x47 Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(4, 12),/*0x48 <CUR-UP> p.|r,c=,*/
-    KEY_CODE_FROM_ROW_COL(1, 16),/*0x49 <PG-UP> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x4A Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(5, 7),/*0x4B <CUR-LEFT> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x4C Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(5, 9),/*0x4D <CUR-RIGHT> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x4E Not a scan code .*/
-    KEY_CODE_FROM_ROW_COL(2, 15),/*0x4F <END> p.|r,c=,*/
-    KEY_CODE_FROM_ROW_COL(5, 8),/*0x50 <CUR-DOWN> p.|r,c=,*/
-    KEY_CODE_FROM_ROW_COL(2, 16),/*0x51 <PG-DOWN> p.|r,c=,*/
-    KEY_CODE_FROM_ROW_COL(0, 16),/*0x52 <INSERT> p.|r,c=,| Try <F15>*/
-    KEY_CODE_FROM_ROW_COL(2, 14),/*0x53 <DEL(Not backspace)> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x54 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x55 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x56 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x57 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x58 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x59 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x5A Not a scan code .*/
-    SCAN_CODE_TODO,/*0x5B <"left-GUI"> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x5C <"right-GUI"> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x5D <"apps"> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x5E <"(ACPI)Power"> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x5F <"(ACPI)Sleep"> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x60 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x61 Not a scan code .*/
-    NOT_A_SCAN_CODE, /*0x62 Not a scan code .*/
-    SCAN_CODE_TODO,/*0x63 <"(ACPI)Wake"> p.|r,c=,*/
-    NOT_A_SCAN_CODE, /*0x64 Not a scan code .*/
-    SCAN_CODE_TODO,/*0x65 <(Media)WWW-SEARCH> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x66 <(Media)WWW-FAVS> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x67 <(Media)WWW-REFRESH> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x68 <(Media)WWW-STOP> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x69 <(Media)WWW-FORWARD> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x6A <(Media)WWW-BACK> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x6B <(Media)WWW-My-Computer> p.|r,c=,*/
-    SCAN_CODE_TODO,/*0x6C <(Media)WWW-Email> p.|r,c=,*/
-    SCAN_CODE_TODO/*0x6D <(Media)WWW-Media-Select> p.|r,c=,*/
+static sc_to_kc_entry sc_to_kc_tbl_2byte[] = {
+                                       /* Scan Code | Physical Key | Comment                            */
+                                       /* ----------|--------------|------------------------------------*/
+    {SCAN_CODE_TODO, 0},               /* 0x10      | <(Media)PREV-TRACK> | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x11      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x12      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x13      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x14      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x15      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x16      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x17      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x18      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x19      | <(Media)NEXT-TRACK> | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x1A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x1B      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 12), 0}, /* 0x1C      | <NUMPAD-ENTER> */
+    {KEY_CODE_FROM_ROW_COL(5, 6), 0},  /* 0x1D      | <R-CTLR> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x1E      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x1F      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x20      | <(Media)MUTE>       | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x21      | <(Media)Calculator> | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x22      | <(Media)PLAY>       | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x23      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x24      | <(Media)STOP>       | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x25      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x26      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x27      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x28      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x29      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2B      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2C      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x2D      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x2E      | <(Media)VOL-DOWN> | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x2F      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x30      | <(Media)VOL-UP>   | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x31      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x32      | <(Media)WWW-HOME> | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x33      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x34      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(1, 19), 0}, /* 0x35      | <NUMPAD-"/"> |   */
+    {NOT_A_SCAN_CODE, 0},              /* 0x36      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x37      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 5), 0},  /* 0x38      | <R-ALT> |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x39      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3A      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3B      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3C      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3D      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3E      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x3F      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x40      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x41      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x42      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x43      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x44      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x45      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x46      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(1, 15), 0}, /* 0x47      | <home>   |       */
+    {KEY_CODE_FROM_ROW_COL(4, 12), 0}, /* 0x48      | <CUR-UP> |       */
+    {KEY_CODE_FROM_ROW_COL(1, 16), 0}, /* 0x49      | <PG-UP>  |       */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4A      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 7), 0},  /* 0x4B      | <CUR-LEFT>  |    */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4C      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 9), 0},  /* 0x4D      | <CUR-RIGHT> |    */
+    {NOT_A_SCAN_CODE, 0},              /* 0x4E      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(2, 15), 0}, /* 0x4F      | <END>      |     */
+    {KEY_CODE_FROM_ROW_COL(5, 8), 0},  /* 0x50      | <CUR-DOWN> |     */
+    {KEY_CODE_FROM_ROW_COL(2, 16), 0}, /* 0x51      | <PG-DOWN>  |     */
+    {SCAN_CODE_TODO, 0},               /* 0x52      | <INSERT>   | Apple Keyboard=Unknown */
+    {KEY_CODE_FROM_ROW_COL(2, 14), 0}, /* 0x53      | <delete(Not backspace)> | */
+    {NOT_A_SCAN_CODE, 0},              /* 0x54      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x55      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x56      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x57      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x58      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x59      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x5A      | Not a scan code .*/
+    {KEY_CODE_FROM_ROW_COL(5, 2), 0},  /* 0x5B      | <"left-GUI">    | Apple Keyboard=<L-CMD>.*/
+    {KEY_CODE_FROM_ROW_COL(5, 4), 0},  /* 0x5C      | <"right-GUI">   | Apple Keyboard=<R-CMD>.*/
+    {SCAN_CODE_TODO, 0},               /* 0x5D      | <"apps">        | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x5E      | <"(ACPI)Power"> | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x5F      | <"(ACPI)Sleep"> | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x60      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x61      | Not a scan code .*/
+    {NOT_A_SCAN_CODE, 0},              /* 0x62      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x63      | <"(ACPI)Wake">            | Apple Keyboard=Unknown */
+    {NOT_A_SCAN_CODE, 0},              /* 0x64      | Not a scan code .*/
+    {SCAN_CODE_TODO, 0},               /* 0x65      | <(Media)WWW-SEARCH>       | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x66      | <(Media)WWW-FAVS>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x67      | <(Media)WWW-REFRESH>      | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x68      | <(Media)WWW-STOP>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x69      | <(Media)WWW-FORWARD>      | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6A      | <(Media)WWW-BACK>         | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6B      | <(Media)WWW-My-Computer>  | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0},               /* 0x6C      | <(Media)WWW-Email>        | Apple Keyboard=Unknown */
+    {SCAN_CODE_TODO, 0}                /* 0x6D      | <(Media)WWW-Media-Select> | Apple Keyboard=Unknown */
 };
 
 /*******************************************************************************
 The only remaining scan codes are the following 4-byte and 6-byte scan codes
 are not handled by this driver.
 
-Scan code                          | Meaning
------------------------------------|--------
-0xE0, 0x2A, 0xE0, 0x37             | print screen pressed
-0xE0, 0xB7, 0xE0, 0xAA             | print screen released
-0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed
+Scan code                          | Meaning               | Remarks
+-----------------------------------|-----------------------|--------------------
+0xE0, 0x2A, 0xE0, 0x37             | print screen pressed  | 0xE0_0x2A is not a valid 2 byte scan code. Apple Keyboard=<F13>.
+0xE0, 0xB7, 0xE0, 0xAA             | print screen released | 0xE0_0xB7 is not a valid 2 byte scan code.
+0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5 | pause pressed         | Only scan code starting with 0xE1. Apple Keyboard=<F15>.
+
+@remark The "print screen" pressed vs. released scan codes don't follow a simple
+1-bit flip pattern. There does seem to be a pattern, which I worked out in
+Evernote. But since this is the only 4 byte scan code, and the first pair
+of bytes does not correspond to a valid 2 byte scan code, there is no downside
+to special casing this scan code.
 
 @remark There is no scan code for "pause key released" (it behaves as
 if it is released as soon as it's pressed)
-
-@IMPORTANT @TODO Make sure the function that gets scan codes works correctly
-in case more than 2 byte scan codes are received. Note the prefix bytes.
 *******************************************************************************/
 
 /*!
-    @function   get_key_code
+    sc_to_kc_tbl_4byte
 
-    @discussion Converts a scan code into a key code.
-
-    @param  sc  The scan code.
-
-    @result The key code.
+    @discussion There is only one 4-byte scan code.
 */
-uint8_t get_key_code(uint8_t sc) {
-    // @TODO Handle multi-byte scan codes correctly.
+static sc_to_kc_entry sc_to_kc_tbl_4byte[] = {
+    {KEY_CODE_FROM_ROW_COL(0, 14), 0} /*<F13> p.|r,c=0,14*/ // 4-byte scan code see above.
+};
 
-    if (sc == 0xE0 || sc == 0xE1) // Multi-byte scan codes.
-        return 0xFF; // For now.
+/*!
+    sc_to_kc_tbl_6byte
 
-    if (sc > 0x00 && sc < 0x59) { // A valid single byte scan code.
-        return sc_to_kc_tbl1[sc];
+    @discussion There is only one 6-byte scan code.
+*/
+static sc_to_kc_entry sc_to_kc_tbl_6byte[] = {
+    {KEY_CODE_FROM_ROW_COL(0, 16), 0} /*<F15> p.|r,c=0,16*/ // 6-byte scan code see above.
+};
+
+/*!
+    @function sc_to_kc_index
+
+    @discussion Returns the index of a key code based on the given scan code
+    and the number of bytes in the scan code.
+
+    @param sc Scan code.
+
+    @param n  Number of bytes in the scan code.
+
+    @result Key code index.
+*/
+uint8_t sc_to_kc_index(uint8_t sc, uint8_t n) {
+
+    if (n == 1 && sc <= 0x58) {
+        return sc;
+    }
+
+    if (n == 1 && sc >= 0x80 && sc <= 0xD8) {
+        sc &= 0x7F;
+        return sc;
+    }
+
+    if (n == 2 && sc >= 0x10 && sc <= 0x6D) {
+        return sc - 0x10;
+    }
+
+    if (n == 2 && sc >= 0x90 && sc <= 0xED) {
+        sc &= 0x7F;
+        return sc - 0x10;
+    }
+
+    if (n == 4 && (sc == 0x37 || sc == 0xAA)) {
+        return 0;
+    }
+
+    if (n == 6 && sc == 0xC5) {
+        return 0;
     }
 
     return 0xFF;
 }
 
 /*!
-    @function   scan_code_to_ascii
+    @function   kc_to_ascii
 
-    @discussion Converts a scan code to an ASCII code.
+    @discussion Converts a key code to an ASCII code.
 
-    @param  sc  The scan code.
+    @param  kc  Key code.
 
     @result An ASCII character.
 */
-char scan_code_to_ascii (uint8_t sc) { // @TODO
-    uint8_t kc, r, c;
+char kc_to_ascii (uint8_t kc) {
+    uint8_t r, c;
 
-    kc = get_key_code(sc);
+    r = KEY_CODE_TO_ROW(kc);
+    c = KEY_CODE_TO_COL(kc);
 
-    if(kc != 0xFF) {
-        r = KEY_CODE_TO_ROW(kc);
-        c = KEY_CODE_TO_COL(kc);
-        // [] Improve this. e.g. use assert.
-        if (r >= KEY_CODE_TO_ASCII_ROWS || c >= KEY_CODE_TO_ASCII_COLS)
-            return '!';
-
-        return kc_rc_to_ascii[r][c];
+    if (r < KEY_CODE_TO_ASCII_ROWS && c < KEY_CODE_TO_ASCII_COLS) {
+        // 0x2A = left shift scan code.
+        // 0x36 = right shift scan code.
+        if(sc_to_kc_tbl_1byte[0x2A].ks || sc_to_kc_tbl_1byte[0x36].ks)
+            return shift_kc_rc_to_ascii[r][c];
+        else
+            return kc_rc_to_ascii[r][c];
     }
 
-    return '^';
+    return '!';
 }
 
+#if 0 // Keeping for future reference.
 /*!
     @function   get_scan_code
 
@@ -487,63 +560,291 @@ int get_scan_code(uint8_t *sc) { // @TODO
 
     return 0;
 }
+#endif
 
 /*!
-    @function get_scan_code2
+    @typedef sc_state_t
 
-    @discussion Returns a 2 byte scan code from the keyboard. Caller must ensure
-    that `sc` is 2 bytes in size.
+    @discussion States of the state machine used to detect the receipt of a
+    complete scan code.
 
-    @param  sc  Pointer in which to return the 2-byte scan code.
+    @constant SSCS    State, Scan Code, Start.
+    @constant S1B0P_F    State, 1-Byte scan code, byte # 0, Pressed scan code, Final state.
+    @constant S1B0R_F    State, 1-Byte scan code, byte # 0, Released scan code, Final state.
+    @constant S2B0_S4B0  State, 2-Byte scan code, byte # 0, OR, State, 4-Byte scan code, byte # 0.
 
-    @result 0 on success. Non-0 on error.
+    ...
+    @TODO
+    ...
+    @TODO Draw the state machine. Notes on paper.
 */
-int get_scan_code2(uint8_t *sc) {
-    ps_2_ctrl_stat_t stat;
-    int r;
-    uint8_t b;
+typedef enum _sc_state_t {
+    SSCS = 0,
+    S1B0P_F,
+    S1B0R_F,
+    S2B0_S4B0,
+    S2B1P_F,
+    S2B1R_F,
+    S4B1P,
+    S4B2P,
+    S4B3P_F,
+    S4B1R,
+    S4B2R,
+    S4B3R_F,
+    S6B0,
+    S6B1,
+    S6B2,
+    S6B3,
+    S6B4,
+    S6B5P_F,
+    SSC_ERR // Error state
+} sc_state_t;
 
-    r = get_ctlr_stat(&stat);
+/*!
+    @function sc_sm_next_state
 
-    if (r != 0)
-        return 1;
+    @discussion Returns the next state of the scan code state machine a.k.a. the
+    transition function. I have designed and drawn this state machine on paper.
+    See `os-from-scratch/drivers/docs/keyboard/scan_code_received_FSM.png`.
 
-    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
-                                                 received. */
-        r = get_ctlr_stat(&stat);
+    @param cs Current state of the state machine.
 
-        if (r != 0)
-            return 2;
+    @param in Input to the state machine, which is a keyboard scan code.
+
+    @result The next state of the state machine.
+*/
+static sc_state_t sc_sm_next_state(sc_state_t cs, uint8_t in) {
+    /*!
+        @typedef sc_transition_tbl_t
+
+        @discussion Scan code transition table entry. Used define the state machine
+        that detects the receipt of a complete scan code.
+
+        @field cs    Current state.
+        @field il    Input lower bound.
+        @field ih    Input higher bound.
+        @field ns    Next state.
+    */
+    typedef struct _sc_transition_tbl_t {
+        sc_state_t cs;
+        uint8_t il;
+        uint8_t ih;
+        sc_state_t ns;
+    } sc_transition_tbl_t;
+    static const sc_transition_tbl_t sc_t_tbl[] = { // Scan code transition table. Used to implement the state machine transition function.
+        {SSCS, 0x00, 0x58, S1B0P_F},
+        {SSCS, 0x80, 0xD8, S1B0R_F},
+
+        {SSCS, 0xE0, 0xE0, S2B0_S4B0},
+        {S2B0_S4B0, 0x2A, 0x2A, S4B1P}, // @TODO Is this a hacky fix? 0x2A falls inside [0x10, 0x6D]. The transition table now depends on the order of the entries. But isn't an NFA always reducible to a DFA?
+        {S2B0_S4B0, 0x10, 0x6D, S2B1P_F},
+        {S2B0_S4B0, 0xB7, 0xB7, S4B1R}, // @TODO Is this a hacky fix? 0xB7 falls inside [0x10, 0x6D].
+        {S2B0_S4B0, 0x90, 0xED, S2B1R_F},
+
+        //{S2B0_S4B0, 0x2A, 0x2A, S4B1P},
+        {S4B1P, 0xE0, 0xE0, S4B2P},
+        {S4B2P, 0x37, 0x37, S4B3P_F},
+
+        //{S2B0_S4B0, 0xB7, 0xB7, S4B1R},
+        {S4B1R, 0xE0, 0xE0, S4B2R},
+        {S4B2R, 0xAA, 0xAA, S4B3R_F},
+
+        {SSCS, 0xE1, 0xE1, S6B0},
+        {S6B0, 0x1D, 0x1D, S6B1},
+        {S6B1, 0x45, 0x45, S6B2},
+        {S6B2, 0xE1, 0xE1, S6B3},
+        {S6B3, 0x9D, 0x9D, S6B4},
+        {S6B4, 0xC5, 0xC5, S6B5P_F} // @IMPORTANT 6-Byte scan code does not have a released state.
+    };
+
+    static const int sc_t_tbl_len = sizeof(sc_t_tbl)/sizeof(sc_t_tbl[0]);
+
+    int i;
+
+    for (i = 0; i < sc_t_tbl_len; i++) {
+        // Return next state based on current state and bounds of input.
+        if(sc_t_tbl[i].cs == cs && in >= sc_t_tbl[i].il && in <= sc_t_tbl[i].ih) {
+            return sc_t_tbl[i].ns;
+        }
     }
 
-    r = rcv_byte (&b);
-
-    if (r != 0)
-        return 3;
-
-    *sc = b;
-
-    if (b != 0xE0) {
-        // This is a single byte scan code.
-        *(sc+1) = 0x00;
-        return 0;
-    }
-
-    /* Get the second scan code byte. */
-    while (stat.obuf_full == PS2_BUF_EMPTY) { /* Loop until a scan code is
-                                                 received. */
-        r = get_ctlr_stat(&stat);
-
-        if (r != 0)
-            return 4;
-    }
-
-    r = rcv_byte (&b);
-
-    if (r != 0)
-        return 5;
-
-    *(sc+1) = b;
-
-    return 0;
+    return SSC_ERR; // Invalid state transition.
 }
+
+/*!
+    @function sc_sm_is_final_state
+
+    @discussion Returns 1 if the scan code state machine has reached a final
+    state, returns 0 otherwise. This function also records whether or not a
+    particular key is currently pressed or released by used the scan code as an
+    index into the scan code to key code tables. The value of *p is set to 0 if
+    nothing should be printed, 1 if a 1 byte scan code should be printed, 2 if a
+    2-byte scan code should be printed.
+
+    @param s Current state of the scan code state machine.
+
+    @param sc Scan code.
+
+    @param kc Output: key code.
+
+    @result 1 if the state machine has reached a final state, 0 if not a final
+    state.
+*/
+static int sc_sm_is_final_state(sc_state_t s, uint8_t sc, uint8_t *kc) {
+    uint8_t i = 0xFF;
+
+    *kc = SCAN_CODE_ERR;
+
+    switch(s) {
+    case S1B0P_F:
+        //print("1-Byte Scan Code Pressed\n");
+        i = sc_to_kc_index(sc, 1);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_1byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_1byte[i].kc;
+        return 1;
+        break;
+    case S1B0R_F:
+        //print("1-Byte Scan Code Released\n");
+        i = sc_to_kc_index(sc, 1);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_1byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_1byte[i].kc;
+        return 1;
+        break;
+    case S2B1P_F:
+        print("2-Byte Scan Code Pressed\n");
+        i = sc_to_kc_index(sc, 2);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_2byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_2byte[i].kc;
+        return 1;
+        break;
+    case S2B1R_F:
+        print("2-Byte Scan Code Released\n");
+        i = sc_to_kc_index(sc, 2);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_2byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_2byte[i].kc;
+        return 1;
+        break;
+    case S4B3P_F:
+        print("4-Byte Scan Code Pressed\n");
+        i = sc_to_kc_index(sc, 4);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_4byte[i].ks = KEY_STATE_PRESSED;
+        *kc = sc_to_kc_tbl_4byte[i].kc;
+        return 1;
+        break;
+    case S4B3R_F:
+        print("4-Byte Scan Code Released\n");
+        i = sc_to_kc_index(sc, 4);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        sc_to_kc_tbl_4byte[i].ks = KEY_STATE_RELEASED;
+        *kc = SCAN_CODE_IGNORE; // sc_to_kc_tbl_4byte[i].kc;
+        return 1;
+        break;
+    case S6B5P_F:
+        print("6-Byte Scan Code Pressed\n");
+        i = sc_to_kc_index(sc, 6);
+        if (i == 0xFF) {
+            assert(0); // Should not occur for valid scan codes.
+            return 1;
+        }
+        /* Special case: behaves as if it is released as soon as it's pressed */
+        /* sc_to_kc_tbl_1byte[i].ks = KEY_STATE_PRESSED; */
+        *kc = sc_to_kc_tbl_6byte[i].kc;
+        return 1;
+        break;
+    case SSC_ERR:
+        print("Scan Code Error State!\n");
+        return 1;
+        break;
+    default:
+        break;
+    }
+
+    return 0; // Not final state.
+}
+
+/*!
+    @function sc_sm_update
+
+    @discussion Implements the scan code detection state machine. The input is
+    a scan code and the current state is stored in a state variable private to
+    this function.
+
+    @param sc Scan code.
+
+    @result Key code.
+
+*/
+uint8_t sc_sm_update(uint8_t sc) {
+    static sc_state_t sc_sm_cs = SSCS; // cs = Current State, initialize to state state.
+    uint8_t kc;
+
+    sc_sm_cs = sc_sm_next_state(sc_sm_cs, sc);
+
+    if(sc_sm_is_final_state(sc_sm_cs, sc, &kc))
+        sc_sm_cs = SSCS; // Scan code state machine reset to start state.
+
+    return kc;
+}
+
+/*!
+    @function v33_handler
+
+    @discussion Keyboard interrupt handler.
+
+    @param vn Vector number
+
+    @param err_code Error code
+*/
+void v33_handler(uint32_t vn, uint32_t err_code) {
+    uint8_t sc , kc;
+    char c;
+
+    if (vn || err_code) { // Suppress warning.
+        ;
+    }
+
+    sc = inb (0x0060); // Read keyboard output buffer.
+    pic_eoi(vn);
+    print_x32(sc);
+    print("\n");
+
+    kc = sc_sm_update(sc);
+    if(kc != SCAN_CODE_ERR && kc != SCAN_CODE_IGNORE) {
+        // Print something
+        c = kc_to_ascii(kc);
+        print_ch_at(c, 0, -1, -1);
+    }
+}
+
+#if 0
+// TODO: Thoughts on how to implement <stdarg.h>
+void foo(int v, ...) {
+    // &v + 4 // call stack
+    if(v) {
+        ;
+    }
+}
+#endif

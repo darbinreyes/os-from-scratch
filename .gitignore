@@ -2,3 +2,4 @@
 *.o
 os-image
 bochs/
+other/c_experiments/exp3/a.out
